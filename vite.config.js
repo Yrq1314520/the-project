@@ -1,7 +1,31 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import path from 'path'
+// 引入Vant/Element Plus
+import Components from 'unplugin-vue-components/vite'
+import { VantResolver, ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    Components({
+      resolvers: [VantResolver(), ElementPlusResolver()]
+    })
+  ],
+  // 路径别名，@ 指向 src 目录
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src')
+    }
+  },
+  // 跨域代理（对接后端接口）
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://后端接口地址:端口', // 后端实际地址
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
+  }
 })
