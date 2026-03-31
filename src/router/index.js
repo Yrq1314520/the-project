@@ -1,3 +1,5 @@
+import { componentSizeMap, roleTypes } from 'element-plus'
+import path from 'node:path'
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
@@ -12,6 +14,21 @@ const routes = [
     path: '/medicine',
     component: () => import('@/views/family/MedicineReminder.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/waring',
+    component: () => import('@/views/family/WaringNotify.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/oldman/drug',
+    component: () => import('@/views/oldman/DrugList.vue'),
+    meta: { requiresAuth: true, role: oldman }
+  },
+  {
+    path: '/oldman/remind',
+    component: () => import('@/views/oldman/RemindList.vue'),
+    meta: { requiresAuth: true, role: oldman }
   }
 ]
 
