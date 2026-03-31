@@ -29,6 +29,26 @@ const routes = [
     path: '/oldman/remind',
     component: () => import('@/views/oldman/RemindList.vue'),
     meta: { requiresAuth: true, role: oldman }
+  },
+  {
+    path: '/family/real-warning',
+    component: () => import('@views/family/RealTimeWarning.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/family/bind-oldman',
+    component: () => import('@/views/family/BindOldman.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/family/oldman-profile',
+    component: () => import('@/views/family/OldmanProfile.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/family/emergency-contact',
+    component: () => import('@/views/family/EmergencyContact.vue'),
+    meta: { requiresAuth: true }
   }
 ]
 

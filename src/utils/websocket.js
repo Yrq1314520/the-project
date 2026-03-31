@@ -1,20 +1,47 @@
-let ws = null
-export function initWs(userId) {
-  // 后端WebSocket地址
-  ws = new WebSocket(`ws://localhost:8080/ws/${userId}`)
+export const useWebSocket = (url, onMessageCallback) => {
+  let socket = null
+  let isConnected = false
+  const reconnectInterval = 3000 //3秒重新连
 
-  ws.onmessage = (e) => {
-    // 接收后端预警数据，可触发全局提示/存储
-    const data = JSON.parse(e.data)
-    console.log('收到预警：', data)
+  //连接
+  const connect = () => {
+    socket = new WebSocket(url)
+
+    socket.onopen = () => {
+      console.log('WebSocket 连接成功')
+      isConnected = true
+    }
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+      onMessageCallback(data) //收到消息时调用外部回调
+    }
+
+    socket.onerror = (err) => {
+      console.error('WebSocket 连接错误', err)
+    }
+
+    socket.onclose = () => {
+      console.log('WebSocket 连接关闭')
+      isConnected = false
+      setTimeout(connect, reconnectInterval) //自动重连
+    }
   }
 
-  ws.onclose = () => {
-    // 重连逻辑：3秒后重连
-    setTimeout(() => initWs(userId), 3000)
+  //发送消息
+  const send = (data) => {
+    if (isConnected && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify(data))
+    }
   }
-}
 
-export function closeWs() {
-  ws?.close()
+  //关闭连接
+  const close = () => {
+    if (socket) {
+      socket.close()
+    }
+  }
+
+  connect()
+  return { send, close }
 }

@@ -3,6 +3,14 @@
     <van-cell-group>
       <van-cell title="用户注销" icon="delete" is-link @click="handleLogout" />
     </van-cell-group>
+    <van-grid column-num="2" :gutter="12">
+      <van-grid-item icon="user-o" text="绑定老人" to="/family/bind-oldman" />
+      <van-grid-item icon="records" text="老人档案" to="/family/oldman-profile" />
+      <van-grid-item icon="medal-o" text="药品管理" to="/family/drug-manage" />
+      <van-grid-item icon="bell-o" text="预警通知" to="/family/warning" />
+      <van-grid-item icon="warning-o" text="实时预警" to="/family/real-warning" />
+      <van-grid-item icon="friends-o" text="紧急联系人" to="/family/emergency-contact" />
+    </van-grid>
   </div>
 </template>
 
