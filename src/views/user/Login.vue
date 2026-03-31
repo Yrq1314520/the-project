@@ -1,6 +1,6 @@
 <template>
   <div class="login-page">
-    <h2 class="title">翼护银发 登录</h2>
+    <h2 class="title">翼护银发</h2>
 
     <van-form @submit="onLogin" ref="formRef" class="form">
       <van-cell-group inset>

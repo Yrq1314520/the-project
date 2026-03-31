@@ -7,6 +7,11 @@ const routes = [
     path: '/family',
     component: () => import('@/views/family/index.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/medicine',
+    component: () => import('@/views/family/MedicineReminder.vue'),
+    meta: { requiresAuth: true }
   }
 ]
 
