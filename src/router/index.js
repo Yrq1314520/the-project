@@ -4,7 +4,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
   { path: '/', redirect: '/login' },
-  { path: '/login', component: () => import('@/views/user/Login.vue') },
+  { path: '/login', component: () => import('@/views/user/index.vue') },
   {
     path: '/family',
     component: () => import('@/views/family/index.vue'),
