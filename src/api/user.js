@@ -18,10 +18,50 @@ export function sendEmailCodeApi(email) {
   })
 }
 
-// 用户注销
-export function logoutApi() {
+// 用户注册
+export function registerApi(data) {
+  return request({
+    url: '/user/register',
+    method: 'post',
+    data
+  })
+}
+
+// 密码重置（需要邮箱验证码或手机短信）
+export function resetPasswordApi(data) {
+  return request({
+    url: '/user/resetPassword',
+    method: 'post',
+    data: {
+      ...data,
+      password: data.newPassword.trim()
+    }
+  })
+}
+
+// 修改个人信息（需要登录后才能实现）
+export function updateProfileApi(data) {
+  return request({
+    url: '/user/updateProfile',
+    method: 'post',
+    data
+  })
+}
+
+// 用户注销（需要登录后才能实现）
+export function logoutApi(data) {
   return request({
     url: '/user/logout',
-    method: 'post'
+    method: 'post',
+    data
+  })
+}
+
+// 密码修改（需要登录后才能实现）
+export function changePasswordApi(data) {
+  return request({
+    url: '/user/changePassword',
+    method: 'post',
+    data
   })
 }

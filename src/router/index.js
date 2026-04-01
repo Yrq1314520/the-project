@@ -23,17 +23,12 @@ const routes = [
   {
     path: '/oldman/drug',
     component: () => import('@/views/oldman/DrugList.vue'),
-    meta: { requiresAuth: true, role: oldman }
+    meta: { requiresAuth: true, role: 'oldman' }
   },
   {
     path: '/oldman/remind',
     component: () => import('@/views/oldman/RemindList.vue'),
-    meta: { requiresAuth: true, role: oldman }
-  },
-  {
-    path: '/family/real-warning',
-    component: () => import('@views/family/RealTimeWarning.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, role: 'oldman' }
   },
   {
     path: '/family/bind-oldman',
