@@ -30,38 +30,98 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { showToast } from 'vant'
+import { ref, reactive, onMounted } from 'vue'
+import { showToast, showLoading, showConfirmDialog } from 'vant'
+import { getEmergencyContactApi, addEmergencyContactApi, deleteEmergencyContactApi } from '@/api/family'
 
 const loading = ref(false)
 const contactList = ref([])
 const showAdd = ref(false)
 const newContact = reactive({ name: '', phone: '' })
 
+// 加载联系人列表
+const loadContactList = async () => {
+  try {
+    loading.value = true
+    showLoading('加载中...')
+    const res = await getEmergencyContactApi()
+    if (res.code === 200) {
+      contactList.value = res.data
+    } else {
+      showToast(res.msg || '加载失败')
+    }
+  } catch (err) {
+    showToast('网络异常，请重试')
+    console.error(err)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 加载更多（保持与 van-list 兼容）
 const onLoad = () => {
   loading.value = false
 }
 
-const onAdd = () => {
+// 添加联系人
+const onAdd = async () => {
   if (!newContact.name || !newContact.phone) {
     showToast('请填写完整')
     return
   }
-  contactList.value.push({
-    id: Date.now(),
-    name: newContact.name,
-    phone: newContact.phone
-  })
-  showToast('添加成功')
-  showAdd.value = false
-  newContact.name = ''
-  newContact.phone = ''
+
+  try {
+    loading.value = true
+    showLoading('添加中...')
+    const res = await addEmergencyContactApi(newContact)
+    if (res.code === 200) {
+      contactList.value.push(res.data)
+      showToast('添加成功')
+      showAdd.value = false
+      newContact.name = ''
+      newContact.phone = ''
+    } else {
+      showToast(res.msg || '添加失败')
+    }
+  } catch (err) {
+    showToast('网络异常，请重试')
+    console.error(err)
+  } finally {
+    loading.value = false
+  }
 }
 
-const onDelete = (id) => {
-  contactList.value = contactList.value.filter(i => i.id !== id)
-  showToast('已删除')
+// 删除联系人
+const onDelete = async (id) => {
+  try {
+    await showConfirmDialog({
+      title: '确认删除',
+      message: '确定要删除这个联系人吗？'
+    })
+
+    loading.value = true
+    showLoading('删除中...')
+    const res = await deleteEmergencyContactApi(id)
+    if (res.code === 200) {
+      contactList.value = contactList.value.filter(i => i.id !== id)
+      showToast('已删除')
+    } else {
+      showToast(res.msg || '删除失败')
+    }
+  } catch (err) {
+    if (err !== 'cancel') {
+      showToast('网络异常，请重试')
+      console.error(err)
+    }
+  } finally {
+    loading.value = false
+  }
 }
+
+// 页面加载时获取联系人列表
+onMounted(() => {
+  loadContactList()
+})
 </script>
 
 <style scoped>

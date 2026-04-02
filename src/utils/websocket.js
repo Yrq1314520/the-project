@@ -1,3 +1,5 @@
+// WebSocket 连接工具
+// 用于连接 WebSocket 服务器，处理消息接收和发送
 export const useWebSocket = (url, onMessageCallback) => {
   let socket = null
   let isConnected = false

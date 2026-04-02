@@ -66,11 +66,13 @@ const showPassword = ref(false)
 const rules = {
   account: [
     { required: true, message: '请输入账号' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号' }
+    // 先不验证手机号格式
+    // { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号' }
   ],
   password: [
     { required: true, message: '请输入密码' },
-    { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,20}$/, message: '密码必须包含大小写字母和数字，8-20位' }
+    // 先不验证密码复杂度
+    // { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,20}$/, message: '密码必须包含大小写字母和数字，8-20位' }
   ]
 }
 
@@ -84,15 +86,24 @@ const onLogin = async () => {
   try {
     await formRef.value?.validate()
     loading.value = true
+    userStore.setLoginInfo('userStore.setLoginInfo', 'family')
+    showToast('登录成功')
+    router.push('/old')
+    router.push('/family') // 跳转到家庭页面
 
-    const res = await loginApi(form.value)
-    if (res.code === 200) {
-      userStore.setLoginInfo(res.data.token, res.data.user)
-      showToast('登录成功')
-      router.push('/home') // 跳转到主页
-    } else {
-      showToast(res.msg || '登录失败')
-    }
+    // -----------------------------------
+    // 后续再调用登录接口
+    // const res = await loginApi(form.value)
+    // if (res.code === 200) {
+    //   userStore.setLoginInfo(res.data.token, res.data.user)
+    //   showToast('登录成功')
+    //   router.push('/home') // 跳转到主页
+    // } else {
+    //   showToast(res.msg || '登录失败')
+    // }
+    // -----------------------------------
+
+
   } catch (err) {
     showToast('网络异常，请重试')
   } finally {

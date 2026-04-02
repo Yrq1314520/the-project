@@ -7,25 +7,31 @@
     </div>
 
     <!-- 预警列表 -->
-    <van-cell-group inset class="list-group">
-      <van-cell
-        v-for="item in warningList"
-        :key="item.id"
-        :title="item.title"
-        :desc="item.content"
-        is-link
-        @click="goDetail(item)"
-      >
-        <template #right-icon>
-          <span :class="['tag', item.type === 'email' ? 'email-tag' : 'alert-tag']">
-            {{ item.type === 'email' ? '邮箱通知' : '系统预警' }}
-          </span>
-        </template>
-      </van-cell>
-    </van-cell-group>
+    <van-list
+      v-model:loading="loading"
+      :finished="finished"
+      finished-text="没有更多了"
+      @load="loadWarningList"
+      class="list-group"
+    >
+      <van-cell-group inset v-for="item in warningList" :key="item.id">
+        <van-cell
+          :title="item.title"
+          :desc="item.content"
+          is-link
+          @click="goDetail(item)"
+        >
+          <template #right-icon>
+            <span :class="['tag', item.type === 'email' ? 'email-tag' : 'alert-tag']">
+              {{ item.type === 'email' ? '邮箱通知' : '系统预警' }}
+            </span>
+          </template>
+        </van-cell>
+      </van-cell-group>
+    </van-list>
 
     <!-- 状态为空 -->
-    <van-empty description="暂无预警通知" />
+    <van-empty v-if="warningList.length === 0" description="暂无预警通知" />
 
     <!-- 详情弹窗 -->
     <van-popup v-model:show="showDetail" position="bottom" style="height: 80%">
@@ -47,35 +53,52 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { showToast, showLoading } from 'vant'
+import { getWarningNotifyApi } from '@/api/family'
 
-// 空数组(或放一两组数据)
-const warningList = ref([
-  {
-    id:1,
-    title:'用药超时未服用',
-    content:'老人降压药已超时30分钟未服用，请及时查看',
-    type:'alert',
-    time:'2026-03-31 20:30'
-  },
-  {
-     id:2,
-     title:'邮箱通知已发送',
-     content:'已向紧急联系人发送用药异常邮件通知',
-     type:'email',
-     time:'2026-03-31 20:31'
-  }
-])
+// 预警列表数据
+const warningList = ref([])
+const loading = ref(false)
+const finished = ref(false)
+const page = ref(1)
 
 // 弹窗状态
 const showDetail = ref(false)
 const currentDetail = ref(null)
 
-// 查看详情（保留逻辑，后续接口直接用）
+// 加载预警列表
+const loadWarningList = async () => {
+  try {
+    loading.value = true
+    const res = await getWarningNotifyApi({ page: page.value, pageSize: 10 })
+    if (res.code === 200) {
+      warningList.value.push(...res.data.list)
+      page.value++
+      if (warningList.value.length >= res.data.total) {
+        finished.value = true
+      }
+    } else {
+      showToast(res.msg || '加载失败')
+    }
+  } catch (err) {
+    showToast('网络异常，请重试')
+    console.error(err)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 查看详情
 const goDetail = (item) => {
   currentDetail.value = item
   showDetail.value = true
 }
+
+// 页面加载时获取预警列表
+onMounted(() => {
+  loadWarningList()
+})
 </script>
 
 <style scoped>

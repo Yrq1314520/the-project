@@ -4,7 +4,9 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
   { path: '/', redirect: '/login' },
+  // 登录页
   { path: '/login', component: () => import('@/views/user/index.vue') },
+  // 家属页
   {
     path: '/family',
     component: () => import('@/views/family/index.vue'),

@@ -1,5 +1,16 @@
 <template>
   <div class="family-home">
+    <!-- 
+      家庭首页：
+      家庭端登录后有的功能：
+      1. 绑定老人
+      2. 老人档案
+      3. 药品管理
+      4. 预警通知
+      5. 实时预警
+      6. 紧急联系人
+      7. 用户注销
+    -->
     <van-cell-group>
       <van-cell title="用户注销" icon="delete" is-link @click="handleLogout" />
     </van-cell-group>

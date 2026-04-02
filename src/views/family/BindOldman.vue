@@ -18,20 +18,40 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
-import { showToast } from 'vant'
+import { reactive, ref } from 'vue'
+import { showToast, showLoading } from 'vant'
+import { useRouter } from 'vue-router'
+import { bindOldmanApi } from '@/api/family'
 
+const router = useRouter()
 const bindForm = reactive({
   code: ''
 })
+const loading = ref(false)
 
-const onBind = () => {
+const onBind = async () => {
   if (!bindForm || !bindForm.code) {
     showToast('请输入绑定码')
     return
   }
-  //绑定接口
-  showToast('绑定成功（演示）')
+
+  try {
+    loading.value = true
+    showLoading('绑定中...')
+    const res = await bindOldmanApi({ code: bindForm.code })
+    if (res.code === 200) {
+      showToast('绑定成功')
+      // 跳转到老人档案页面
+      router.push('/family/oldman-profile')
+    } else {
+      showToast(res.msg || '绑定失败')
+    }
+  } catch (err) {
+    showToast('网络异常，请重试')
+    console.error(err)
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
