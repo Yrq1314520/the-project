@@ -3,7 +3,7 @@
     <!-- 顶部操作栏 -->
     <div class="action-bar">
       <h2>用药提醒管理</h2>
-      <van-button type="primary" @click="openAddDialog">
+      <van-button type="primary" @click="openAddMedicineDialog">
         + 新增提醒
       </van-button>
     </div>
@@ -13,10 +13,10 @@
       v-model:loading="loading"
       :finished="finished"
       finished-text="没有更多了"
-      @load="onLoad"
+      @load="loadMedicineList"
     >
       <van-card
-        v-for="item in list"
+        v-for="item in medicineList"
         :key="item.id"
         :title="item.medicineName"
         :desc="`用药时间: ${item.takeTime} | 剂量: ${item.dosage}`"
@@ -25,10 +25,10 @@
           <div class="card-footer">
             <span class="time">周期: {{ item.cycle }}</span>
             <div class="btn-group">
-              <van-button size="small" type="primary" @click="openEditDialog(item)">
+              <van-button size="small" type="primary" @click="openEditMedicineDialog(item)">
                 编辑
               </van-button>
-              <van-button size="small" type="danger" @click="onDelete(item.id)">
+              <van-button size="small" type="danger" @click="deleteMedicine(item.id)">
                 删除
               </van-button>
             </div>
@@ -38,37 +38,37 @@
     </van-list>
 
     <!-- 新增/编辑弹窗 -->
-    <van-popup v-model:show="showDialog" position="bottom" style="height: 80%">
+    <van-popup v-model:show="isDialogVisible" position="bottom" style="height: 80%">
       <div class="dialog-content">
         <h3>{{ isEdit ? '编辑用药提醒' : '新增用药提醒' }}</h3>
-        <van-form @submit="onSubmit">
+        <van-form @submit="submitMedicineForm">
           <van-cell-group>
             <van-field
-              v-model="form.medicineName"
+              v-model="medicineForm.medicineName"
               label="药品名称"
               placeholder="请输入药品名称"
               required
             />
             <van-field
-              v-model="form.takeTime"
+              v-model="medicineForm.takeTime"
               label="用药时间"
               placeholder="如: 08:00, 12:00"
               required
             />
             <van-field
-              v-model="form.dosage"
+              v-model="medicineForm.dosage"
               label="用药剂量"
               placeholder="如: 1片/次"
               required
             />
             <van-field
-              v-model="form.cycle"
+              v-model="medicineForm.cycle"
               label="用药周期"
               placeholder="如: 每日/每周一三五"
               required
             />
             <van-field
-              v-model="form.remark"
+              v-model="medicineForm.remark"
               label="备注"
               type="textarea"
               placeholder="其他说明"
@@ -96,15 +96,15 @@ import {
 } from '@/api/medicine'
 
 // 列表数据
-const list = ref([])
+const medicineList = ref([])
 const loading = ref(false)
 const finished = ref(false)
 const page = ref(1)
 
 // 弹窗状态
-const showDialog = ref(false)
+const isDialogVisible = ref(false)
 const isEdit = ref(false)
-const form = reactive({
+const medicineForm = reactive({
   id: null,
   medicineName: '',
   takeTime: '',
@@ -114,14 +114,14 @@ const form = reactive({
 })
 
 // 加载列表
-const onLoad = async () => {
+const loadMedicineList = async () => {
   loading.value = true
   try {
     const res = await getMedicineListApi({ page: page.value, pageSize: 10 })
     if (res.code === 200) {
-      list.value.push(...res.data.list)
+      medicineList.value.push(...res.data.list)
       page.value++
-      if (list.value.length >= res.data.total) {
+      if (medicineList.value.length >= res.data.total) {
         finished.value = true
       }
     }
@@ -133,51 +133,51 @@ const onLoad = async () => {
 }
 
 // 打开新增弹窗
-const openAddDialog = () => {
+const openAddMedicineDialog = () => {
   isEdit.value = false
   // 清空表单
-  Object.keys(form).forEach(key => {
-    form[key] = key === 'id' ? null : ''
+  Object.keys(medicineForm).forEach(key => {
+    medicineForm[key] = key === 'id' ? null : ''
   })
-  showDialog.value = true
+  isDialogVisible.value = true
 }
 
 // 打开编辑弹窗
-const openEditDialog = (item) => {
+const openEditMedicineDialog = (item) => {
   isEdit.value = true
   // 回填数据
-  Object.assign(form, item)
-  showDialog.value = true
+  Object.assign(medicineForm, item)
+  isDialogVisible.value = true
 }
 
 // 提交表单（新增/编辑）
-const onSubmit = async () => {
-  if (!form.medicineName || !form.takeTime || !form.dosage || !form.cycle) {
+const submitMedicineForm = async () => {
+  if (!medicineForm.medicineName || !medicineForm.takeTime || !medicineForm.dosage || !medicineForm.cycle) {
     showToast('请填写必填项')
     return
   }
 
   try {
     if (isEdit.value) {
-      await updateMedicineApi(form)
+      await updateMedicineApi(medicineForm)
       showToast('修改成功')
     } else {
-      await addMedicineApi(form)
+      await addMedicineApi(medicineForm)
       showToast('添加成功')
     }
-    showDialog.value = false
+    isDialogVisible.value = false
     // 刷新列表
-    list.value = []
+    medicineList.value = []
     page.value = 1
     finished.value = false
-    onLoad()
+    loadMedicineList()
   } catch (err) {
     showToast('操作失败')
   }
 }
 
 // 删除提醒
-const onDelete = async (id) => {
+const deleteMedicine = async (id) => {
   await showConfirmDialog({
     title: '确认删除',
     message: '确定要删除这条用药提醒吗？'
@@ -187,10 +187,10 @@ const onDelete = async (id) => {
     await deleteMedicineApi(id)
     showToast('删除成功')
     // 刷新列表
-    list.value = []
+    medicineList.value = []
     page.value = 1
     finished.value = false
-    onLoad()
+    loadMedicineList()
   } catch (err) {
     showToast('删除失败')
   }

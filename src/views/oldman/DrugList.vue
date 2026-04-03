@@ -34,6 +34,7 @@ import { ref } from 'vue'
 import { showToast } from 'vant'
 import { getOldDrugListApi } from '@/api/oldMedicine'
 
+// 
 const searchKey = ref('')
 const drugList = ref([])
 const loading = ref(false)
@@ -57,7 +58,7 @@ const loadData = async () => {
       }
     }
   } catch (err) {
-    showToast="加载失败，请稍后重试"
+    showToast('加载失败，请稍后重试')
   } finally {
     loading.value = false
   }

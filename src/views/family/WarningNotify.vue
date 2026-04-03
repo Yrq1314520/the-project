@@ -54,7 +54,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { showToast, showLoading } from 'vant'
+import { showToast } from 'vant'
 import { getWarningNotifyApi } from '@/api/family'
 
 // 预警列表数据
@@ -104,41 +104,56 @@ onMounted(() => {
 <style scoped>
 .warning-page {
   padding: 16px;
-  background: #f8f9fa;
+  background-color: #f8f9fa;
   min-height: 100vh;
 }
+
 .header {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
+
 .header h2 {
-  font-size: 22px;
-  margin: 0 0 6px 0;
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 600;
 }
+
 .tip {
   font-size: 14px;
   color: #666;
   margin: 0;
 }
+
 .list-group {
-  margin-bottom: 20px;
+  background-color: #f8f9fa;
 }
+
 .tag {
+  padding: 2px 8px;
+  border-radius: 10px;
   font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  color: #fff;
 }
+
 .email-tag {
-  background: #1976d2;
+  background-color: #e6f7ff;
+  color: #1890ff;
 }
+
 .alert-tag {
-  background: #ff5252;
+  background-color: #fff2f0;
+  color: #ff4d4f;
 }
+
 .detail-content {
   padding: 20px;
+  height: 100%;
+  overflow-y: auto;
 }
+
 .detail-content h3 {
   text-align: center;
   margin-bottom: 20px;
+  font-size: 18px;
+  font-weight: 600;
 }
 </style>

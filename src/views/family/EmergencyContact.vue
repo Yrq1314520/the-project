@@ -31,7 +31,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { showToast, showLoading, showConfirmDialog } from 'vant'
+import { showToast, showConfirmDialog } from 'vant'
 import { getEmergencyContactApi, addEmergencyContactApi, deleteEmergencyContactApi } from '@/api/family'
 
 const loading = ref(false)
@@ -43,7 +43,6 @@ const newContact = reactive({ name: '', phone: '' })
 const loadContactList = async () => {
   try {
     loading.value = true
-    showLoading('加载中...')
     const res = await getEmergencyContactApi()
     if (res.code === 200) {
       contactList.value = res.data
@@ -72,7 +71,6 @@ const onAdd = async () => {
 
   try {
     loading.value = true
-    showLoading('添加中...')
     const res = await addEmergencyContactApi(newContact)
     if (res.code === 200) {
       contactList.value.push(res.data)

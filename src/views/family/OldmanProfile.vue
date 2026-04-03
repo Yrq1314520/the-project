@@ -206,7 +206,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { showToast, showConfirmDialog, showLoading } from 'vant'
+import { showToast, showConfirmDialog } from 'vant'
 import {
   getOldmanProfileListApi,
   getOldmanProfileDetailApi,
@@ -320,7 +320,6 @@ const openEditDialog = async (item) => {
   isEdit.value = true
   currentId.value = item.id
   try {
-    showLoading('加载中...')
     const res = await getOldmanProfileDetailApi(item.id)
     if (res.code === 200) {
       Object.assign(form, res.data)
@@ -337,7 +336,6 @@ const openEditDialog = async (item) => {
 // 打开查看弹窗
 const openViewDialog = async (item) => {
   try {
-    showLoading('加载中...')
     const res = await getOldmanProfileDetailApi(item.id)
     if (res.code === 200) {
       currentProfile.value = res.data
@@ -355,7 +353,6 @@ const openViewDialog = async (item) => {
 const onSubmit = async () => {
   try {
     submitLoading.value = true
-    showLoading('保存中...')
     
     if (isEdit.value) {
       const res = await updateOldmanProfileApi(currentId.value, form)
@@ -400,7 +397,6 @@ const onDelete = async (id) => {
       message: '确定要删除这条老人档案吗？此操作不可恢复。'
     })
 
-    showLoading('删除中...')
     const res = await deleteOldmanProfileApi(id)
     if (res.code === 200) {
       showToast('删除成功')

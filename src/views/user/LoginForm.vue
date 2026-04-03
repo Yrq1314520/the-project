@@ -88,7 +88,6 @@ const onLogin = async () => {
     loading.value = true
     userStore.setLoginInfo('userStore.setLoginInfo', 'family')
     showToast('登录成功')
-    router.push('/old')
     router.push('/family') // 跳转到家庭页面
 
     // -----------------------------------

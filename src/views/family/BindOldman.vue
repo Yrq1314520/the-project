@@ -11,7 +11,7 @@
         />
       </van-cell-group>
       <div style="padding: 16px;">
-        <van-button type="primary" block native-type="submit">绑定</van-button>
+        <van-button type="primary" block native-type="submit" :loading="loading">绑定</van-button>
       </div>
     </van-form>
   </div>
@@ -19,7 +19,7 @@
 
 <script setup>
 import { reactive, ref } from 'vue'
-import { showToast, showLoading } from 'vant'
+import { showToast } from 'vant'
 import { useRouter } from 'vue-router'
 import { bindOldmanApi } from '@/api/family'
 
@@ -37,7 +37,6 @@ const onBind = async () => {
 
   try {
     loading.value = true
-    showLoading('绑定中...')
     const res = await bindOldmanApi({ code: bindForm.code })
     if (res.code === 200) {
       showToast('绑定成功')
