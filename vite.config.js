@@ -22,9 +22,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://后端接口地址:端口', // 后端实际地址
+        target: 'http://118.195.215.81/yiguardsilverfa', // 后端实际地址
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        rewrite: (path) => path
       }
     }
   }

@@ -103,7 +103,9 @@ const page = ref(1)
 
 // 弹窗状态
 const isDialogVisible = ref(false)
+// 编辑状态
 const isEdit = ref(false)
+// 表单数据
 const medicineForm = reactive({
   id: null,
   medicineName: '',
