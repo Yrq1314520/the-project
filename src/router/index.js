@@ -4,37 +4,44 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
   { path: '/', redirect: '/login' },
-  { path: '/login', component: () => import('@/views/user/Login.vue') },
+  // 登录页
+  { path: '/login', component: () => import('@/views/user/index.vue') },
+  // 家属页
   {
     path: '/family',
     component: () => import('@/views/family/index.vue'),
     meta: { requiresAuth: true }
   },
+  // 药品管理
   {
-    path: '/medicine',
-    component: () => import('@/views/family/MedicineReminder.vue'),
+    path: '/family/drug-manage',
+    component: () => import('@/views/family/DrugManage.vue'),
     meta: { requiresAuth: true }
   },
+  // 预警通知
   {
-    path: '/waring',
-    component: () => import('@/views/family/WaringNotify.vue'),
+    path: '/family/warning',
+    component: () => import('@/views/family/WarningNotify.vue'),
     meta: { requiresAuth: true }
   },
+  // 实时预警
+  {
+    path: '/family/real-warning',
+    component: () => import('@/views/family/RealTimeWarning.vue'),
+    meta: { requiresAuth: true }
+  },
+  // 老人端路由
   {
     path: '/oldman/drug',
     component: () => import('@/views/oldman/DrugList.vue'),
-    meta: { requiresAuth: true, role: oldman }
+    meta: { requiresAuth: true, role: 'oldman' }
   },
   {
     path: '/oldman/remind',
     component: () => import('@/views/oldman/RemindList.vue'),
-    meta: { requiresAuth: true, role: oldman }
+    meta: { requiresAuth: true, role: 'oldman' }
   },
-  {
-    path: '/family/real-warning',
-    component: () => import('@views/family/RealTimeWarning.vue'),
-    meta: { requiresAuth: true }
-  },
+  // 家属功能路由
   {
     path: '/family/bind-oldman',
     component: () => import('@/views/family/BindOldman.vue'),
@@ -49,7 +56,10 @@ const routes = [
     path: '/family/emergency-contact',
     component: () => import('@/views/family/EmergencyContact.vue'),
     meta: { requiresAuth: true }
-  }
+  },
+  // 重定向旧路由
+  { path: '/medicine', redirect: '/family/drug-manage' },
+  { path: '/waring', redirect: '/family/warning' }
 ]
 
 const router = createRouter({

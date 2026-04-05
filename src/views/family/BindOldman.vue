@@ -17,6 +17,7 @@
         />
       </van-cell-group>
       <div style="padding: 16px;">
+<<<<<<< HEAD
         <van-button 
           type="primary" 
           block 
@@ -26,6 +27,9 @@
         >
           查询并绑定
         </van-button>
+=======
+        <van-button type="primary" block native-type="submit" :loading="loading">绑定</van-button>
+>>>>>>> c1e0353f8c67c7d3c7689a3c501b01c46bb0126c
       </div>
     </van-form>
   </div>
@@ -33,15 +37,25 @@
 
 <script setup>
 import { reactive, ref } from 'vue'
+<<<<<<< HEAD
 import { showToast, showConfirmDialog } from 'vant'
 //引入家属端绑定API
 import { queryOldManInfoApi, bindOldManApi } from '@/api/family'
 
 //表单数据
+=======
+import { showToast } from 'vant'
+import { useRouter } from 'vue-router'
+import { bindOldmanApi } from '@/api/family'
+
+const router = useRouter()
+>>>>>>> c1e0353f8c67c7d3c7689a3c501b01c46bb0126c
 const bindForm = reactive({
   account: ''
 })
+const loading = ref(false)
 
+<<<<<<< HEAD
 //加载状态
 const isLoading = ref(false)
 
@@ -111,6 +125,29 @@ const onBind = async () => {
     showToast(errorMsg)
   } finally {
     isLoading.value = false
+=======
+const onBind = async () => {
+  if (!bindForm || !bindForm.code) {
+    showToast('请输入绑定码')
+    return
+  }
+
+  try {
+    loading.value = true
+    const res = await bindOldmanApi({ code: bindForm.code })
+    if (res.code === 200) {
+      showToast('绑定成功')
+      // 跳转到老人档案页面
+      router.push('/family/oldman-profile')
+    } else {
+      showToast(res.msg || '绑定失败')
+    }
+  } catch (err) {
+    showToast('网络异常，请重试')
+    console.error(err)
+  } finally {
+    loading.value = false
+>>>>>>> c1e0353f8c67c7d3c7689a3c501b01c46bb0126c
   }
 }
 </script>
