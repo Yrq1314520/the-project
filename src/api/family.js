@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 绑定老人
 export function bindOldmanApi(data) {
   return request({
-    url: '/family/bind-oldman',
+    url: '/api/v1/elderInfo/bind',
     method: 'post',
     data
   })
@@ -12,7 +12,7 @@ export function bindOldmanApi(data) {
 // 获取老人档案列表
 export function getOldmanProfileListApi(params) {
   return request({
-    url: '/family/oldman-profile/list',
+    url: '/api/v1/elderInfo/list',
     method: 'get',
     params
   })
@@ -21,7 +21,7 @@ export function getOldmanProfileListApi(params) {
 // 获取老人档案详情
 export function getOldmanProfileDetailApi(id) {
   return request({
-    url: `/family/oldman-profile/${id}`,
+    url: `/api/v1/elderInfo/${id}`,
     method: 'get'
   })
 }
@@ -29,7 +29,7 @@ export function getOldmanProfileDetailApi(id) {
 // 添加老人档案
 export function addOldmanProfileApi(data) {
   return request({
-    url: '/family/oldman-profile',
+    url: '/api/v1/elderInfo/add',
     method: 'post',
     data
   })
@@ -38,7 +38,7 @@ export function addOldmanProfileApi(data) {
 // 更新老人档案
 export function updateOldmanProfileApi(id, data) {
   return request({
-    url: `/family/oldman-profile/${id}`,
+    url: `/api/v1/elderInfo/update/${id}`,
     method: 'put',
     data
   })
@@ -47,7 +47,7 @@ export function updateOldmanProfileApi(id, data) {
 // 删除老人档案
 export function deleteOldmanProfileApi(id) {
   return request({
-    url: `/family/oldman-profile/${id}`,
+    url: `/api/v1/elderInfo/delete/${id}`,
     method: 'delete'
   })
 }

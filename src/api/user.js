@@ -10,18 +10,18 @@ export function loginApi(data) {
 }
 
 // 获取邮箱验证码
-export function sendEmailCodeApi(email) {
+export function sendEmailCodeApi(data) {
   return request({
-    url: '/users/sendEmailCode',
+    url: '/v1/users/sendEmailCode',
     method: 'post',
-    data: { email }
+    data
   })
 }
 
 // 用户注册
 export function registerApi(data) {
   return request({
-    url: '/users/register',
+    url: '/v1/users',
     method: 'post',
     data
   })
