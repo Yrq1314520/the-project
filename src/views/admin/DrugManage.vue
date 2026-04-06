@@ -23,6 +23,13 @@
             <el-option label="保健品" value="3" />
           </el-select>
         </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="searchForm.status" placeholder="请选择状态">
+            <el-option label="全部" value="" />
+            <el-option label="启用" value="1" />
+            <el-option label="禁用" value="0" />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
             <el-icon name="el-icon-search" />
@@ -51,7 +58,18 @@
         <el-table-column prop="specification" label="规格" width="150" />
         <el-table-column prop="usage" label="用法用量" width="200" />
         <el-table-column prop="dosage" label="剂量" width="100" />
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="scope">
+            <el-switch 
+              v-model="scope.row.status" 
+              active-value="1" 
+              inactive-value="0"
+              @change="handleStatusChange(scope.row)"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column prop="createTime" label="创建时间" width="200" />
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="scope">
             <el-button type="primary" size="small" @click="handleEditDrug(scope.row)">
               <el-icon name="el-icon-edit" />
@@ -108,6 +126,9 @@
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
         </el-form-item>
+        <el-form-item label="状态" prop="status">
+          <el-switch v-model="form.status" active-value="1" inactive-value="0" />
+        </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -122,12 +143,13 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getDrugListApi, addDrugApi, updateDrugApi, deleteDrugApi } from '@/api/medicine'
+import { getDrugListApi, addDrugApi, updateDrugApi, deleteDrugApi, updateDrugStatusApi } from '@/api/medicine'
 
 // 搜索表单
 const searchForm = reactive({
   name: '',
-  category: ''
+  category: '',
+  status: ''
 })
 
 // 分页
@@ -150,7 +172,8 @@ const form = reactive({
   specification: '',
   usage: '',
   dosage: '',
-  remark: ''
+  remark: '',
+  status: '1'
 })
 
 // 表单验证
@@ -202,7 +225,8 @@ const loadDrugList = async () => {
       page: page.current,
       pageSize: page.size,
       name: searchForm.name,
-      category: searchForm.category
+      category: searchForm.category,
+      status: searchForm.status
     })
     if (res.code === 200) {
       drugList.value = res.data.list
@@ -224,6 +248,7 @@ const handleSearch = () => {
 const handleReset = () => {
   searchForm.name = ''
   searchForm.category = ''
+  searchForm.status = ''
   page.current = 1
   loadDrugList()
 }
@@ -249,7 +274,8 @@ const handleAddDrug = () => {
     specification: '',
     usage: '',
     dosage: '',
-    remark: ''
+    remark: '',
+    status: '1'
   })
   dialogVisible.value = true
 }
@@ -279,6 +305,19 @@ const handleDeleteDrug = (id) => {
       console.error('删除药品失败', error)
     }
   }).catch(() => {})
+}
+
+// 状态变更
+const handleStatusChange = async (drug) => {
+  try {
+    const res = await updateDrugStatusApi(drug.id, drug.status)
+    if (res.code === 200) {
+      ElMessage.success(drug.status === '1' ? '启用成功' : '禁用成功')
+    }
+  } catch (error) {
+    ElMessage.error('状态变更失败')
+    console.error('状态变更失败', error)
+  }
 }
 
 // 提交表单
@@ -313,7 +352,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding: 20px;
 }
 
 .page-header {
