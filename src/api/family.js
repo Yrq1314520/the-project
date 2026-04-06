@@ -1,45 +1,19 @@
 import request from '@/utils/request'
 
-// 绑定老人
-export function bindOldmanApi(data) {
-  return request({
-    url: '/api/v1/elderInfo/bind',
-    method: 'post',
-    data
-  })
-}
-
-// 获取老人档案列表
-export function getOldmanProfileListApi(params) {
-  return request({
-    url: '/api/v1/elderInfo/list',
-    method: 'get',
-    params
-  })
-}
-
-// 获取老人档案详情
-export function getOldmanProfileDetailApi(id) {
-  return request({
-    url: `/api/v1/elderInfo/${id}`,
-    method: 'get'
-  })
-}
-
 // 添加老人档案
 export function addOldmanProfileApi(data) {
   return request({
-    url: '/api/v1/elderInfo/add',
+    url: '/elderInfo/add',
     method: 'post',
     data
   })
 }
 
-// 更新老人档案
-export function updateOldmanProfileApi(id, data) {
+// 修改老人档案
+export function updateOldmanProfileApi(data) {
   return request({
-    url: `/api/v1/elderInfo/update/${id}`,
-    method: 'put',
+    url: '/elderInfo/update',
+    method: 'post',
     data
   })
 }
@@ -47,13 +21,14 @@ export function updateOldmanProfileApi(id, data) {
 // 删除老人档案
 export function deleteOldmanProfileApi(id) {
   return request({
-    url: `/api/v1/elderInfo/delete/${id}`,
-    method: 'delete'
+    url: `/elderInfo/delete/${id}`,
+    method: 'post'
   })
 }
 
-// 获取预警通知列表
-export function getWarningNotifyApi(params) {
+// 绑定老人账号
+// 通过 username 模糊查询老人信息
+export function searchElderByUsernameApi(data) {
   return request({
     url: '/family/warning-notify',
     method: 'get',
@@ -158,7 +133,18 @@ export function getActivityRecordApi(params) {
 // 删除紧急联系人
 export function deleteEmergencyContactApi(id) {
   return request({
-    url: `/family/emergency-contact/${id}`,
-    method: 'delete'
+    url: '/elderInfo/bind-account',
+    method: 'post',
+    data
+  })
+}
+
+// 设置紧急联系人
+// 获取紧急联系人列表
+export function setEmergencyContactForElder(data) {
+  return request({
+    url: '/elderInfo/update',
+    method: 'post',
+    data
   })
 }

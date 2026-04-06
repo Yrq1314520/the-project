@@ -50,31 +50,27 @@ const router = useRouter()
 const userStore = useUserStore()
 const formRef = ref(null)
 
-// 表单数据
 const loginForm = reactive({
   phone: '',
   password: ''
 })
 
-// 加载状态
 const loading = ref(false)
-
-// 密码可见性
 const showPassword = ref(false)
 
-// 表单验证规则
+
 const rules = {
   phone: [
     { required: true, message: '请输入手机号' },
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号' }
   ],
   password: [
+
     { required: true, message: '请输入密码' },
-    // { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,20}$/, message: '密码必须包含大小写字母和数字，8-20位' }
+    { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,20}$/, message: '密码必须包含大小写字母和数字，8-20位' }
   ]
 }
 
-// 切换密码可见性
 const togglePassword = () => {
   showPassword.value = !showPassword.value
 }
@@ -101,13 +97,11 @@ const onLogin = async () => {
       } else if(res.data.role === 3){
         router.push('/admin')
       }
-
     } else {
       showToast(res?.errorMsg || '登录失败')
     }
   } catch (err) {
-    console.error('登录请求失败', err)
-    showToast('网络异常，请重试')
+    showToast('登录失败，请检查账号密码')
   } finally {
     loading.value = false
   }
@@ -123,16 +117,10 @@ const onLogin = async () => {
   --van-button-height: 50px;
   font-size: 18px;
 }
-
-/* 密码切换图标样式 */
 .password-toggle-icon {
   font-size: 20px;
   color: #999;
   cursor: pointer;
   padding: 0 10px;
-}
-
-.password-toggle-icon:hover {
-  color: #1976d2;
 }
 </style>

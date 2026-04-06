@@ -1,9 +1,19 @@
+<<<<<<< HEAD
+import path from 'node:path'
+=======
+>>>>>>> 51676807013fff7e6e441f3ab3bed229d165f305
 import { createRouter, createWebHistory } from 'vue-router'
 
 // 路由配置
 const routes = [
   // 基础路由
   { path: '/', redirect: '/login' },
+<<<<<<< HEAD
+  // 登录页
+  { path: '/login', component: () => import('@/views/user/index.vue') },
+
+  // 家属页 
+=======
   // 登录页 - 包含登录、注册、忘记密码功能
   { 
     path: '/login', 
@@ -37,6 +47,7 @@ const routes = [
   // 家属端
   // ======================================
   // 家属端首页
+>>>>>>> 51676807013fff7e6e441f3ab3bed229d165f305
   {
     path: '/family',
     component: () => import('@/views/family/index.vue'),
@@ -60,7 +71,6 @@ const routes = [
       requiresAuth: true // 需要登录才能访问
     }
   },
-  // 药品管理
   {
     path: '/family/drug-manage',
     component: () => import('@/views/family/DrugManage.vue'),
@@ -68,8 +78,11 @@ const routes = [
       requiresAuth: true // 需要登录才能访问
     }
   },
+<<<<<<< HEAD
+=======
 
   // 预警通知
+>>>>>>> 51676807013fff7e6e441f3ab3bed229d165f305
   {
     path: '/family/warning',
     component: () => import('@/views/family/WarningNotify.vue'),
@@ -77,7 +90,6 @@ const routes = [
       requiresAuth: true // 需要登录才能访问
     }
   },
-  // 实时预警
   {
     path: '/family/real-warning',
     component: () => import('@/views/family/RealTimeWarning.vue'),
@@ -85,6 +97,8 @@ const routes = [
       requiresAuth: true // 需要登录才能访问
     }
   },
+<<<<<<< HEAD
+=======
   // 健康数据管理
   {
     path: '/family/health-data',
@@ -102,6 +116,7 @@ const routes = [
     }
   },
   // 安全检测
+>>>>>>> 51676807013fff7e6e441f3ab3bed229d165f305
   {
     path: '/family/safety-detection',
     component: () => import('@/views/family/SafetyDetection.vue'),
@@ -118,6 +133,30 @@ const routes = [
     }
   },
 
+<<<<<<< HEAD
+  // 老人端路由
+  {
+    path: '/oldman/drug',
+    component: () => import('@/views/oldman/DrugList.vue'),
+    meta: { requiresAuth: true, role: 'oldman' }
+  },
+  {
+    path: '/oldman/remind',
+    component: () => import('@/views/oldman/RemindList.vue'),
+    meta: { requiresAuth: true, role: 'oldman' }
+  },
+
+  // 新增：老人端我的档案
+  {
+    path: '/elder/profile',
+    component: () => import('@/views/elder/MyProfile.vue'),
+    meta: { requiresAuth: true, role: 'elder' }
+  },
+
+  // 重定向旧路由
+  { path: '/medicine', redirect: '/family/drug-manage' },
+  { path: '/waring', redirect: '/family/warning' }
+=======
 
   // ======================================
   // 老人端
@@ -239,6 +278,7 @@ const routes = [
   // 旧路由重定向到新路由
   { path: '/medicine', redirect: '/family/drug-manage' }, // 药品管理旧路由
   { path: '/waring', redirect: '/family/warning' } // 预警通知旧路由
+>>>>>>> 51676807013fff7e6e441f3ab3bed229d165f305
 ]
 
 const router = createRouter({
@@ -246,7 +286,11 @@ const router = createRouter({
   routes
 })
 
+<<<<<<< HEAD
+// 路由守卫,未登录不能进需要权限的页面
+=======
 // 路由守卫：控制页面访问权限
+>>>>>>> 51676807013fff7e6e441f3ab3bed229d165f305
 router.beforeEach((to, from, next) => {
   // 从本地存储获取token和用户信息
   const token = localStorage.getItem('token')

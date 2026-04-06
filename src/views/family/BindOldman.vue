@@ -1,40 +1,98 @@
 <template>
   <div class="bind-page">
     <h2>绑定老人账号</h2>
-    <van-form @submit="onBind">
-      <van-cell-group inset>
+
+    <van-form @submit="onSearch">
+      <van-cell-group inset class="search-box">
         <van-field
-          v-model="bindForm.account"
-          label="老人账号"
-          placeholder="请输入老人手机号/账号"
-          type="tel"
-          clearable
-          :rules="[
-            { required: true, message: '请输入老人账号' },
-            { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号格式' }
-          ]"
+          v-model="searchForm.username"
+          label="用户名"
+          placeholder="输入老人用户名搜索"
           required
         />
       </van-cell-group>
+<<<<<<< HEAD
+      <div style="padding:16px">
+        <van-button type="primary" block native-type="submit">
+          搜索老人
+        </van-button>
+=======
       <div style="padding: 16px;">
         <van-button type="primary" block native-type="submit" :loading="loading">绑定</van-button>
+>>>>>>> 51676807013fff7e6e441f3ab3bed229d165f305
       </div>
     </van-form>
+
+    <!-- 搜索结果 -->
+    <div v-if="elderList.length > 0" class="result-list">
+      <van-cell-group inset>
+        <van-cell
+          v-for="item in elderList"
+          :key="item.id"
+          :title="item.username"
+          :sub-title="item.phone || '暂无手机号'"
+        >
+          <template #right-icon>
+            <van-button
+              size="small"
+              type="success"
+              @click="onBind(item.id)"
+            >
+              绑定
+            </van-button>
+          </template>
+        </van-cell>
+      </van-cell-group>
+    </div>
   </div>
 </template>
 
 <script setup>
+<<<<<<< HEAD
+import { ref, reactive } from 'vue'
+=======
 import { reactive, ref } from 'vue'
+>>>>>>> 51676807013fff7e6e441f3ab3bed229d165f305
 import { showToast } from 'vant'
-import { useRouter } from 'vue-router'
-import { bindOldmanApi } from '@/api/family'
+import {
+  searchElderByUsernameApi,
+  bindElderAccountApi
+} from '@/api/family'
 
+<<<<<<< HEAD
+const searchForm = reactive({
+  username: ''
+=======
 const router = useRouter()
 const bindForm = reactive({
   account: ''
+>>>>>>> 51676807013fff7e6e441f3ab3bed229d165f305
 })
-const loading = ref(false)
+const elderList = ref([])
 
+<<<<<<< HEAD
+// 搜索老人
+const onSearch = async () => {
+  if (!searchForm.username) {
+    showToast('请输入用户名')
+    return
+  }
+  const res = await searchElderByUsernameApi(searchForm)
+  if (res.code === 200) {
+    elderList.value = res.data || []
+  } else {
+    showToast('查询失败')
+  }
+}
+
+// 绑定老人
+const onBind = async (elderId) => {
+  const res = await bindElderAccountApi({ elderId })
+  if (res.code === 200) {
+    showToast('绑定成功')
+  } else {
+    showToast(res.msg || '绑定失败')
+=======
 const onBind = async () => {
   if (!bindForm || !bindForm.code) {
     showToast('请输入绑定码')
@@ -56,6 +114,7 @@ const onBind = async () => {
     console.error(err)
   } finally {
     loading.value = false
+>>>>>>> 51676807013fff7e6e441f3ab3bed229d165f305
   }
 }
 </script>
@@ -63,25 +122,17 @@ const onBind = async () => {
 <style scoped>
 .bind-page {
   padding: 16px;
-  background: #f8f9fa;
+  background: #f5f7fa;
   min-height: 100vh;
 }
 h2 {
   text-align: center;
   margin-bottom: 20px;
-  color: #323233;
-  font-size: 20px;
-  font-weight: 500;
 }
-:deep(.van-cell-group) {
-  margin-bottom: 20px;
-  border-radius: 12px;
-  overflow: hidden;
+.search-box {
+  margin-bottom: 10px;
 }
-:deep(.van-field__label) {
-  color: #646566;
-}
-:deep(.van-field__control) {
-  font-size: 14px;
+.result-list {
+  margin-top: 20px;
 }
 </style>

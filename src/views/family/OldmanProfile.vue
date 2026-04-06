@@ -208,11 +208,10 @@
 import { ref, reactive, onMounted } from 'vue'
 import { showToast, showConfirmDialog } from 'vant'
 import {
-  getOldmanProfileListApi,
-  getOldmanProfileDetailApi,
   addOldmanProfileApi,
   updateOldmanProfileApi,
-  deleteOldmanProfileApi
+  deleteOldmanProfileApi,
+  searchElderByUsernameApi,  // 搜索
 } from '@/api/family'
 
 // 列表数据
@@ -240,6 +239,7 @@ const bloodTypeColumns = ['A型', 'B型', 'AB型', 'O型', 'RH阳性', 'RH阴性
 
 // 表单数据
 const form = reactive({
+  id: '',
   name: '',
   gender: '',
   age: '',
@@ -272,21 +272,17 @@ const rules = {
   ]
 }
 
-// 加载列表
+
+// 加载列表（改用 用户名搜索接口）
 const onLoad = async () => {
   loading.value = true
   try {
-    const res = await getOldmanProfileListApi({ 
-      page: page.value, 
-      pageSize: 10,
-      keyword: searchKeyword.value 
+    const res = await searchElderByUsernameApi({
+      username: searchKeyword.value
     })
     if (res.code === 200) {
-      list.value.push(...res.data.list)
-      page.value++
-      if (list.value.length >= res.data.total) {
-        finished.value = true
-      }
+      list.value = res.data || []
+      finished.value = true
     }
   } catch (err) {
     showToast('加载失败')
@@ -308,7 +304,6 @@ const onSearch = () => {
 const openAddDialog = () => {
   isEdit.value = false
   currentId.value = ''
-  // 清空表单
   Object.keys(form).forEach(key => {
     form[key] = ''
   })
@@ -319,64 +314,39 @@ const openAddDialog = () => {
 const openEditDialog = async (item) => {
   isEdit.value = true
   currentId.value = item.id
-  try {
-    const res = await getOldmanProfileDetailApi(item.id)
-    if (res.code === 200) {
-      Object.assign(form, res.data)
-      showDialog.value = true
-    } else {
-      showToast(res.msg || '加载失败')
-    }
-  } catch (err) {
-    showToast('网络异常，请重试')
-    console.error(err)
-  }
+  Object.assign(form, item)
+  showDialog.value = true
 }
 
 // 打开查看弹窗
 const openViewDialog = async (item) => {
-  try {
-    const res = await getOldmanProfileDetailApi(item.id)
-    if (res.code === 200) {
-      currentProfile.value = res.data
-      showViewDialog.value = true
-    } else {
-      showToast(res.msg || '加载失败')
-    }
-  } catch (err) {
-    showToast('网络异常，请重试')
-    console.error(err)
-  }
+  currentProfile.value = item
+  showViewDialog.value = true
 }
 
-// 提交表单（新增/编辑）
+
+// 提交表单（对接真实后端）
 const onSubmit = async () => {
   try {
     submitLoading.value = true
-    
+
     if (isEdit.value) {
-      const res = await updateOldmanProfileApi(currentId.value, form)
+      // 编辑：form 里已包含 id，不需要单独传
+      const res = await updateOldmanProfileApi(form)
       if (res.code === 200) {
         showToast('修改成功')
         showDialog.value = false
-        // 刷新列表
-        list.value = []
-        page.value = 1
-        finished.value = false
-        onLoad()
+        onSearch()
       } else {
         showToast(res.msg || '修改失败')
       }
     } else {
+      // 新增
       const res = await addOldmanProfileApi(form)
       if (res.code === 200) {
         showToast('添加成功')
         showDialog.value = false
-        // 刷新列表
-        list.value = []
-        page.value = 1
-        finished.value = false
-        onLoad()
+        onSearch()
       } else {
         showToast(res.msg || '添加失败')
       }
@@ -389,46 +359,39 @@ const onSubmit = async () => {
   }
 }
 
+
 // 删除档案
+
 const onDelete = async (id) => {
   try {
     await showConfirmDialog({
       title: '确认删除',
-      message: '确定要删除这条老人档案吗？此操作不可恢复。'
+      message: '确定要删除这条老人档案吗？'
     })
-
     const res = await deleteOldmanProfileApi(id)
     if (res.code === 200) {
       showToast('删除成功')
-      // 刷新列表
-      list.value = []
-      page.value = 1
-      finished.value = false
-      onLoad()
+      onSearch()
     } else {
       showToast(res.msg || '删除失败')
     }
   } catch (err) {
-    if (err !== 'cancel') {
-      showToast('网络异常，请重试')
-      console.error(err)
-    }
+    if (err !== 'cancel') showToast('删除失败')
   }
 }
 
-// 性别选择确认
+// 性别选择
 const onGenderConfirm = (value) => {
   form.gender = value
   showGenderPicker.value = false
 }
 
-// 血型选择确认
+// 血型选择
 const onBloodTypeConfirm = (value) => {
   form.bloodType = value
   showBloodTypePicker.value = false
 }
 
-// 页面加载时获取列表
 onMounted(() => {
   onLoad()
 })
