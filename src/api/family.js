@@ -1,45 +1,19 @@
 import request from '@/utils/request'
 
-// 绑定老人
-export function bindOldmanApi(data) {
-  return request({
-    url: '/family/bind-oldman',
-    method: 'post',
-    data
-  })
-}
-
-// 获取老人档案列表
-export function getOldmanProfileListApi(params) {
-  return request({
-    url: '/family/oldman-profile/list',
-    method: 'get',
-    params
-  })
-}
-
-// 获取老人档案详情
-export function getOldmanProfileDetailApi(id) {
-  return request({
-    url: `/family/oldman-profile/${id}`,
-    method: 'get'
-  })
-}
-
 // 添加老人档案
 export function addOldmanProfileApi(data) {
   return request({
-    url: '/family/oldman-profile',
+    url: '/elderInfo/add',
     method: 'post',
     data
   })
 }
 
-// 更新老人档案
-export function updateOldmanProfileApi(id, data) {
+// 修改老人档案
+export function updateOldmanProfileApi(data) {
   return request({
-    url: `/family/oldman-profile/${id}`,
-    method: 'put',
+    url: '/elderInfo/update',
+    method: 'post',
     data
   })
 }
@@ -47,41 +21,36 @@ export function updateOldmanProfileApi(id, data) {
 // 删除老人档案
 export function deleteOldmanProfileApi(id) {
   return request({
-    url: `/family/oldman-profile/${id}`,
-    method: 'delete'
+    url: `/elderInfo/delete/${id}`,
+    method: 'post'
   })
 }
 
-// 获取预警通知列表
-export function getWarningNotifyApi(params) {
+// 绑定老人账号
+// 通过 username 模糊查询老人信息
+export function searchElderByUsernameApi(data) {
   return request({
-    url: '/family/warning-notify',
-    method: 'get',
-    params
-  })
-}
-
-// 获取紧急联系人列表
-export function getEmergencyContactApi() {
-  return request({
-    url: '/family/emergency-contact',
-    method: 'get'
-  })
-}
-
-// 添加紧急联系人
-export function addEmergencyContactApi(data) {
-  return request({
-    url: '/family/emergency-contact',
+    url: '/elderInfo/search/byusername',
     method: 'post',
     data
   })
 }
 
-// 删除紧急联系人
-export function deleteEmergencyContactApi(id) {
+// 家属绑定查询到的老人账号
+export function bindElderAccountApi(data) {
   return request({
-    url: `/family/emergency-contact/${id}`,
-    method: 'delete'
+    url: '/elderInfo/bind-account',
+    method: 'post',
+    data
+  })
+}
+
+// 设置紧急联系人
+// 获取紧急联系人列表
+export function setEmergencyContactForElder(data) {
+  return request({
+    url: '/elderInfo/update',
+    method: 'post',
+    data
   })
 }

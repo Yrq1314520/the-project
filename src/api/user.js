@@ -5,7 +5,10 @@ export function loginApi(data) {
   return request({
     url: '/users/login',
     method: 'post',
-    data
+    data: {
+      phone: data.phone,
+      password: data.password
+    }
   })
 }
 
@@ -21,7 +24,7 @@ export function sendEmailCodeApi(email) {
 // 用户注册
 export function registerApi(data) {
   return request({
-    url: '/users/register',
+    url: '/users',
     method: 'post',
     data
   })
