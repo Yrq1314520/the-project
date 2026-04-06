@@ -2,10 +2,10 @@
   <van-form @submit="onLogin" ref="formRef" class="form">
     <van-cell-group inset>
       <van-field
-        v-model="loginForm.username"
-        label="账号"
-        placeholder="请输入用户名"
-        :rules="rules.username"
+        v-model="loginForm.phone"
+        label="手机号"
+        placeholder="请输入手机号"
+        :rules="rules.phone"
       />
 
       <van-field
@@ -52,7 +52,7 @@ const formRef = ref(null)
 
 // 表单数据
 const loginForm = reactive({
-  username: '',
+  phone: '',
   password: ''
 })
 
@@ -64,15 +64,13 @@ const showPassword = ref(false)
 
 // 表单验证规则
 const rules = {
-  username: [
-    { required: true, message: '请输入账号' },
-    // 先不验证手机号格式
-    // { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号' }
+  phone: [
+    { required: true, message: '请输入手机号' },
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号' }
   ],
   password: [
     { required: true, message: '请输入密码' },
-    // 先不验证密码复杂度
-    // { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,20}$/, message: '密码必须包含大小写字母和数字，8-20位' }
+    { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,20}$/, message: '密码必须包含大小写字母和数字，8-20位' }
   ]
 }
 
@@ -81,44 +79,45 @@ const togglePassword = () => {
   showPassword.value = !showPassword.value
 }
 
-// 登录
-
-// --------------------------------------
 // 调用接口登录
-/* const onLogin = async () => {
-  try {
-    await formRef.value?.validate()
-    loading.value = true
-    const res = await loginApi(loginForm)
-    console.log(res)
-    if (res && res.success === 200 && res.data) {
-      userStore.setLoginInfo(res.data.token, res.data)
-      showToast('登录成功')
+// const onLogin = async () => {
+//   try {
+//     await formRef.value?.validate()
+//     loading.value = true
+//     const res = await loginApi(loginForm)
+//     console.log(res)
+//     if (res && res.success === 200 && res.data) {
+//       userStore.setLoginInfo(res.data.token, res.data)
+//       showToast('登录成功')
 
-      // 根据角色跳转不同的页面：
-      // 1.老人
-      // 2.家庭成员
-      // 3.管理员
-      if(res.data.role === 1){
-        router.push('/oldman')
-      } else if(res.data.role === 2){
-        router.push('/family')
-      } else if(res.data.role === 3){
-        router.push('/admin')
-      }
+//       // 根据角色跳转不同的页面：
+//       // 1.老人
+//       // 2.家庭成员
+//       // 3.管理员
+//       if(res.data.role === 1){
+//         router.push('/oldman')
+//       } else if(res.data.role === 2){
+//         router.push('/family')
+//       } else if(res.data.role === 3){
+//         router.push('/admin')
+//       }
 
-    } else {
-      showToast(res?.errorMsg || '登录失败')
-    }
-  } catch (err) {
-    showToast('网络异常，请重试')
-  } finally {
-    loading.value = false
-  }
-} */
-// --------------------------------------
+//     } else {
+//       showToast(res?.errorMsg || '登录失败')
+//     }
+//   } catch (err) {
+//     console.error('登录请求失败', err)
+//     showToast('网络异常，请重试')
+//   } finally {
+//     loading.value = false
+//   }
+// }
 
-// 不调用接口直接登录
+
+
+// =====================================================
+
+// 不调用接口登录
 const onLogin = async () => {
   try {
     await formRef.value?.validate()
@@ -127,7 +126,7 @@ const onLogin = async () => {
     // 模拟登录成功
     const mockUser = {
       token: 'mock-token-' + Date.now(),
-      username: loginForm.username,
+      phone: loginForm.phone,
       role: 3 // 模拟角色，可根据需要修改 1.老人 2.家庭成员 3.管理员
     }
 

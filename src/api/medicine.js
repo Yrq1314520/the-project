@@ -1,74 +1,53 @@
-import request from '@/utils/request'
+import request from './request'
 
-// 药品管理接口
-// 查询用药提醒列表
-export function getMedicineListApi(params) {
+// 获取药品列表
+export const getDrugListApi = (params) => {
   return request({
-    url: '/medicine/list',
+    url: '/api/admin/drug/list',
     method: 'get',
     params
   })
 }
 
-// 新增用药提醒
-export function addMedicineApi(data) {
+// 获取药品详情
+export const getDrugDetailApi = (id) => {
   return request({
-    url: '/medicine/add',
+    url: `/api/admin/drug/${id}`,
+    method: 'get'
+  })
+}
+
+// 添加药品
+export const addDrugApi = (data) => {
+  return request({
+    url: '/api/admin/drug',
     method: 'post',
     data
   })
 }
 
-// 修改用药提醒
-export function updateMedicineApi(data) {
+// 编辑药品
+export const updateDrugApi = (id, data) => {
   return request({
-    url: '/medicine/update',
+    url: `/api/admin/drug/${id}`,
     method: 'put',
     data
   })
 }
 
-// 删除用药提醒
-export function deleteMedicineApi(id) {
+// 删除药品
+export const deleteDrugApi = (id) => {
   return request({
-    url: `/medicine/delete/${id}`,
+    url: `/api/admin/drug/${id}`,
     method: 'delete'
   })
 }
 
-// 添加药品信息
-export function addDrugApi(data) {
+// 更改药品状态
+export const updateDrugStatusApi = (id, status) => {
   return request({
-    url: '/drug/add',
-    method: 'post',
-    data
-  })
-}
-
-// 查询药品信息列表
-export function getDrugListApi(params) {
-  return request({
-    url: '/drug/list',
-    method: 'get',
-    params
-  })
-}
-
-// 删除药品信息
-export function deleteDrugApi(id) {
-  return request({
-    url: `/drug/delete/${id}`,
-    method: 'delete'
-  })
-}
-
-// 修改药品信息
-export function updateDrugApi(data) {
-  // 打印data
-  console.log(data)
-  return request({
-    url: '/drug/update',
-    method: 'put',
-    data
+    url: `/api/admin/drug/${id}/status`,
+    method: 'patch',
+    data: { status }
   })
 }

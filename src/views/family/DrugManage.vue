@@ -1,241 +1,358 @@
 <template>
-  <div class="medicine-page">
-    <!-- 顶部操作栏 -->
-    <div class="action-bar">
-      <h2>用药提醒管理</h2>
-      <van-button type="primary" @click="openAddMedicineDialog">
-        + 新增提醒
-      </van-button>
+  <div class="drug-manage">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h2>药品管理</h2>
+      <el-button type="primary" @click="handleAddDrug">
+        <el-icon name="el-icon-plus" />
+        添加药品
+      </el-button>
     </div>
-
-    <!--提醒列表 -->
-    <van-list
-      v-model:loading="loading"
-      :finished="finished"
-      finished-text="没有更多了"
-      @load="loadMedicineList"
-    >
-      <van-card
-        v-for="item in medicineList"
-        :key="item.id"
-        :title="item.medicineName"
-        :desc="`用药时间: ${item.takeTime} | 剂量: ${item.dosage}`"
-      >
-        <template #footer>
-          <div class="card-footer">
-            <span class="time">周期: {{ item.cycle }}</span>
-            <div class="btn-group">
-              <van-button size="small" type="primary" @click="openEditMedicineDialog(item)">
-                编辑
-              </van-button>
-              <van-button size="small" type="danger" @click="deleteMedicine(item.id)">
-                删除
-              </van-button>
-            </div>
-          </div>
-        </template>
-      </van-card>
-    </van-list>
-
-    <!-- 新增/编辑弹窗 -->
-    <van-popup v-model:show="isDialogVisible" position="bottom" style="height: 80%">
-      <div class="dialog-content">
-        <h3>{{ isEdit ? '编辑用药提醒' : '新增用药提醒' }}</h3>
-        <van-form @submit="submitMedicineForm">
-          <van-cell-group>
-            <van-field
-              v-model="medicineForm.medicineName"
-              label="药品名称"
-              placeholder="请输入药品名称"
-              required
-            />
-            <van-field
-              v-model="medicineForm.takeTime"
-              label="用药时间"
-              placeholder="如: 08:00, 12:00"
-              required
-            />
-            <van-field
-              v-model="medicineForm.dosage"
-              label="用药剂量"
-              placeholder="如: 1片/次"
-              required
-            />
-            <van-field
-              v-model="medicineForm.cycle"
-              label="用药周期"
-              placeholder="如: 每日/每周一三五"
-              required
-            />
-            <van-field
-              v-model="medicineForm.remark"
-              label="备注"
-              type="textarea"
-              placeholder="其他说明"
-            />
-          </van-cell-group>
-          <div style="margin: 16px">
-            <van-button type="primary" block native-type="submit">
-              {{ isEdit ? '保存修改' : '提交' }}
-            </van-button>
-          </div>
-        </van-form>
+    
+    <!-- 搜索表单 -->
+    <el-card class="search-card">
+      <el-form :inline="true" :model="searchForm" class="search-form">
+        <el-form-item label="药品名称">
+          <el-input v-model="searchForm.name" placeholder="请输入药品名称" />
+        </el-form-item>
+        <el-form-item label="分类">
+          <el-select v-model="searchForm.category" placeholder="请选择分类">
+            <el-option label="全部" value="" />
+            <el-option label="处方药" value="1" />
+            <el-option label="非处方药" value="2" />
+            <el-option label="保健品" value="3" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">
+            <el-icon name="el-icon-search" />
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon name="el-icon-refresh" />
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
+    
+    <!-- 药品列表 -->
+    <el-card class="drug-list-card">
+      <el-table :data="drugList" style="width: 100%">
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="name" label="药品名称" width="200" />
+        <el-table-column prop="category" label="分类" width="120">
+          <template #default="scope">
+            <el-tag :type="getCategoryTagType(scope.row.category)">
+              {{ getCategoryText(scope.row.category) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="specification" label="规格" width="150" />
+        <el-table-column prop="usage" label="用法用量" width="200" />
+        <el-table-column prop="dosage" label="剂量" width="100" />
+        <el-table-column label="操作" width="150" fixed="right">
+          <template #default="scope">
+            <el-button type="primary" size="small" @click="handleEditDrug(scope.row)">
+              <el-icon name="el-icon-edit" />
+              编辑
+            </el-button>
+            <el-button type="danger" size="small" @click="handleDeleteDrug(scope.row.id)">
+              <el-icon name="el-icon-delete" />
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      
+      <!-- 分页 -->
+      <div class="pagination">
+        <el-pagination
+          v-model:current-page="page.current"
+          v-model:page-size="page.size"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="total"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
       </div>
-    </van-popup>
+    </el-card>
+    
+    <!-- 添加/编辑药品对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="isEdit ? '编辑药品' : '添加药品'"
+      width="600px"
+    >
+      <el-form :model="form" :rules="rules" ref="formRef">
+        <el-form-item label="药品名称" prop="name">
+          <el-input v-model="form.name" placeholder="请输入药品名称" />
+        </el-form-item>
+        <el-form-item label="分类" prop="category">
+          <el-select v-model="form.category" placeholder="请选择分类">
+            <el-option label="处方药" value="1" />
+            <el-option label="非处方药" value="2" />
+            <el-option label="保健品" value="3" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="规格" prop="specification">
+          <el-input v-model="form.specification" placeholder="请输入规格" />
+        </el-form-item>
+        <el-form-item label="用法用量" prop="usage">
+          <el-input v-model="form.usage" placeholder="请输入用法用量" />
+        </el-form-item>
+        <el-form-item label="剂量" prop="dosage">
+          <el-input v-model="form.dosage" placeholder="请输入剂量" />
+        </el-form-item>
+        <el-form-item label="备注" prop="remark">
+          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmit">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { showToast, showConfirmDialog } from 'vant'
-import {
-  getMedicineListApi,
-  addMedicineApi,
-  updateMedicineApi,
-  deleteMedicineApi
-} from '@/api/medicine'
+import { ref, reactive, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { getDrugListApi, addDrugApi, updateDrugApi, deleteDrugApi } from '@/api/medicine'
 
-// 列表数据
-const medicineList = ref([])
-const loading = ref(false)
-const finished = ref(false)
-const page = ref(1)
+// 搜索表单
+const searchForm = reactive({
+  name: '',
+  category: ''
+})
 
-// 弹窗状态
-const isDialogVisible = ref(false)
-// 编辑状态
+// 分页
+const page = reactive({
+  current: 1,
+  size: 10
+})
+
+// 数据
+const drugList = ref([])
+const total = ref(0)
+
+// 对话框
+const dialogVisible = ref(false)
 const isEdit = ref(false)
-// 表单数据
-const medicineForm = reactive({
-  id: null,
-  medicineName: '',
-  takeTime: '',
+const form = reactive({
+  id: '',
+  name: '',
+  category: '2',
+  specification: '',
+  usage: '',
   dosage: '',
-  cycle: '',
   remark: ''
 })
 
-// 加载列表
-const loadMedicineList = async () => {
-  loading.value = true
+// 表单验证
+const rules = {
+  name: [
+    { required: true, message: '请输入药品名称', trigger: 'blur' }
+  ],
+  category: [
+    { required: true, message: '请选择分类', trigger: 'change' }
+  ],
+  specification: [
+    { required: true, message: '请输入规格', trigger: 'blur' }
+  ],
+  usage: [
+    { required: true, message: '请输入用法用量', trigger: 'blur' }
+  ],
+  dosage: [
+    { required: true, message: '请输入剂量', trigger: 'blur' }
+  ]
+}
+
+// 表单引用
+const formRef = ref(null)
+
+// 获取分类标签类型
+const getCategoryTagType = (category) => {
+  const typeMap = {
+    '1': 'warning',
+    '2': 'primary',
+    '3': 'success'
+  }
+  return typeMap[category] || 'info'
+}
+
+// 获取分类文本
+const getCategoryText = (category) => {
+  const categoryMap = {
+    '1': '处方药',
+    '2': '非处方药',
+    '3': '保健品'
+  }
+  return categoryMap[category] || '未知'
+}
+
+// 加载药品列表
+const loadDrugList = async () => {
   try {
-    const res = await getMedicineListApi({ page: page.value, pageSize: 10 })
+    const res = await getDrugListApi({
+      page: page.current,
+      pageSize: page.size,
+      name: searchForm.name,
+      category: searchForm.category
+    })
     if (res.code === 200) {
-      medicineList.value.push(...res.data.list)
-      page.value++
-      if (medicineList.value.length >= res.data.total) {
-        finished.value = true
-      }
+      drugList.value = res.data.list
+      total.value = res.data.total
     }
-  } catch (err) {
-    showToast('加载失败')
-  } finally {
-    loading.value = false
+  } catch (error) {
+    ElMessage.error('加载药品列表失败')
+    console.error('加载药品列表失败', error)
   }
 }
 
-// 打开新增弹窗
-const openAddMedicineDialog = () => {
+// 搜索
+const handleSearch = () => {
+  page.current = 1
+  loadDrugList()
+}
+
+// 重置
+const handleReset = () => {
+  searchForm.name = ''
+  searchForm.category = ''
+  page.current = 1
+  loadDrugList()
+}
+
+// 分页
+const handleSizeChange = (size) => {
+  page.size = size
+  loadDrugList()
+}
+
+const handleCurrentChange = (current) => {
+  page.current = current
+  loadDrugList()
+}
+
+// 添加药品
+const handleAddDrug = () => {
   isEdit.value = false
-  // 清空表单
-  Object.keys(medicineForm).forEach(key => {
-    medicineForm[key] = key === 'id' ? null : ''
+  Object.assign(form, {
+    id: '',
+    name: '',
+    category: '2',
+    specification: '',
+    usage: '',
+    dosage: '',
+    remark: ''
   })
-  isDialogVisible.value = true
+  dialogVisible.value = true
 }
 
-// 打开编辑弹窗
-const openEditMedicineDialog = (item) => {
+// 编辑药品
+const handleEditDrug = (drug) => {
   isEdit.value = true
-  // 回填数据
-  Object.assign(medicineForm, item)
-  isDialogVisible.value = true
+  Object.assign(form, drug)
+  dialogVisible.value = true
 }
 
-// 提交表单（新增/编辑）
-const submitMedicineForm = async () => {
-  if (!medicineForm.medicineName || !medicineForm.takeTime || !medicineForm.dosage || !medicineForm.cycle) {
-    showToast('请填写必填项')
-    return
-  }
-
-  try {
-    if (isEdit.value) {
-      await updateMedicineApi(medicineForm)
-      showToast('修改成功')
-    } else {
-      await addMedicineApi(medicineForm)
-      showToast('添加成功')
+// 删除药品
+const handleDeleteDrug = (id) => {
+  ElMessage.confirm('确定要删除该药品吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async () => {
+    try {
+      const res = await deleteDrugApi(id)
+      if (res.code === 200) {
+        ElMessage.success('删除成功')
+        loadDrugList()
+      }
+    } catch (error) {
+      ElMessage.error('删除失败')
+      console.error('删除药品失败', error)
     }
-    isDialogVisible.value = false
-    // 刷新列表
-    medicineList.value = []
-    page.value = 1
-    finished.value = false
-    loadMedicineList()
-  } catch (err) {
-    showToast('操作失败')
-  }
+  }).catch(() => {})
 }
 
-// 删除提醒
-const deleteMedicine = async (id) => {
-  await showConfirmDialog({
-    title: '确认删除',
-    message: '确定要删除这条用药提醒吗？'
-  })
-
+// 提交表单
+const handleSubmit = async () => {
   try {
-    await deleteMedicineApi(id)
-    showToast('删除成功')
-    // 刷新列表
-    medicineList.value = []
-    page.value = 1
-    finished.value = false
-    loadMedicineList()
-  } catch (err) {
-    showToast('删除失败')
+    await formRef.value.validate()
+    let res
+    if (isEdit.value) {
+      res = await updateDrugApi(form.id, form)
+    } else {
+      res = await addDrugApi(form)
+    }
+    if (res.code === 200) {
+      ElMessage.success(isEdit.value ? '编辑成功' : '添加成功')
+      dialogVisible.value = false
+      loadDrugList()
+    }
+  } catch (error) {
+    ElMessage.error(isEdit.value ? '编辑失败' : '添加失败')
+    console.error('表单提交失败', error)
   }
 }
+
+// 初始化
+onMounted(() => {
+  loadDrugList()
+})
 </script>
 
 <style scoped>
-.medicine-page {
-  padding: 16px;
-  background-color: #f8f9fa;
-  min-height: 100vh;
-}
-.action-bar {
+.drug-manage {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-h2 {
-  font-size: 20px;
-  font-weight: 600;
-}
-.van-card {
-  margin-bottom: 12px;
-}
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.time {
-  color: #666;
-  font-size: 14px;
-}
-.btn-group {
-  display: flex;
-  gap: 8px;
-}
-.dialog-content {
+  flex-direction: column;
+  gap: 20px;
   padding: 20px;
 }
-h3 {
-  text-align: center;
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 20px;
+}
+
+.page-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  color: #303133;
+}
+
+.search-card {
+  margin-bottom: 20px;
+}
+
+.search-form {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.drug-list-card {
+  margin-bottom: 20px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 </style>

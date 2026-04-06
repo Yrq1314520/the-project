@@ -25,15 +25,7 @@
             </div>
           </div>
         </el-card>
-        <el-card class="stat-card">
-          <div class="stat-icon yellow">
-              <el-icon name="el-icon-alarm-clock" />
-            </div>
-          <div class="stat-info">
-            <h3 class="stat-value">{{ stats.totalReminders }}</h3>
-            <p class="stat-label">用药提醒</p>
-          </div>
-        </el-card>
+
         <el-card class="stat-card">
           <div class="stat-icon red">
               <el-icon name="el-icon-warning" />
@@ -78,7 +70,6 @@ import { ref, onMounted } from 'vue'
 const stats = ref({
   totalUsers: 128,
   totalOldman: 56,
-  totalReminders: 234,
   totalWarnings: 45
 })
 </script>

@@ -68,6 +68,7 @@ const routes = [
       requiresAuth: true // 需要登录才能访问
     }
   },
+
   // 预警通知
   {
     path: '/family/warning',
@@ -139,15 +140,7 @@ const routes = [
       role: 1 // 仅限老人角色访问
     }
   },
-  // 用药提醒列表
-  {
-    path: '/oldman/remind',
-    component: () => import('@/views/oldman/RemindList.vue'),
-    meta: { 
-      requiresAuth: true, // 需要登录才能访问
-      role: 1 // 仅限老人角色访问
-    }
-  },
+
   // 紧急求助
   {
     path: '/oldman/emergency',
@@ -208,10 +201,7 @@ const routes = [
         path: 'drug-manage',
         component: () => import('@/views/admin/DrugManage.vue')
       },
-      {
-        path: 'remind-manage',
-        component: () => import('@/views/admin/RemindManage.vue')
-      },
+
       // 预警管理
       {
         path: 'warning-manage',

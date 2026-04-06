@@ -143,6 +143,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { getDrugListApi, addDrugApi, updateDrugApi, deleteDrugApi, updateDrugStatusApi } from '@/api/medicine'
 
 // 搜索表单
 const searchForm = reactive({
@@ -218,44 +219,23 @@ const getCategoryText = (category) => {
 }
 
 // 加载药品列表
-const loadDrugList = () => {
-  // 模拟数据
-  drugList.value = [
-    {
-      id: 1,
-      name: '阿司匹林',
-      category: '2',
-      specification: '100mg*30片',
-      usage: '口服',
-      dosage: '1片/次',
-      remark: '饭后服用',
-      status: '1',
-      createTime: '2026-04-01 10:00:00'
-    },
-    {
-      id: 2,
-      name: '布洛芬',
-      category: '2',
-      specification: '200mg*20片',
-      usage: '口服',
-      dosage: '1片/次',
-      remark: '疼痛时服用',
-      status: '1',
-      createTime: '2026-04-02 14:30:00'
-    },
-    {
-      id: 3,
-      name: '降压药',
-      category: '1',
-      specification: '5mg*28片',
-      usage: '口服',
-      dosage: '1片/次',
-      remark: '每日固定时间服用',
-      status: '1',
-      createTime: '2026-04-03 09:15:00'
+const loadDrugList = async () => {
+  try {
+    const res = await getDrugListApi({
+      page: page.current,
+      pageSize: page.size,
+      name: searchForm.name,
+      category: searchForm.category,
+      status: searchForm.status
+    })
+    if (res.code === 200) {
+      drugList.value = res.data.list
+      total.value = res.data.total
     }
-  ]
-  total.value = drugList.value.length
+  } catch (error) {
+    ElMessage.error('加载药品列表失败')
+    console.error('加载药品列表失败', error)
+  }
 }
 
 // 搜索
@@ -313,29 +293,51 @@ const handleDeleteDrug = (id) => {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
-  }).then(() => {
-    // 模拟删除
-    ElMessage.success('删除成功')
-    loadDrugList()
+  }).then(async () => {
+    try {
+      const res = await deleteDrugApi(id)
+      if (res.code === 200) {
+        ElMessage.success('删除成功')
+        loadDrugList()
+      }
+    } catch (error) {
+      ElMessage.error('删除失败')
+      console.error('删除药品失败', error)
+    }
   }).catch(() => {})
 }
 
 // 状态变更
-const handleStatusChange = (drug) => {
-  // 模拟状态变更
-  ElMessage.success(drug.status === '1' ? '启用成功' : '禁用成功')
+const handleStatusChange = async (drug) => {
+  try {
+    const res = await updateDrugStatusApi(drug.id, drug.status)
+    if (res.code === 200) {
+      ElMessage.success(drug.status === '1' ? '启用成功' : '禁用成功')
+    }
+  } catch (error) {
+    ElMessage.error('状态变更失败')
+    console.error('状态变更失败', error)
+  }
 }
 
 // 提交表单
 const handleSubmit = async () => {
   try {
     await formRef.value.validate()
-    // 模拟提交
-    ElMessage.success(isEdit.value ? '编辑成功' : '添加成功')
-    dialogVisible.value = false
-    loadDrugList()
+    let res
+    if (isEdit.value) {
+      res = await updateDrugApi(form.id, form)
+    } else {
+      res = await addDrugApi(form)
+    }
+    if (res.code === 200) {
+      ElMessage.success(isEdit.value ? '编辑成功' : '添加成功')
+      dialogVisible.value = false
+      loadDrugList()
+    }
   } catch (error) {
-    console.error('表单验证失败', error)
+    ElMessage.error(isEdit.value ? '编辑失败' : '添加失败')
+    console.error('表单提交失败', error)
   }
 }
 

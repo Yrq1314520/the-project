@@ -22,7 +22,7 @@
     <div class="function-grid">
       <van-grid :column-num="2" gap="16">
         <van-grid-item icon="medicine-box" text="药品信息" to="/oldman/drug" />
-        <van-grid-item icon="clock-o" text="用药提醒" to="/oldman/remind" />
+
         <van-grid-item icon="phone-o" text="紧急求助" to="/oldman/emergency" />
         <van-grid-item icon="contacts" text="紧急联系人" to="/oldman/emergency-contact" />
       </van-grid>
@@ -110,8 +110,6 @@ const handleVoiceCommand = (command) => {
   
   if (command.includes('药品') || command.includes('吃药')) {
     router.push('/oldman/drug')
-  } else if (command.includes('提醒') || command.includes('时间')) {
-    router.push('/oldman/remind')
   } else if (command.includes('求助') || command.includes('帮助')) {
     router.push('/oldman/emergency')
   } else if (command.includes('联系人') || command.includes('电话')) {

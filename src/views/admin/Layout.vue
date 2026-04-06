@@ -61,10 +61,7 @@
             <el-icon name="el-icon-s-goods" />
             <span>药品库</span>
           </el-menu-item>
-          <el-menu-item index="/admin/remind-manage">
-            <el-icon name="el-icon-bell" />
-            <span>用药提醒</span>
-          </el-menu-item>
+
         </el-sub-menu>
         
         <el-sub-menu index="warning">
@@ -175,7 +172,7 @@ const activeMenu = computed(() => {
   if (path === '/admin') return 'dashboard'
   if (path.includes('/user-manage') || path.includes('/role-manage')) return 'user'
   if (path.includes('/oldman-manage') || path.includes('/health-data')) return 'oldman'
-  if (path.includes('/drug-manage') || path.includes('/remind-manage')) return 'drug'
+  if (path.includes('/drug-manage')) return 'drug'
   if (path.includes('/warning-manage') || path.includes('/notification')) return 'warning'
   if (path.includes('/health-analysis') || path.includes('/system-analysis')) return 'analysis'
   if (path.includes('/system-setting') || path.includes('/log-manage')) return 'system'
