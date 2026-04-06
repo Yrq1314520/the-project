@@ -82,7 +82,10 @@ const togglePassword = () => {
 }
 
 // 登录
-const onLogin = async () => {
+
+// --------------------------------------
+// 调用接口登录
+/* const onLogin = async () => {
   try {
     await formRef.value?.validate()
     loading.value = true
@@ -97,9 +100,7 @@ const onLogin = async () => {
       // 2.家庭成员
       // 3.管理员
       if(res.data.role === 1){
-        // router.push('/oldman')
-        // 等老人角色实现后再跳转老人页面
-        router.push('/family')
+        router.push('/oldman')
       } else if(res.data.role === 2){
         router.push('/family')
       } else if(res.data.role === 3){
@@ -111,6 +112,41 @@ const onLogin = async () => {
     }
   } catch (err) {
     showToast('网络异常，请重试')
+  } finally {
+    loading.value = false
+  }
+} */
+// --------------------------------------
+
+// 不调用接口直接登录
+const onLogin = async () => {
+  try {
+    await formRef.value?.validate()
+    loading.value = true
+
+    // 模拟登录成功
+    const mockUser = {
+      token: 'mock-token-' + Date.now(),
+      username: loginForm.username,
+      role: 3 // 模拟角色，可根据需要修改 1.老人 2.家庭成员 3.管理员
+    }
+
+    // 保存登录信息
+    userStore.setLoginInfo(mockUser.token, mockUser)
+    showToast('登录成功')
+
+    // 根据角色跳转不同的页面
+    if (mockUser.role === 1) {
+      router.push('/oldman')
+    } else if (mockUser.role === 2) {
+      router.push('/family')
+    } else if (mockUser.role === 3) {
+      router.push('/admin')
+    } else {
+      router.push('/family')
+    }
+  } catch (err) {
+    showToast('登录失败，请检查账号密码')
   } finally {
     loading.value = false
   }

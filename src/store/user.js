@@ -10,6 +10,7 @@ export const useUserStore = defineStore('user', {
     // 登录成功保存信息
     setLoginInfo(token, userInfo) {
       this.token = token
+      // 保存用户信息（包含用户名、头像、邮箱等信息）
       this.userInfo = userInfo
       localStorage.setItem('token', token)
       localStorage.setItem('userInfo', JSON.stringify(userInfo))
