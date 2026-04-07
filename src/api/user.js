@@ -17,7 +17,7 @@ export function sendEmailCodeApi(email) {
   return request({
     url: '/codes',
     method: 'post',
-    data: { email }
+    data
   })
 }
 

@@ -1,26 +1,15 @@
 <template>
   <van-form @submit="onRegister" ref="formRef" class="form">
     <van-cell-group inset>
-      <van-field
-        v-model="registerForm.account"
-        label="账号"
-        placeholder="请输入手机号/账号"
-        :rules="rules.account"
-      />
+      <van-field v-model="registerForm.username" label="用户名" placeholder="请输入用户名" :rules="rules.username" />
 
-      <van-field
-        v-model="registerForm.password"
-        label="密码"
-        :type="showRegisterPassword ? 'text' : 'password'"
-        placeholder="请设置密码"
-        :rules="rules.password"
-      >
+      <van-field v-model="registerForm.phone" label="手机号" placeholder="请输入手机号" :rules="rules.phone" />
+
+      <van-field v-model="registerForm.password" label="密码" :type="showRegisterPassword ? 'text' : 'password'"
+        placeholder="请设置密码" :rules="rules.password">
         <template #right-icon>
-          <van-icon 
-            :name="showRegisterPassword ? 'eye' : 'eye-o'" 
-            class="password-toggle-icon" 
-            @click="toggleRegisterPassword"
-          />
+          <van-icon :name="showRegisterPassword ? 'eye' : 'eye-o'" class="password-toggle-icon"
+            @click="toggleRegisterPassword" />
         </template>
       </van-field>
 
@@ -32,49 +21,23 @@
         :rules="rules.confirmPassword"
       >
         <template #right-icon>
-          <van-icon 
-            :name="showRegisterConfirmPassword ? 'eye' : 'eye-o'" 
-            class="password-toggle-icon" 
-            @click="toggleRegisterConfirmPassword"
-          />
+          <van-icon :name="showRegisterConfirmPassword ? 'eye' : 'eye-o'" class="password-toggle-icon"
+            @click="toggleRegisterConfirmPassword" />
         </template>
       </van-field>
 
-      <van-field
-        v-model="registerForm.email"
-        label="邮箱"
-        placeholder="请输入邮箱"
-        :rules="rules.email"
-      />
+      <van-field v-model="registerForm.email" label="邮箱" placeholder="请输入邮箱" :rules="rules.email" />
 
-      <van-field
-        v-model="registerForm.code"
-        label="验证码"
-        placeholder="请输入验证码"
-        :rules="rules.code"
-      >
-        <template #button>
-          <van-button
-            size="small"
-            type="primary"
-            :loading="loadingRegisterCode"
-            :disabled="registerCount > 0"
-            @click="sendRegisterCode"
-          >
-            {{ registerCount > 0 ? `${registerCount}s` : '发送' }}
-          </van-button>
-        </template>
-      </van-field>
+      <!-- 职能选择（选择后正常显示，role=1老人端/2家庭端，数字类型） -->
+      <van-field v-model="registerForm.roleText" label="职能" placeholder="请选择职能" is-link readonly :rules="rules.role"
+        @click="showRolePicker = true" />
+      <van-popup v-model:show="showRolePicker" position="bottom">
+        <van-picker :columns="roleColumns" @confirm="handleRoleConfirm" @cancel="showRolePicker = false" />
+      </van-popup>
     </van-cell-group>
 
     <div style="margin: 16px">
-      <van-button
-        type="primary"
-        block
-        native-type="submit"
-        :loading="registerLoading"
-        class="action-btn"
-      >
+      <van-button type="primary" block native-type="submit" :loading="registerLoading" class="action-btn">
         注册
       </van-button>
     </div>
@@ -82,19 +45,24 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { showToast } from 'vant'
-import { registerApi, sendEmailCodeApi } from '@/api/user'
+import { registerApi } from '@/api/user'
 
+const emit = defineEmits(['switchToLogin'])
 const formRef = ref(null)
 
-// 注册表单
-const registerForm = ref({
-  account: '',
+// 注册表单（完全匹配接口字段，role为数字类型）
+const registerForm = reactive({
+  username: '',
+  phone: '',
   password: '',
   confirmPassword: '',
   email: '',
-  code: ''
+  nickname: '',
+  role: 0, // 初始值0，避免默认提交
+  roleText: '',
+  verifyCode: '' // 接口需要的字段，直接传空字符串
 })
 
 // 加载
@@ -103,40 +71,39 @@ const registerLoading = ref(false)
 // 密码可见
 const showRegisterPassword = ref(false)
 const showRegisterConfirmPassword = ref(false)
+const showRolePicker = ref(false)
 
-// 验证码相关
-const loadingRegisterCode = ref(false)
-const registerCount = ref(0)
-let registerTimer = null
+// 职能选项（严格对应role值：1=老人端，2=家庭端，数字类型）
+const roleColumns = [
+  { text: '老人端', value: 1 },
+  { text: '家庭端', value: 2 }
+]
 
 // 表单验证
 const rules = {
-  account: [
-    { required: true, message: '请输入账号' },
-    { pattern: /^1[3-9]\d{9}$|^[a-zA-Z0-9_]{4,16}$/, message: '账号必须是手机号或4-16位字母数字下划线' }
+  username: [
+    { required: true, message: '请输入用户名' },
+    { pattern: /^[a-zA-Z0-9_]{4,16}$/, message: '用户名4-16位字母数字下划线' }
+  ],
+  phone: [
+    { required: true, message: '请输入手机号' },
+    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确' }
   ],
   password: [
     { required: true, message: '请输入密码' },
-    { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,20}$/, message: '密码必须包含大小写字母和数字，8-20位' }
-  ],
-  email: [
-    { required: true, message: '请输入邮箱' },
-    { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: '请输入有效的邮箱地址' }
-  ],
-  code: [
-    { required: true, message: '请输入验证码' },
-    { pattern: /^\d{6}$/, message: '验证码必须是6位数字' }
+    { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,20}$/, message: '密码需大小写+数字，8-20位' }
   ],
   confirmPassword: [
     { required: true, message: '请确认密码' },
-    {
-      validator: (value) => {
-        if (value !== registerForm.value.password) {
-          return '两次密码输入不一致'
-        }
-        return true
-      }
-    }
+    { validator: (v) => v === registerForm.password || '两次密码不一致' }
+  ],
+  email: [
+    { required: true, message: '请输入邮箱' },
+    { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: '邮箱格式不正确' }
+  ],
+  role: [
+    { required: true, message: '请选择职能' },
+    { validator: () => registerForm.role > 0, message: '请选择有效的职能' }
   ]
 }
 
@@ -144,7 +111,6 @@ const rules = {
 const toggleRegisterPassword = () => {
   showRegisterPassword.value = !showRegisterPassword.value
 }
-
 const toggleRegisterConfirmPassword = () => {
   showRegisterConfirmPassword.value = !showRegisterConfirmPassword.value
 }
@@ -173,20 +139,7 @@ const sendRegisterCode = async () => {
   }
 }
 
-// 注册验证码倒计时
-const startRegisterCountdown = () => {
-  registerCount.value = 60
-  clearInterval(registerTimer)
-  registerTimer = setInterval(() => {
-    if (registerCount.value > 0) {
-      registerCount.value--
-    } else {
-      clearInterval(registerTimer)
-    }
-  }, 1000)
-}
-
-// 注册
+// 注册提交（100%匹配接口参数，role为数字类型，verifyCode传空）
 const onRegister = async () => {
   try {
     await formRef.value?.validate()
@@ -208,26 +161,26 @@ const onRegister = async () => {
       // 切换到登录选项卡
       emit('switchToLogin')
     } else {
-      showToast(res.msg || '注册失败')
+      showToast(res.errorMsg || '注册失败')
     }
   } catch (err) {
+    console.error('注册失败', err)
     showToast('网络异常，请重试')
   } finally {
     registerLoading.value = false
   }
 }
-
-// 定义事件
-const emit = defineEmits(['switchToLogin'])
 </script>
 
 <style scoped>
 .form {
   padding: 20px;
 }
+
 .action-btn {
   margin-top: 20px;
   --van-button-height: 50px;
+  height: 50px;
   font-size: 18px;
 }
 

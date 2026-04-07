@@ -1,9 +1,27 @@
-import request from './request'
+import request from '@/utils/request'
 
-// 获取药品列表
+// 获取药品列表（通用）
 export const getDrugListApi = (params) => {
   return request({
-    url: '/api/admin/drug/list',
+    url: '/medicine/list',
+    method: 'get',
+    params
+  })
+}
+
+// 老人查询自己所有的药品
+export const getMyDrugListApi = (params) => {
+  return request({
+    url: '/medicine/my-list',
+    method: 'get',
+    params
+  })
+}
+
+// 根据老人档案ID查询药品
+export const getDrugListByElderIdApi = (elderId, params) => {
+  return request({
+    url: `/medicine/list/elder/${elderId}`,
     method: 'get',
     params
   })
@@ -12,15 +30,24 @@ export const getDrugListApi = (params) => {
 // 获取药品详情
 export const getDrugDetailApi = (id) => {
   return request({
-    url: `/api/admin/drug/${id}`,
+    url: `/medicine/${id}`,
     method: 'get'
+  })
+}
+
+// 搜索药品
+export const searchDrugApi = (keyword) => {
+  return request({
+    url: '/medicine/search',
+    method: 'get',
+    params: { keyword }
   })
 }
 
 // 添加药品
 export const addDrugApi = (data) => {
   return request({
-    url: '/api/admin/drug',
+    url: '/medicine/add',
     method: 'post',
     data
   })
@@ -29,7 +56,7 @@ export const addDrugApi = (data) => {
 // 编辑药品
 export const updateDrugApi = (id, data) => {
   return request({
-    url: `/api/admin/drug/${id}`,
+    url: `/medicine/update/${id}`,
     method: 'put',
     data
   })
@@ -38,7 +65,7 @@ export const updateDrugApi = (id, data) => {
 // 删除药品
 export const deleteDrugApi = (id) => {
   return request({
-    url: `/api/admin/drug/${id}`,
+    url: `/medicine/delete/${id}`,
     method: 'delete'
   })
 }
@@ -46,8 +73,9 @@ export const deleteDrugApi = (id) => {
 // 更改药品状态
 export const updateDrugStatusApi = (id, status) => {
   return request({
-    url: `/api/admin/drug/${id}/status`,
+    url: `/medicine/status/${id}`,
     method: 'patch',
     data: { status }
   })
 }
+
