@@ -5,10 +5,7 @@ export function loginApi(data) {
   return request({
     url: '/v1/users/login',
     method: 'post',
-    data: {
-      phone: data.phone,
-      password: data.password
-    }
+    data
   })
 }
 

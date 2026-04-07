@@ -32,30 +32,42 @@
       <van-card
         v-for="item in list"
         :key="item.id"
-        :title="item.name"
-        :desc="`年龄: ${item.age}岁 | 电话: ${item.phone}`"
+        :title="item.name || '未命名'"
+        :desc="item.noProfile ? item.errorMsg : `年龄: ${item.age}岁`"
       >
         <template #tags>
-          <van-tag v-if="item.gender" :type="item.gender === '男' ? 'primary' : 'danger'" class="gender-tag">
-            {{ item.gender }}
+          <van-tag v-if="item.noProfile" type="danger">
+            无档案
           </van-tag>
-          <van-tag v-if="item.illness" type="warning" class="illness-tag">
-            {{ item.illness }}
-          </van-tag>
+          <template v-else>
+            <van-tag v-if="item.gender" :type="item.gender === 1 ? 'primary' : 'danger'" class="gender-tag">
+              {{ item.gender === 1 ? '男' : '女' }}
+            </van-tag>
+            <van-tag v-if="item.medicalHistory" type="warning" class="illness-tag">
+              {{ item.medicalHistory }}
+            </van-tag>
+          </template>
         </template>
         <template #footer>
           <div class="card-footer">
-            <span class="time">{{ item.updateTime || item.createTime }}</span>
+            <span class="time">{{ item.createTime || '未知时间' }}</span>
             <div class="btn-group">
-              <van-button size="small" type="primary" @click="openViewDialog(item)">
-                查看
-              </van-button>
-              <van-button size="small" type="success" @click="openEditDialog(item)">
-                编辑
-              </van-button>
-              <van-button size="small" type="danger" @click="onDelete(item.id)">
-                删除
-              </van-button>
+              <template v-if="item.noProfile">
+                <van-button size="small" type="primary" @click="openAddDialogForUser(item)">
+                  添加档案
+                </van-button>
+              </template>
+              <template v-else>
+                <van-button size="small" type="primary" @click="openViewDialog(item)">
+                  查看
+                </van-button>
+                <van-button size="small" type="success" @click="openEditDialog(item)">
+                  编辑
+                </van-button>
+                <van-button size="small" type="danger" @click="onDelete(item.id)">
+                  删除
+                </van-button>
+              </template>
             </div>
           </div>
         </template>
@@ -73,20 +85,12 @@
           <van-cell-group>
             <!-- 基本信息 -->
             <van-field
-              v-model="form.name"
-              label="姓名"
-              placeholder="请输入姓名"
-              :rules="rules.name"
+              v-model="form.userId"
+              label="用户ID"
+              placeholder="请输入老人用户ID"
+              :rules="rules.userId"
               required
-            />
-            <van-field
-              v-model="form.gender"
-              label="性别"
-              placeholder="请选择性别"
-              :rules="rules.gender"
-              required
-              readonly
-              @click="showGenderPicker = true"
+              type="number"
             />
             <van-field
               v-model="form.age"
@@ -97,44 +101,13 @@
               type="number"
             />
             <van-field
-              v-model="form.phone"
-              label="联系电话"
-              placeholder="请输入联系电话"
-              :rules="rules.phone"
+              :model-value="form.gender === 1 ? '男' : form.gender === 2 ? '女' : ''"
+              label="性别"
+              placeholder="请选择性别"
+              :rules="rules.gender"
               required
-            />
-            <van-field
-              v-model="form.idCard"
-              label="身份证号"
-              placeholder="请输入身份证号"
-            />
-            <van-field
-              v-model="form.address"
-              label="居住地址"
-              placeholder="请输入居住地址"
-              type="textarea"
-              rows="2"
-            />
-            
-            <!-- 健康信息 -->
-            <van-field
-              v-model="form.illness"
-              label="基础病史"
-              placeholder="如：高血压、糖尿病等"
-              type="textarea"
-              rows="2"
-            />
-            <van-field
-              v-model="form.allergy"
-              label="过敏史"
-              placeholder="请输入过敏史"
-            />
-            <van-field
-              v-model="form.bloodType"
-              label="血型"
-              placeholder="请选择血型"
               readonly
-              @click="showBloodTypePicker = true"
+              @click="showGenderPicker = true"
             />
             <van-field
               v-model="form.height"
@@ -147,6 +120,40 @@
               label="体重(kg)"
               placeholder="请输入体重"
               type="number"
+            />
+            <van-field
+              v-model="form.medicalHistory"
+              label="基础病史"
+              placeholder="如：高血压、糖尿病等"
+              type="textarea"
+              rows="2"
+            />
+            <van-field
+              v-model="form.allergy"
+              label="过敏史"
+              placeholder="请输入过敏史"
+            />
+            <van-field
+              v-model="form.emergencyContact"
+              label="紧急联系人"
+              placeholder="请输入紧急联系人"
+            />
+            <van-field
+              v-model="form.emergencyPhone"
+              label="紧急联系电话"
+              placeholder="请输入紧急联系电话"
+            />
+            <van-field
+              v-model="form.address"
+              label="居住地址"
+              placeholder="请输入居住地址"
+              type="textarea"
+              rows="2"
+            />
+            <van-field
+              v-model="form.relation"
+              label="关系"
+              placeholder="请输入关系，如：子女"
             />
           </van-cell-group>
           <div style="margin: 16px">
@@ -166,17 +173,17 @@
       <div class="dialog-content">
         <h3>老人档案详情</h3>
         <van-cell-group v-if="currentProfile">
-          <van-cell title="姓名" :value="currentProfile.name" />
-          <van-cell title="性别" :value="currentProfile.gender" />
+          <van-cell title="用户ID" :value="currentProfile.userId" />
           <van-cell title="年龄" :value="currentProfile.age + '岁'" />
-          <van-cell title="联系电话" :value="currentProfile.phone" />
-          <van-cell title="身份证号" :value="currentProfile.idCard || '未填写'" />
-          <van-cell title="居住地址" :value="currentProfile.address || '未填写'" />
-          <van-cell title="基础病史" :value="currentProfile.illness || '无'" />
-          <van-cell title="过敏史" :value="currentProfile.allergy || '无'" />
-          <van-cell title="血型" :value="currentProfile.bloodType || '未填写'" />
+          <van-cell title="性别" :value="currentProfile.gender === 1 ? '男' : currentProfile.gender === 2 ? '女' : '未填写'" />
           <van-cell title="身高" :value="currentProfile.height ? currentProfile.height + 'cm' : '未填写'" />
           <van-cell title="体重" :value="currentProfile.weight ? currentProfile.weight + 'kg' : '未填写'" />
+          <van-cell title="基础病史" :value="currentProfile.medicalHistory || '无'" />
+          <van-cell title="过敏史" :value="currentProfile.allergy || '无'" />
+          <van-cell title="紧急联系人" :value="currentProfile.emergencyContact || '未填写'" />
+          <van-cell title="紧急联系电话" :value="currentProfile.emergencyPhone || '未填写'" />
+          <van-cell title="居住地址" :value="currentProfile.address || '未填写'" />
+          <van-cell title="关系" :value="currentProfile.relation || '未填写'" />
         </van-cell-group>
         <div style="margin: 16px">
           <van-button block @click="showViewDialog = false">关闭</van-button>
@@ -192,15 +199,6 @@
         @cancel="showGenderPicker = false"
       />
     </van-popup>
-
-    <!-- 血型选择器 -->
-    <van-popup v-model:show="showBloodTypePicker" position="bottom">
-      <van-picker
-        :columns="bloodTypeColumns"
-        @confirm="onBloodTypeConfirm"
-        @cancel="showBloodTypePicker = false"
-      />
-    </van-popup>
   </div>
 </template>
 
@@ -212,6 +210,7 @@ import {
   updateOldmanProfileApi,
   deleteOldmanProfileApi,
   searchElderByUsernameApi,  // 搜索
+  getElderProfileByUserIdApi
 } from '@/api/family'
 
 // 列表数据
@@ -231,62 +230,120 @@ const currentId = ref('')
 
 // 选择器状态
 const showGenderPicker = ref(false)
-const showBloodTypePicker = ref(false)
 
 // 选择器数据
-const genderColumns = ['男', '女']
-const bloodTypeColumns = ['A型', 'B型', 'AB型', 'O型', 'RH阳性', 'RH阴性']
+const genderColumns = [
+  { text: '男', value: 1 },
+  { text: '女', value: 2 }
+]
 
 // 表单数据
 const form = reactive({
   id: '',
-  name: '',
-  gender: '',
+  userId: '',
   age: '',
-  phone: '',
-  idCard: '',
-  address: '',
-  illness: '',
-  allergy: '',
-  bloodType: '',
+  gender: '',
   height: '',
-  weight: ''
+  weight: '',
+  medicalHistory: '',
+  allergy: '',
+  emergencyContact: '',
+  emergencyPhone: '',
+  address: '',
+  relation: ''
 })
 
 // 表单验证规则
 const rules = {
-  name: [
-    { required: true, message: '请输入姓名' },
-    { max: 20, message: '姓名不超过20个字符' }
-  ],
-  gender: [
-    { required: true, message: '请选择性别' }
+  userId: [
+    { required: true, message: '请输入用户ID' },
+    { pattern: /^\d+$/, message: '用户ID必须是数字' }
   ],
   age: [
     { required: true, message: '请输入年龄' },
     { pattern: /^\d+$/, message: '年龄必须是数字' }
   ],
-  phone: [
-    { required: true, message: '请输入联系电话' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号' }
+  gender: [
+    { required: true, message: '请选择性别' }
   ]
 }
 
 
-// 加载列表（改用 用户名搜索接口）
+// 加载列表
 const onLoad = async () => {
+  if (!searchKeyword.value) {
+    loading.value = false
+    finished.value = true
+    list.value = []
+    return
+  }
+
   loading.value = true
   try {
+    // 这里应该使用获取已绑定老人列表的接口
+    // 暂时使用搜索接口作为替代
     const res = await searchElderByUsernameApi({
       username: searchKeyword.value
     })
-    if (res.code === 200) {
-      list.value = res.data || []
+    console.log('加载列表:', res)
+    
+    if (res.success !== 200) {
+      showToast(res.errorMsg || '搜索失败')
+      list.value = []
       finished.value = true
+      return
     }
+    
+    const users = res.data || []
+    const profiles = []
+    
+    for (const user of users) {
+      try {
+        const profileRes = await getElderProfileByUserIdApi(user.id)
+        console.log(`用户 ${user.username} 的档案查询结果:`, profileRes)
+        
+        if (profileRes.success === 200 && profileRes.data) {
+          const profileData = Array.isArray(profileRes.data) ? profileRes.data[0] : profileRes.data
+          if (profileData) {
+            profiles.push({
+              ...profileData,
+              name: user.username || user.nickname
+            })
+          }
+        } else {
+          // 没有档案时，显示用户信息并提示无档案
+          profiles.push({
+            id: user.id,
+            userId: user.id,
+            name: user.username || user.nickname,
+            age: '暂无',
+            gender: 0,
+            noProfile: true,
+            errorMsg: profileRes.errorMsg || '无这个用户的档案信息'
+          })
+        }
+      } catch (err) {
+        console.error('获取档案失败', err)
+        // 网络错误时，也显示用户信息
+        profiles.push({
+          id: user.id,
+          userId: user.id,
+          name: user.username || user.nickname,
+          age: '暂无',
+          gender: 0,
+          noProfile: true,
+          errorMsg: '网络异常，请稍后重试'
+        })
+      }
+    }
+    
+    list.value = profiles
+    finished.value = true
   } catch (err) {
     showToast('加载失败')
     console.error(err)
+    list.value = []
+    finished.value = true
   } finally {
     loading.value = false
   }
@@ -307,6 +364,17 @@ const openAddDialog = () => {
   Object.keys(form).forEach(key => {
     form[key] = ''
   })
+  showDialog.value = true
+}
+
+// 为指定用户打开新增弹窗
+const openAddDialogForUser = (item) => {
+  isEdit.value = false
+  currentId.value = ''
+  Object.keys(form).forEach(key => {
+    form[key] = ''
+  })
+  form.userId = item.userId
   showDialog.value = true
 }
 
@@ -331,24 +399,26 @@ const onSubmit = async () => {
     submitLoading.value = true
 
     if (isEdit.value) {
-      // 编辑：form 里已包含 id，不需要单独传
+      // 编辑
       const res = await updateOldmanProfileApi(form)
-      if (res.code === 200) {
+      console.log('编辑结果:', res)
+      if (res.success === 200) {
         showToast('修改成功')
         showDialog.value = false
         onSearch()
       } else {
-        showToast(res.msg || '修改失败')
+        showToast(res.errorMsg || '修改失败')
       }
     } else {
       // 新增
       const res = await addOldmanProfileApi(form)
-      if (res.code === 200) {
+      console.log('新增结果:', res)
+      if (res.success === 200) {
         showToast('添加成功')
         showDialog.value = false
         onSearch()
       } else {
-        showToast(res.msg || '添加失败')
+        showToast(res.errorMsg || '添加失败')
       }
     }
   } catch (err) {
@@ -361,7 +431,6 @@ const onSubmit = async () => {
 
 
 // 删除档案
-
 const onDelete = async (id) => {
   try {
     await showConfirmDialog({
@@ -369,11 +438,12 @@ const onDelete = async (id) => {
       message: '确定要删除这条老人档案吗？'
     })
     const res = await deleteOldmanProfileApi(id)
-    if (res.code === 200) {
+    console.log('删除结果:', res)
+    if (res.success === 200) {
       showToast('删除成功')
       onSearch()
     } else {
-      showToast(res.msg || '删除失败')
+      showToast(res.errorMsg || '删除失败')
     }
   } catch (err) {
     if (err !== 'cancel') showToast('删除失败')
@@ -381,15 +451,11 @@ const onDelete = async (id) => {
 }
 
 // 性别选择
-const onGenderConfirm = (value) => {
-  form.gender = value
+const onGenderConfirm = (selectedOptions, selectedIndexes) => {
+  if (selectedOptions && selectedOptions.length > 0) {
+    form.gender = selectedOptions[0].value
+  }
   showGenderPicker.value = false
-}
-
-// 血型选择
-const onBloodTypeConfirm = (value) => {
-  form.bloodType = value
-  showBloodTypePicker.value = false
 }
 
 onMounted(() => {

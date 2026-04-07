@@ -71,6 +71,11 @@ const routes = [
 
   // 老人端路由
   {
+    path: '/oldman',
+    component: () => import('@/views/oldman/index.vue'),
+    meta: { requiresAuth: true, role: 1 }
+  },
+  {
     path: '/oldman/drug',
     component: () => import('@/views/oldman/DrugList.vue'),
     meta: { requiresAuth: true, role: 1 }

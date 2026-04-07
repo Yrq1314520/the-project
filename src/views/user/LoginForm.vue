@@ -79,7 +79,8 @@ const onLogin = async () => {
     await formRef.value?.validate()
     loading.value = true
     const res = await loginApi(loginForm)
-    if (res.code === 200 && res.data) {
+    console.log(res)
+    if (res.success === 200) {
       userStore.setLoginInfo(res.data.token, res.data)
       showToast('登录成功')
 
@@ -94,7 +95,7 @@ const onLogin = async () => {
         router.push('/family')
       }
     } else {
-      showToast(res.msg || '登录失败')
+      showToast(res.errorMsg || '登录失败')
     }
   } catch (err) {
     showToast('网络异常，请重试')
