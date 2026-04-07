@@ -217,10 +217,10 @@ const sendVerifyCode = async () => {
   try {
     const res = await getCodeApi({
       email: registerForm.email,
-      type: 1 // 注册类型固定为1
+      type: registerForm.role // 使用选择的职能作为type参数
     })
     console.log(res)
-    if (res.code === 200) {
+    if (res.success === 200) {
       showToast('验证码已发送')
       // 开始倒计时
       countdown.value = 60
@@ -231,7 +231,7 @@ const sendVerifyCode = async () => {
         }
       }, 1000)
     } else {
-      showToast(res.msg || '发送失败')
+      showToast(res.errorMsg || '发送失败')
     }
   } catch (err) {
     console.error('发送验证码失败', err)
@@ -250,14 +250,14 @@ const onRegister = async () => {
       registerForm.nickname = registerForm.username
     }
 
-    // 移除confirmPassword 和 roleText 字段
+    // 移除confirmPassword、roleText和phone字段
     const { confirmPassword, roleText, ...submitData } = registerForm
     // 确保 role 是数字
     submitData.role = Number(submitData.role)
 
     const res = await registerApi(submitData)
     console.log(res)
-    if (res.code === 200) {
+    if (res.success === 200) {
       showToast('注册成功')
       // 清空表单
       Object.assign(registerForm, {
@@ -276,7 +276,7 @@ const onRegister = async () => {
       // 切换到登录选项卡
       emit('switchToLogin')
     } else {
-      showToast(res.msg || res.errorMsg || '注册失败')
+      showToast(res.errorMsg || '注册失败')
     }
   } catch (err) {
     console.error('注册失败', err)
