@@ -142,8 +142,7 @@ const onRoleConfirm = (selected) => {
 // 表单验证规则
 const rules = {
   username: [
-    { required: true, message: '请输入用户名' },
-    { pattern: /^[a-zA-Z0-9_]{4,16}$/, message: '用户名4-16位字母数字下划线' }
+    { required: true, message: '请输入用户名' }
   ],
   phone: [
     { required: true, message: '请输入手机号' },

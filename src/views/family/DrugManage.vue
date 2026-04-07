@@ -86,27 +86,25 @@
       width="600px"
     >
       <el-form :model="form" :rules="rules" ref="formRef">
-        <el-form-item label="药品名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入药品名称" />
-        </el-form-item>
-        <el-form-item label="分类" prop="category">
-          <el-select v-model="form.category" placeholder="请选择分类">
-            <el-option label="处方药" value="1" />
-            <el-option label="非处方药" value="2" />
-            <el-option label="保健品" value="3" />
+        <el-form-item label="老人档案" prop="elderId" v-if="!isEdit">
+          <el-select v-model="form.elderId" placeholder="请选择老人档案">
+            <el-option v-for="elder in elderList" :key="elder.id" :label="elder.name" :value="elder.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="规格" prop="specification">
-          <el-input v-model="form.specification" placeholder="请输入规格" />
+        <el-form-item label="药品名称" prop="medicineName">
+          <el-input v-model="form.medicineName" placeholder="请输入药品名称" />
         </el-form-item>
-        <el-form-item label="用法用量" prop="usage">
-          <el-input v-model="form.usage" placeholder="请输入用法用量" />
+        <el-form-item label="有效期" prop="expiryDate">
+          <el-input v-model="form.expiryDate" placeholder="请输入有效期，如2026-06-30" />
         </el-form-item>
-        <el-form-item label="剂量" prop="dosage">
-          <el-input v-model="form.dosage" placeholder="请输入剂量" />
+        <el-form-item label="类型" prop="type">
+          <el-input v-model="form.type" placeholder="请输入药品类型，如降压药" />
+        </el-form-item>
+        <el-form-item label="数量" prop="quantity">
+          <el-input v-model="form.quantity" type="number" placeholder="请输入数量" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
+          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注，如每天一次" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -123,6 +121,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getDrugListApi, addDrugApi, updateDrugApi, deleteDrugApi } from '@/api/medicine'
+import { getElderListApi } from '@/api/elderInfo'
 
 // 搜索表单
 const searchForm = reactive({
@@ -139,36 +138,37 @@ const page = reactive({
 // 数据
 const drugList = ref([])
 const total = ref(0)
+const elderList = ref([])
 
 // 对话框
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const form = reactive({
   id: '',
-  name: '',
-  category: '2',
-  specification: '',
-  usage: '',
-  dosage: '',
+  elderId: '',
+  medicineName: '',
+  expiryDate: '',
+  type: '',
+  quantity: '',
   remark: ''
 })
 
 // 表单验证
 const rules = {
-  name: [
+  elderId: [
+    { required: true, message: '请选择老人档案', trigger: 'change' }
+  ],
+  medicineName: [
     { required: true, message: '请输入药品名称', trigger: 'blur' }
   ],
-  category: [
-    { required: true, message: '请选择分类', trigger: 'change' }
+  expiryDate: [
+    { required: true, message: '请输入有效期', trigger: 'blur' }
   ],
-  specification: [
-    { required: true, message: '请输入规格', trigger: 'blur' }
+  type: [
+    { required: true, message: '请输入药品类型', trigger: 'blur' }
   ],
-  usage: [
-    { required: true, message: '请输入用法用量', trigger: 'blur' }
-  ],
-  dosage: [
-    { required: true, message: '请输入剂量', trigger: 'blur' }
+  quantity: [
+    { required: true, message: '请输入数量', trigger: 'blur' }
   ]
 }
 
@@ -193,6 +193,19 @@ const getCategoryText = (category) => {
     '3': '保健品'
   }
   return categoryMap[category] || '未知'
+}
+
+// 加载老人列表
+const loadElderList = async () => {
+  try {
+    const res = await getElderListApi()
+    if (res.code === 200) {
+      elderList.value = res.data.list
+    }
+  } catch (error) {
+    ElMessage.error('加载老人列表失败')
+    console.error('加载老人列表失败', error)
+  }
 }
 
 // 加载药品列表
@@ -244,11 +257,11 @@ const handleAddDrug = () => {
   isEdit.value = false
   Object.assign(form, {
     id: '',
-    name: '',
-    category: '2',
-    specification: '',
-    usage: '',
-    dosage: '',
+    elderId: '',
+    medicineName: '',
+    expiryDate: '',
+    type: '',
+    quantity: '',
     remark: ''
   })
   dialogVisible.value = true
@@ -305,6 +318,7 @@ const handleSubmit = async () => {
 // 初始化
 onMounted(() => {
   loadDrugList()
+  loadElderList()
 })
 </script>
 

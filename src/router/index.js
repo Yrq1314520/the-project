@@ -73,7 +73,16 @@ const routes = [
   {
     path: '/oldman/drug',
     component: () => import('@/views/oldman/DrugList.vue'),
+<<<<<<< HEAD
     meta: { requiresAuth: true, role: '1' }
+=======
+    meta: { requiresAuth: true, role: 1 }
+  },
+  {
+    path: '/oldman/remind',
+    component: () => import('@/views/oldman/RemindList.vue'),
+    meta: { requiresAuth: true, role: 1 }
+>>>>>>> 067fde764c4f0740523ab8185088536dd8ffc3f4
   },
   // {
   //   path: '/oldman/remind',
@@ -85,7 +94,11 @@ const routes = [
   {
     path: '/oldman/profile',
     component: () => import('@/views/oldman/MyProfile.vue'),
+<<<<<<< HEAD
     meta: { requiresAuth: true, role: '1' }
+=======
+    meta: { requiresAuth: true, role: 1 }
+>>>>>>> 067fde764c4f0740523ab8185088536dd8ffc3f4
   },
 
   // 重定向旧路由
