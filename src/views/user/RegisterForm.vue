@@ -75,8 +75,7 @@ const roleColumns = [
 // 验证规则
 const rules = {
   username: [
-    { required: true, message: '请输入用户名' },
-    { pattern: /^[a-zA-Z0-9_]{4,16}$/, message: '用户名4-16位字母数字下划线' }
+    { required: true, message: '请输入用户名' }
   ],
   phone: [
     { required: true, message: '请输入手机号' },
@@ -131,9 +130,10 @@ const onRegister = async () => {
       role: registerForm.role, // 数字类型：1=老人端，2=家庭端
       verifyCode: registerForm.verifyCode // 接口需要的字段，传空字符串
     }
-
+    console.log(registerForm)
+    console.log(params)
     const res = await registerApi(params)
-
+    console.log(res)
     if (res.success === 200) {
       showToast('注册成功')
       // 清空表单
