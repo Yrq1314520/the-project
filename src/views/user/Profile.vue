@@ -10,8 +10,8 @@
         <div class="avatar">
           <img :src="userInfo.avatar || defaultAvatar" alt="头像">
         </div>
-        <h3>{{ userInfo.nickname }}</h3>
-        <p>{{ userInfo.username }}</p>
+        <h3>{{ userInfo.nickname || userInfo.username }}</h3>
+        <p>{{ userInfo.username || userInfo.phone }}</p>
       </div>
       
       <!-- 个人信息表单 -->
@@ -49,27 +49,30 @@
         <van-button type="danger" block @click="onLogout">
           退出登录
         </van-button>
+        <van-button type="default" block @click="goToCancelAccount">
+          注销账号
+        </van-button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { useUserStore } from '@/store/user'
-import { updateProfileApi } from '@/api/user'
+import { updateProfileApi, getUserInfoApi, logoutApi } from '@/api/user'
 
 const router = useRouter()
 const userStore = useUserStore()
 const formRef = ref(null)
 const loading = ref(false)
 
-// 默认头像
+//默认头像
 const defaultAvatar = 'https://img.yzcdn.cn/vant/logo.png'
 
-// 计算属性：用户信息
+//用户信息
 const userInfo = computed(() => userStore.userInfo)
 
 // 表单数据
@@ -78,10 +81,36 @@ const form = reactive({
   email: ''
 })
 
+// 获取用户 ID
+const userId = computed(() => userInfo.value?.id || userInfo.value?.userId)
+
+// 加载用户信息
+const fetchUserInfo = async () => {
+  if (!userId.value) return
+  try {
+    const res = await getUserInfoApi(userId.value)
+    if (res.code === 200 && res.data) {
+      //更新store中的用户信息
+      userStore.setLoginInfo(userStore.token, res.data)
+      // 同步到表单
+      form.nickname = res.data.nickname || ''
+      form.email = res.data.email || ''
+    } else {
+      showToast(res.msg || '获取用户信息失败')
+    }
+  } catch (err) {
+    console.error('获取用户信息失败', err)
+  }
+}
+
 // 初始化表单数据
 onMounted(() => {
-  form.nickname = userInfo.value.nickname || ''
-  form.email = userInfo.value.email || ''
+  if (userInfo.value) {
+    form.nickname = userInfo.value.nickname || ''
+    form.email = userInfo.value.email || ''
+  }
+  // 重新获取最新信息
+  fetchUserInfo()
 })
 
 // 提交修改
@@ -90,16 +119,16 @@ const onSubmit = async () => {
     await formRef.value?.validate()
     loading.value = true
     
-    const res = await updateProfileApi(form)
-    if (res && res.success === 200) {
-      // 更新 store 中的用户信息
-      userStore.setLoginInfo(userStore.token, {
-        ...userInfo.value,
-        ...form
-      })
+    const res = await updateProfileApi({
+      nickname: form.nickname,
+      email: form.email
+    })
+    if (res.code === 200) {
+      // 重新获取用户信息以确保同步
+      await fetchUserInfo()
       showToast('修改成功')
     } else {
-      showToast(res?.errorMsg || '修改失败')
+      showToast(res.msg || '修改失败')
     }
   } catch (err) {
     showToast('网络异常，请重试')
@@ -113,11 +142,24 @@ const goToChangePassword = () => {
   router.push('/user/change-password')
 }
 
-// 退出登录
-const onLogout = () => {
-  userStore.logout()
-  router.push('/login')
-  showToast('已退出登录')
+// 跳转到注销账号页面
+const goToCancelAccount = () => {
+  router.push('/user/cancel-account')
+}
+
+// 退出登录（调用 API）
+const onLogout = async () => {
+  try {
+    if (userStore.token) {
+      await logoutApi({ token: userStore.token })
+    }
+  } catch (err) {
+    console.error('退出接口调用失败', err)
+  } finally {
+    userStore.logout()
+    router.push('/login')
+    showToast('已退出登录')
+  }
 }
 </script>
 

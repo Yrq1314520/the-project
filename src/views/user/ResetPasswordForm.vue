@@ -2,13 +2,6 @@
   <van-form @submit="onResetPassword" ref="formRef" class="form">
     <van-cell-group inset>
       <van-field
-        v-model="resetForm.account"
-        label="账号"
-        placeholder="请输入手机号/账号"
-        :rules="rules.account"
-      />
-
-      <van-field
         v-model="resetForm.email"
         label="邮箱"
         placeholder="请输入邮箱"
@@ -72,15 +65,13 @@ import { resetPasswordApi, sendEmailCodeApi } from '@/api/user'
 
 const formRef = ref(null)
 
-// 重置密码表单
+// 重置密码表单，移除 account
 const resetForm = ref({
-  account: '',
   email: '',
   code: '',
   newPassword: ''
 })
 
-// 加载状态
 const resetLoading = ref(false)
 
 // 密码可见性
@@ -91,12 +82,8 @@ const loadingResetCode = ref(false)
 const resetCount = ref(0)
 let resetTimer = null
 
-// 表单验证规则
+// 表单验证
 const rules = {
-  account: [
-    { required: true, message: '请输入账号' },
-    { pattern: /^1[3-9]\d{9}$|^[a-zA-Z0-9_]{4,16}$/, message: '账号必须是手机号或4-16位字母数字下划线' }
-  ],
   email: [
     { required: true, message: '请输入邮箱' },
     { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: '请输入有效的邮箱地址' }
@@ -125,10 +112,8 @@ const sendResetCode = async () => {
 
   try {
     loadingResetCode.value = true
-    const res = await sendEmailCodeApi({
-      email: resetForm.value.email,
-      type: 'reset'
-    })
+    // API 只接收 email 字符串
+    const res = await sendEmailCodeApi(resetForm.value.email)
     if (res.code === 200) {
       showToast('验证码已发送')
       startResetCountdown()
@@ -155,23 +140,26 @@ const startResetCountdown = () => {
   }, 1000)
 }
 
-// 重置密码
+// 重置密码，只传 email, code, newPassword
 const onResetPassword = async () => {
   try {
     await formRef.value?.validate()
     resetLoading.value = true
 
-    const res = await resetPasswordApi(resetForm.value)
+    const res = await resetPasswordApi({
+      email: resetForm.value.email,
+      code: resetForm.value.code,
+      newPassword: resetForm.value.newPassword
+    })
     if (res.code === 200) {
       showToast('密码重置成功')
-      // 清空重置密码表单
+      // 清空
       resetForm.value = {
-        account: '',
         email: '',
         code: '',
         newPassword: ''
       }
-      // 触发切换到登录选项卡
+      // 切换到登录选项卡
       emit('switchToLogin')
     } else {
       showToast(res.msg || '重置失败')
@@ -183,7 +171,7 @@ const onResetPassword = async () => {
   }
 }
 
-// 定义事件
+
 const emit = defineEmits(['switchToLogin'])
 </script>
 
@@ -197,7 +185,6 @@ const emit = defineEmits(['switchToLogin'])
   font-size: 18px;
 }
 
-/* 密码切换图标样式 */
 .password-toggle-icon {
   font-size: 20px;
   color: #999;

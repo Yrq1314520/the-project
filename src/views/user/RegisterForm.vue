@@ -13,8 +13,13 @@
         </template>
       </van-field>
 
-      <van-field v-model="registerForm.confirmPassword" label="确认密码"
-        :type="showRegisterConfirmPassword ? 'text' : 'password'" placeholder="请确认密码" :rules="rules.confirmPassword">
+      <van-field
+        v-model="registerForm.confirmPassword"
+        label="确认密码"
+        :type="showRegisterConfirmPassword ? 'text' : 'password'"
+        placeholder="请确认密码"
+        :rules="rules.confirmPassword"
+      >
         <template #right-icon>
           <van-icon :name="showRegisterConfirmPassword ? 'eye' : 'eye-o'" class="password-toggle-icon"
             @click="toggleRegisterConfirmPassword" />
@@ -60,8 +65,10 @@ const registerForm = reactive({
   verifyCode: '' // 接口需要的字段，直接传空字符串
 })
 
-// 状态
+// 加载
 const registerLoading = ref(false)
+
+// 密码可见
 const showRegisterPassword = ref(false)
 const showRegisterConfirmPassword = ref(false)
 const showRolePicker = ref(false)
@@ -72,7 +79,7 @@ const roleColumns = [
   { text: '家庭端', value: 2 }
 ]
 
-// 验证规则
+// 表单验证
 const rules = {
   username: [
     { required: true, message: '请输入用户名' }
@@ -107,12 +114,28 @@ const toggleRegisterConfirmPassword = () => {
   showRegisterConfirmPassword.value = !showRegisterConfirmPassword.value
 }
 
-// 选择职能（严格对应role数字：1=老人端，2=家庭端）
-const handleRoleConfirm = ({ selectedOptions }) => {
-  const item = selectedOptions[0]
-  registerForm.role = item.value // 直接赋值数字，无需转换
-  registerForm.roleText = item.text
-  showRolePicker.value = false
+// 发送注册验证码（修正 API 调用）
+const sendRegisterCode = async () => {
+  if (!registerForm.value.email) {
+    showToast('请输入邮箱')
+    return
+  }
+
+  try {
+    loadingRegisterCode.value = true
+    // API 只接收 email
+    const res = await sendEmailCodeApi(registerForm.value.email)
+    if (res.code === 200) {
+      showToast('验证码已发送')
+      startRegisterCountdown()
+    } else {
+      showToast(res.msg || '发送失败')
+    }
+  } catch (err) {
+    showToast('网络异常，请重试')
+  } finally {
+    loadingRegisterCode.value = false
+  }
 }
 
 // 注册提交（100%匹配接口参数，role为数字类型，verifyCode传空）
@@ -121,26 +144,20 @@ const onRegister = async () => {
     await formRef.value?.validate()
     registerLoading.value = true
 
-    const params = {
-      email: registerForm.email,
-      username: registerForm.username,
-      phone: registerForm.phone,
-      password: registerForm.password,
-      nickname: registerForm.nickname || registerForm.username,
-      role: registerForm.role, // 数字类型：1=老人端，2=家庭端
-      verifyCode: registerForm.verifyCode // 接口需要的字段，传空字符串
-    }
-    console.log(registerForm)
-    console.log(params)
-    const res = await registerApi(params)
-    console.log(res)
-    if (res.success === 200) {
+    // 移除 confirmPassword 字段
+    const { confirmPassword, ...registerData } = registerForm.value
+    const res = await registerApi(registerData)
+    if (res.code === 200) {
       showToast('注册成功')
-      // 清空表单
-      Object.assign(registerForm, {
-        username: '', phone: '', password: '', confirmPassword: '',
-        email: '', nickname: '', role: 0, roleText: '', verifyCode: ''
-      })
+      // 清空注册表单
+      registerForm.value = {
+        account: '',
+        password: '',
+        confirmPassword: '',
+        email: '',
+        code: ''
+      }
+      // 切换到登录选项卡
       emit('switchToLogin')
     } else {
       showToast(res.errorMsg || '注册失败')

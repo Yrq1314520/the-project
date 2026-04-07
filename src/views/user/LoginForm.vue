@@ -58,14 +58,12 @@ const loginForm = reactive({
 const loading = ref(false)
 const showPassword = ref(false)
 
-
 const rules = {
   phone: [
     { required: true, message: '请输入手机号' },
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号' }
   ],
   password: [
-
     { required: true, message: '请输入密码' },
     { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,20}$/, message: '密码必须包含大小写字母和数字，8-20位' }
   ]
@@ -75,33 +73,31 @@ const togglePassword = () => {
   showPassword.value = !showPassword.value
 }
 
-// 调用接口登录
+// API 调用
 const onLogin = async () => {
   try {
     await formRef.value?.validate()
     loading.value = true
     const res = await loginApi(loginForm)
-    console.log(res)
-    if (res && res.success === 200 && res.data) {
+    if (res.code === 200 && res.data) {
       userStore.setLoginInfo(res.data.token, res.data)
       showToast('登录成功')
 
-      // 根据角色跳转不同的页面：
-      // 1.老人
-      // 2.家庭成员
-      // 3.管理员
-      if(res.data.role === 1){
+      // 根据角色跳转不同的页面
+      if (res.data.role === 1) {
         router.push('/oldman')
-      } else if(res.data.role === 2){
+      } else if (res.data.role === 2) {
         router.push('/family')
-      } else if(res.data.role === 3){
+      } else if (res.data.role === 3) {
         router.push('/admin')
+      } else {
+        router.push('/family')
       }
     } else {
-      showToast(res?.errorMsg || '登录失败')
+      showToast(res.msg || '登录失败')
     }
   } catch (err) {
-    showToast('登录失败，请检查账号密码')
+    showToast('网络异常，请重试')
   } finally {
     loading.value = false
   }
