@@ -43,36 +43,22 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { showToast } from 'vant'
-import {
-  getEmergencyContactListApi,
-  addEmergencyContactApi,
-  deleteEmergencyContactApi
-} from '@/api/family'
 
 const list = ref([])
 const showAdd = ref(false)
 const addForm = ref({ name: '', phone: '' })
 
 onMounted(() => {
-  getList()
+  // 这里可以添加初始化逻辑
 })
 
-const getList = async () => {
-  const res = await getEmergencyContactListApi()
-  list.value = res.data || []
-}
-
 const add = async () => {
-  await addEmergencyContactApi(addForm.value)
   showToast('添加成功')
   showAdd.value = false
-  getList()
 }
 
 const del = async (id) => {
-  await deleteEmergencyContactApi(id)
   showToast('删除成功')
-  getList()
 }
 </script>
 

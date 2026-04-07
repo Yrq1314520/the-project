@@ -21,31 +21,37 @@
       <van-grid :column-num="2" gap="16">
         <van-grid-item icon="chat-o" text="智能助手" to="/oldman/chat" />
         <van-grid-item icon="medicine-box" text="药品信息" to="/oldman/drug" />
-        <van-grid-item icon="phone-o" text="紧急求助" to="/oldman/emergency" />
+        <van-grid-item icon="user-o" text="我的档案" to="/oldman/profile" />
         <van-grid-item icon="contacts" text="紧急联系人" to="/oldman/emergency-contact" />
       </van-grid>
     </div>
     
-    <div class="health-section">
-      <h3>健康状态</h3>
-      <div class="health-cards">
-        <van-card>
-          <template #title>今日状态</template>
-          <div class="health-info">
-            <div class="health-item">
-              <span class="label">血压</span>
-              <span class="value">120/80 mmHg</span>
-            </div>
-            <div class="health-item">
-              <span class="label">血糖</span>
-              <span class="value">5.6 mmol/L</span>
-            </div>
-            <div class="health-item">
-              <span class="label">心率</span>
-              <span class="value">72 次/分</span>
+    <!-- 用药提醒模块 -->
+    <div class="reminder-section">
+      <div class="section-header">
+        <h3>用药提醒</h3>
+        <span class="more-link" @click="goToDrugList">全部药品</span>
+      </div>
+      <div class="reminder-list">
+        <div v-if="reminderList.length === 0" class="empty-reminder">
+          <van-icon name="medal-o" size="32" color="#ccc" />
+          <p>暂无用药提醒</p>
+        </div>
+        <div v-for="item in reminderList" :key="item.id" class="reminder-card">
+          <div class="reminder-info">
+            <div class="drug-name">{{ item.drugName }}</div>
+            <div class="drug-spec">{{ item.specification }}</div>
+            <div class="reminder-time">
+              <van-icon name="clock-o" />
+              <span>{{ item.time }}</span>
             </div>
           </div>
-        </van-card>
+          <div class="reminder-action">
+            <van-button size="small" type="primary" plain @click="markTaken(item.id)">
+              已服用
+            </van-button>
+          </div>
+        </div>
       </div>
     </div>
     
@@ -59,7 +65,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { useUserStore } from '@/store/user'
@@ -67,30 +73,62 @@ import { useUserStore } from '@/store/user'
 const router = useRouter()
 const userStore = useUserStore()
 
-// 计算属性：用户信息
 const userInfo = computed(() => userStore.userInfo)
+
+// 用药提醒数据，后期替换
+const reminderList = ref([
+  {
+    id: 1,
+    drugName: '阿司匹林肠溶片',
+    specification: '100mg',
+    time: '08:00 早餐后',
+    taken: false
+  },
+  {
+    id: 2,
+    drugName: '硝苯地平缓释片',
+    specification: '30mg',
+    time: '12:30 午餐后',
+    taken: false
+  },
+  {
+    id: 3,
+    drugName: '二甲双胍片',
+    specification: '0.5g',
+    time: '18:00 晚餐后',
+    taken: false
+  }
+])
+
+// 标记已服用
+const markTaken = (id) => {
+  const item = reminderList.value.find(i => i.id === id)
+  if (item) {
+    item.taken = true
+    showToast(`已记录：${item.drugName} 已服用`)
+  }
+}
+
+// 跳转到药品列表页
+const goToDrugList = () => {
+  router.push('/oldman/drug')
+}
 
 // 开始语音问答
 const startVoiceQnA = () => {
-  // 检查浏览器是否支持语音识别
   if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     const recognition = new SpeechRecognition()
-    
     recognition.lang = 'zh-CN'
     recognition.interimResults = false
-    
     showToast('请开始说话...')
-    
     recognition.start()
-    
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript
       showToast(`您说：${transcript}`)
       handleVoiceCommand(transcript)
     }
-    
-    recognition.onerror = (event) => {
+    recognition.onerror = () => {
       showToast('语音识别失败，请重试')
     }
   } else {
@@ -101,11 +139,12 @@ const startVoiceQnA = () => {
 // 处理语音命令
 const handleVoiceCommand = (command) => {
   command = command.toLowerCase()
-  
   if (command.includes('药品') || command.includes('吃药')) {
     router.push('/oldman/drug')
-  } else if (command.includes('求助') || command.includes('帮助')) {
-    router.push('/oldman/emergency')
+  } else if (command.includes('档案')) {
+    router.push('/oldman/profile')
+  } else if (command.includes('健康') || command.includes('数据')) {
+    router.push('/oldman/health-data')
   } else if (command.includes('联系人') || command.includes('电话')) {
     router.push('/oldman/emergency-contact')
   } else {
@@ -113,10 +152,14 @@ const handleVoiceCommand = (command) => {
   }
 }
 
-// 跳转到紧急求助页面
+// 跳转到紧急求助
 const goToEmergency = () => {
   router.push('/oldman/emergency')
 }
+
+onMounted(() => {
+  // 接口获取用药提醒列表
+})
 </script>
 
 <style scoped>
@@ -177,41 +220,77 @@ const goToEmergency = () => {
 .function-grid {
   margin-bottom: 30px;
 }
-.health-section {
+.reminder-section {
   margin-bottom: 30px;
 }
-.health-section h3 {
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 16px;
+  padding: 0 8px;
+}
+.section-header h3 {
   font-size: 18px;
   font-weight: 600;
-  margin-bottom: 16px;
   color: var(--text-primary);
+  margin: 0;
 }
-.health-cards .van-card {
-  background: var(--card-bg);
-  border-radius: var(--border-radius-lg);
+.more-link {
+  font-size: 14px;
+  color: var(--primary-color);
+  cursor: pointer;
 }
-.health-info {
+.reminder-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
-.health-item {
+.reminder-card {
+  background: var(--card-bg);
+  border-radius: var(--border-radius-lg);
+  padding: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border-light);
+  box-shadow: var(--card-shadow);
+}
+.reminder-info {
+  flex: 1;
+}
+.drug-name {
   font-size: 18px;
-}
-.health-item:last-child {
-  border-bottom: none;
-}
-.health-item .label {
-  color: var(--text-secondary);
-}
-.health-item .value {
   font-weight: 600;
   color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.drug-spec {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.reminder-time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--warning-color);
+}
+.reminder-action .van-button {
+  border-radius: 30px;
+  padding: 0 16px;
+  height: 36px;
+}
+.empty-reminder {
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--card-bg);
+  border-radius: var(--border-radius-lg);
+  color: var(--text-secondary);
+}
+.empty-reminder p {
+  margin-top: 8px;
+  font-size: 14px;
 }
 .emergency-button {
   margin-top: 20px;

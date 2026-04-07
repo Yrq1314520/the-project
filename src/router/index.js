@@ -71,27 +71,42 @@ const routes = [
 
   // 老人端路由
   {
+    path: '/oldman',
+    component: () => import('@/views/oldman/index.vue'),
+    meta: { requiresAuth: true, role: '1' }
+  },
+  {
     path: '/oldman/drug',
     component: () => import('@/views/oldman/DrugList.vue'),
-    meta: { requiresAuth: true, role: 1 }
+    meta: { requiresAuth: true, role: '1' }
+  },
+  // 老人端我的档案
+  {
+    path: '/oldman/profile',
+    component: () => import('@/views/oldman/MyProfile.vue'),
+    meta: { requiresAuth: true, role: '1' }
   },
   {
     path: '/oldman/chat',
     component: () => import('@/views/oldman/Chat.vue'),
     meta: { requiresAuth: true, role: '1' }
   },
-  // {
-  //   path: '/oldman/remind',
-  //   component: () => import('@/views/oldman/RemindList.vue'),
-  //   meta: { requiresAuth: true, role: '1' }
-  // },
-
-  // 新增：老人端我的档案
   {
-    path: '/oldman/profile',
-    component: () => import('@/views/oldman/MyProfile.vue'),
-    meta: { requiresAuth: true, role: 1 }
+    path: '/oldman/emergency',
+    component: () => import('@/views/oldman/EmergencyHelp.vue'),
+    meta: { requiresAuth: true, role: '1' }
   },
+  {
+    path: '/oldman/emergency-contact',
+    component: () => import('@/views/oldman/EmergencyContact.vue'),
+    meta: { requiresAuth: true, role: '1' }
+  },
+  {
+    path: '/oldman/profile-edit',
+    component: () => import('@/views/oldman/ProfileEdit.vue'),
+    meta: { requiresAuth: true, role: '1' }
+  },
+
 
   // 重定向旧路由
   { path: '/medicine', redirect: '/family/drug-manage' },
@@ -111,15 +126,12 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫,未登录不能进需要权限的页面
+// 路由守卫
 router.beforeEach((to, from, next) => {
-  return next()
-  // 从本地存储获取token和用户信息
   const token = localStorage.getItem('token')
   const userInfoStr = localStorage.getItem('userInfo')
   let userRole = null
 
-  // 解析用户信息，获取角色
   if (userInfoStr) {
     try {
       const userInfo = JSON.parse(userInfoStr)
@@ -129,43 +141,32 @@ router.beforeEach((to, from, next) => {
     }
   }
 
-  // 1. 检查是否需要登录
   if (to.meta.requiresAuth) {
-    // 未登录，跳转到登录页
     if (!token) {
       next('/login')
       return
     }
 
-    // 2. 检查角色权限
     if (to.meta.role) {
-      const requiredRole = to.meta.role
-      // 确保角色是数字类型
+      const requiredRole = Number(to.meta.role)  // 关键：转为数字
       const userRoleNum = Number(userRole)
 
-      // 角色不匹配，根据用户角色跳转到对应首页
       if (userRoleNum !== requiredRole) {
-        switch (userRoleNum) {
-          case 1: // 老人
-            next('/oldman')
-            break
-          case 2: // 家属
-            next('/family')
-            break
-          case 3: // 管理员
-            next('/admin')
-            break
-          default: // 未知角色
-            next('/login')
-            break
+        // 角色不匹配，跳转到对应角色的首页
+        if (userRoleNum === 1) {
+          next('/oldman')
+        } else if (userRoleNum === 2) {
+          next('/family')
+        } else if (userRoleNum === 3) {
+          next('/admin')
+        } else {
+          next('/login')
         }
         return
       }
     }
   }
-
-  // 权限验证通过，继续访问
-  return next()
+  next()
 })
 
 export default router

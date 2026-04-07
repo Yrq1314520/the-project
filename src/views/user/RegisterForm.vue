@@ -31,13 +31,8 @@
         </template>
       </van-field>
 
-      <van-field
-        v-model="registerForm.confirmPassword"
-        label="确认密码"
-        :type="showRegisterConfirmPassword ? 'text' : 'password'"
-        placeholder="请确认密码"
-        :rules="rules.confirmPassword"
-      >
+      <van-field v-model="registerForm.confirmPassword" label="确认密码"
+        :type="showRegisterConfirmPassword ? 'text' : 'password'" placeholder="请确认密码" :rules="rules.confirmPassword">
         <template #right-icon>
           <van-icon
             :name="showRegisterConfirmPassword ? 'eye' : 'eye-o'"
@@ -53,6 +48,25 @@
         placeholder="请输入邮箱"
         :rules="rules.email"
       />
+
+      <!-- 验证码 -->
+      <van-field
+        v-model="registerForm.verifyCode"
+        label="验证码"
+        placeholder="请输入验证码"
+        :rules="rules.verifyCode"
+      >
+        <template #button>
+          <van-button
+            size="small"
+            type="primary"
+            :disabled="countdown > 0"
+            @click="sendVerifyCode"
+          >
+            {{ countdown > 0 ? `${countdown}s后重发` : '获取验证码' }}
+          </van-button>
+        </template>
+      </van-field>
 
       <!-- 职能选择 -->
       <van-field
@@ -90,7 +104,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { showToast } from 'vant'
-import { registerApi } from '@/api/user'
+import { registerApi, getCodeApi } from '@/api/user'
 
 const emit = defineEmits(['switchToLogin'])
 const formRef = ref(null)
@@ -102,6 +116,7 @@ const registerForm = reactive({
   password: '',
   confirmPassword: '',
   email: '',
+  verifyCode: '',
   nickname: '',        
   role: 0,            
   roleText: ''
@@ -112,6 +127,7 @@ const registerLoading = ref(false)
 const showRegisterPassword = ref(false)
 const showRegisterConfirmPassword = ref(false)
 const showRolePicker = ref(false)
+const countdown = ref(0)
 
 // 职能选项
 const roleColumns = [
@@ -124,11 +140,11 @@ const onRoleConfirm = (selected) => {
   let selectedValue
   if (selected && typeof selected === 'object') {
     if (Array.isArray(selected)) {
-      selectedValue = selected[0]
+      selectedValue = Number(selected[0])
     } else if (selected.selectedValues) {
-      selectedValue = selected.selectedValues[0]
+      selectedValue = Number(selected.selectedValues[0])
     } else if (selected.value !== undefined) {
-      selectedValue = selected.value
+      selectedValue = Number(selected.value)
     }
   }
   const option = roleColumns.find(item => item.value === selectedValue)
@@ -141,9 +157,7 @@ const onRoleConfirm = (selected) => {
 
 // 表单验证规则
 const rules = {
-  username: [
-    { required: true, message: '请输入用户名' }
-  ],
+  username: [{ required: true, message: '请输入用户名' }],
   phone: [
     { required: true, message: '请输入手机号' },
     { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确' }
@@ -172,6 +186,9 @@ const rules = {
       validator: () => registerForm.role === 1 || registerForm.role === 2,
       message: '请选择有效的职能'
     }
+  ],
+  verifyCode: [
+    { required: true, message: '请输入验证码' }
   ]
 }
 
@@ -183,23 +200,64 @@ const toggleRegisterConfirmPassword = () => {
   showRegisterConfirmPassword.value = !showRegisterConfirmPassword.value
 }
 
+// 发送验证码
+const sendVerifyCode = async () => {
+  if (!registerForm.email) {
+    showToast('请输入邮箱')
+    return
+  }
+  
+  // 验证邮箱格式
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(registerForm.email)) {
+    showToast('邮箱格式不正确')
+    return
+  }
+  
+  try {
+    const res = await getCodeApi({
+      email: registerForm.email,
+      type: 1 // 注册类型固定为1
+    })
+    console.log(res)
+    if (res.code === 200) {
+      showToast('验证码已发送')
+      // 开始倒计时
+      countdown.value = 60
+      const timer = setInterval(() => {
+        countdown.value--
+        if (countdown.value <= 0) {
+          clearInterval(timer)
+        }
+      }, 1000)
+    } else {
+      showToast(res.msg || '发送失败')
+    }
+  } catch (err) {
+    console.error('发送验证码失败', err)
+    showToast('网络异常，请重试')
+  }
+}
+
 // 注册提交
 const onRegister = async () => {
   try {
     await formRef.value?.validate()
     registerLoading.value = true
 
-    // nickname 未填，默认用 username
+    // nickname未则username
     if (!registerForm.nickname) {
       registerForm.nickname = registerForm.username
     }
 
-    // 移除confirmPassword 和 roleText 字段
+    // 移除 confirmPassword 和 roleText 
     const { confirmPassword, roleText, ...submitData } = registerForm
     // 确保 role 是数字
     submitData.role = Number(submitData.role)
 
     const res = await registerApi(submitData)
+    console.log(res)
+    
     if (res.code === 200) {
       showToast('注册成功')
       // 清空表单
@@ -209,14 +267,29 @@ const onRegister = async () => {
         password: '',
         confirmPassword: '',
         email: '',
+        verifyCode: '',
         nickname: '',
         role: 0,
         roleText: ''
       })
+      // 重置倒计时
+      countdown.value = 0
       // 切换到登录选项卡
       emit('switchToLogin')
     } else {
-      showToast(res.msg || res.errorMsg || '注册失败')
+      // 细化错误提示
+      const errorMsg = res.msg || res.errorMsg || '注册失败'
+      if (errorMsg.includes('邮箱已被注册')) {
+        showToast('该邮箱已被注册，请更换邮箱')
+      } else if (errorMsg.includes('用户名已被占用')) {
+        showToast('用户名已被占用，请更换用户名')
+      } else if (errorMsg.includes('验证码错误')) {
+        showToast('验证码错误，请重新输入')
+      } else if (errorMsg.includes('密码格式不符合要求')) {
+        showToast('密码需包含大小写字母和数字，长度8-20位')
+      } else {
+        showToast(errorMsg)
+      }
     }
   } catch (err) {
     console.error('注册失败', err)

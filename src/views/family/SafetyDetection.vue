@@ -114,8 +114,6 @@
 
 <script setup>
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
-import { showToast } from 'vant'
-import { getSafetyStatusApi, getActivityRecordApi } from '@/api/family'
 
 const loading = ref(false)
 const finished = ref(false)
@@ -138,40 +136,6 @@ const settings = reactive({
   environmentAlert: true
 })
 
-// 加载活动记录
-const onLoad = async () => {
-  loading.value = true
-  try {
-    const res = await getActivityRecordApi({ page: 1, pageSize: 10 })
-    if (res && res.success === 200) {
-      activityList.value = res.data?.list || []
-      finished.value = true
-    }
-  } catch (err) {
-    showToast('加载活动记录失败')
-  } finally {
-    loading.value = false
-  }
-}
-
-// 加载安全状态
-const loadSafetyStatus = async () => {
-  try {
-    const res = await getSafetyStatusApi()
-    if (res && res.success === 200) {
-      const data = res.data
-      老人状态.value = data.status === 'normal'
-      老人位置.value = data.location
-      最后更新时间.value = data.updateTime
-      环境数据.temperature = data.environment.temperature
-      环境数据.humidity = data.environment.humidity
-      环境数据.gasLevel = data.environment.gasLevel
-    }
-  } catch (err) {
-    showToast('加载安全状态失败')
-  }
-}
-
 // 模拟实时数据更新
 let updateInterval
 
@@ -186,8 +150,6 @@ const startRealTimeUpdate = () => {
 
 // 初始化
 onMounted(() => {
-  loadSafetyStatus()
-  onLoad()
   startRealTimeUpdate()
 })
 
