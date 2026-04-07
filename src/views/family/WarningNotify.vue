@@ -54,8 +54,6 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { showToast } from 'vant'
-import { getWarningNotifyApi } from '@/api/family'
 
 // 预警列表数据
 const warningList = ref([])
@@ -67,37 +65,15 @@ const page = ref(1)
 const showDetail = ref(false)
 const currentDetail = ref(null)
 
-// 加载预警列表
-const loadWarningList = async () => {
-  try {
-    loading.value = true
-    const res = await getWarningNotifyApi({ page: page.value, pageSize: 10 })
-    if (res.code === 200) {
-      warningList.value.push(...res.data.list)
-      page.value++
-      if (warningList.value.length >= res.data.total) {
-        finished.value = true
-      }
-    } else {
-      showToast(res.msg || '加载失败')
-    }
-  } catch (err) {
-    showToast('网络异常，请重试')
-    console.error(err)
-  } finally {
-    loading.value = false
-  }
-}
-
 // 查看详情
 const goDetail = (item) => {
   currentDetail.value = item
   showDetail.value = true
 }
 
-// 页面加载时获取预警列表
+// 页面加载时初始化
 onMounted(() => {
-  loadWarningList()
+  // 这里可以添加初始化逻辑
 })
 </script>
 

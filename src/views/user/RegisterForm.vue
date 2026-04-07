@@ -13,13 +13,8 @@
         </template>
       </van-field>
 
-      <van-field
-        v-model="registerForm.confirmPassword"
-        label="确认密码"
-        :type="showRegisterConfirmPassword ? 'text' : 'password'"
-        placeholder="请确认密码"
-        :rules="rules.confirmPassword"
-      >
+      <van-field v-model="registerForm.confirmPassword" label="确认密码"
+        :type="showRegisterConfirmPassword ? 'text' : 'password'" placeholder="请确认密码" :rules="rules.confirmPassword">
         <template #right-icon>
           <van-icon :name="showRegisterConfirmPassword ? 'eye' : 'eye-o'" class="password-toggle-icon"
             @click="toggleRegisterConfirmPassword" />
@@ -28,7 +23,7 @@
 
       <van-field v-model="registerForm.email" label="邮箱" placeholder="请输入邮箱" :rules="rules.email" />
 
-      <!-- 职能选择（选择后正常显示，role=1老人端/2家庭端，数字类型） -->
+      <!-- 职能选择 -->
       <van-field v-model="registerForm.roleText" label="职能" placeholder="请选择职能" is-link readonly :rules="rules.role"
         @click="showRolePicker = true" />
       <van-popup v-model:show="showRolePicker" position="bottom">
@@ -52,7 +47,7 @@ import { registerApi } from '@/api/user'
 const emit = defineEmits(['switchToLogin'])
 const formRef = ref(null)
 
-// 注册表单（完全匹配接口字段，role为数字类型）
+// 注册表单
 const registerForm = reactive({
   username: '',
   phone: '',
@@ -60,12 +55,12 @@ const registerForm = reactive({
   confirmPassword: '',
   email: '',
   nickname: '',
-  role: 0, // 初始值0，避免默认提交
+  role: 0,
   roleText: '',
-  verifyCode: '' // 接口需要的字段，直接传空字符串
+  verifyCode: ''
 })
 
-// 加载
+// 加载状态
 const registerLoading = ref(false)
 
 // 密码可见
@@ -73,7 +68,7 @@ const showRegisterPassword = ref(false)
 const showRegisterConfirmPassword = ref(false)
 const showRolePicker = ref(false)
 
-// 职能选项（严格对应role值：1=老人端，2=家庭端，数字类型）
+// ✅ 修复：职能选择数组（正确写法，不是二维数组）
 const roleColumns = [
   { text: '老人端', value: 1 },
   { text: '家庭端', value: 2 }
@@ -81,9 +76,7 @@ const roleColumns = [
 
 // 表单验证
 const rules = {
-  username: [
-    { required: true, message: '请输入用户名' }
-  ],
+  username: [{ required: true, message: '请输入用户名' }],
   phone: [
     { required: true, message: '请输入手机号' },
     { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确' }
@@ -114,53 +107,39 @@ const toggleRegisterConfirmPassword = () => {
   showRegisterConfirmPassword.value = !showRegisterConfirmPassword.value
 }
 
-// 发送注册验证码（修正 API 调用）
-const sendRegisterCode = async () => {
-  if (!registerForm.value.email) {
-    showToast('请输入邮箱')
-    return
-  }
-
-  try {
-    loadingRegisterCode.value = true
-    // API 只接收 email
-    const res = await sendEmailCodeApi(registerForm.value.email)
-    if (res.code === 200) {
-      showToast('验证码已发送')
-      startRegisterCountdown()
-    } else {
-      showToast(res.msg || '发送失败')
-    }
-  } catch (err) {
-    showToast('网络异常，请重试')
-  } finally {
-    loadingRegisterCode.value = false
-  }
+// ✅ 修复：职能选择确认事件
+const handleRoleConfirm = ({ selectedOptions }) => {
+  const item = selectedOptions[0]
+  registerForm.role = item.value
+  registerForm.roleText = item.text
+  showRolePicker.value = false
 }
 
-// 注册提交（100%匹配接口参数，role为数字类型，verifyCode传空）
+// 注册提交
 const onRegister = async () => {
   try {
     await formRef.value?.validate()
     registerLoading.value = true
 
-    // 移除 confirmPassword 字段
-    const { confirmPassword, ...registerData } = registerForm.value
+    // 过滤掉不需要传给后端的字段
+    const { confirmPassword, ...registerData } = registerForm
     const res = await registerApi(registerData)
+
     if (res.code === 200) {
       showToast('注册成功')
-      // 清空注册表单
-      registerForm.value = {
-        account: '',
+      Object.assign(registerForm, {
+        username: '',
+        phone: '',
         password: '',
         confirmPassword: '',
         email: '',
-        code: ''
-      }
-      // 切换到登录选项卡
+        role: 0,
+        roleText: '',
+        verifyCode: ''
+      })
       emit('switchToLogin')
     } else {
-      showToast(res.errorMsg || '注册失败')
+      showToast(res.msg || '注册失败')
     }
   } catch (err) {
     console.error('注册失败', err)

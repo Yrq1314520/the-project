@@ -75,11 +75,6 @@ const routes = [
     component: () => import('@/views/oldman/DrugList.vue'),
     meta: { requiresAuth: true, role: 1 }
   },
-  {
-    path: '/oldman/remind',
-    component: () => import('@/views/oldman/RemindList.vue'),
-    meta: { requiresAuth: true, role: 1 }
-  },
 
   // 新增：老人端我的档案
   {
