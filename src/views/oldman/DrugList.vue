@@ -291,44 +291,50 @@ const handleDelete = (item) => {
 <style scoped>
 .old-drug-page {
   padding: 16px;
-  background: #f8f9fa;
+  background: var(--bg-color);
   min-height: 100vh;
 }
-
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
 }
-
 .page-title {
   font-size: 22px;
   font-weight: 600;
   margin: 0;
 }
-
+.page-header .van-button {
+  background: var(--primary-color);
+  border-radius: 30px;
+  padding: 8px 20px;
+}
+.van-cell {
+  font-size: 18px;
+  padding: 16px;
+}
+.van-cell__title {
+  font-weight: 600;
+}
 .dialog-content {
   padding: 20px;
   max-height: 80vh;
   overflow-y: auto;
 }
-
 .dialog-title {
   font-size: 18px;
   font-weight: 600;
   margin-bottom: 20px;
   text-align: center;
 }
-
 .dialog-buttons {
   display: flex;
   justify-content: space-between;
   margin-top: 20px;
+  gap: 12px;
 }
-
-.dialog-buttons van-button {
+.dialog-buttons .van-button {
   flex: 1;
-  margin: 0 10px;
 }
 </style>

@@ -71,15 +71,44 @@ const openDetail = (item) => {
 <style scoped>
 .real-warning-page {
   padding: 16px;
-  background: #f8f9fa;
+  background: var(--bg-color);
   min-height: 100vh;
 }
-.header { margin-bottom: 16px; }
-.header h2 { margin: 0 0 6px; }
-.tip { font-size: 14px; color: #666; margin: 0 0 8px; }
-.status-tag { font-size: 12px; padding: 2px 8px; border-radius: 12px; }
-.online { background: #e6f7ff; color: #1890ff; }
-.offline { background: #fff2f0; color: #ff4d4f; }
-.real-tag { background: #ff4d4f; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
-.detail { padding: 20px; }
+.header {
+  margin-bottom: 16px;
+}
+.header h2 {
+  margin: 0 0 6px;
+}
+.tip {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 0 8px;
+}
+.status-tag {
+  display: inline-block;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 30px;
+  font-weight: 600;
+}
+.online {
+  background: #e0f2e9;
+  color: #2e7d64;
+}
+.offline {
+  background: #fff2f0;
+  color: #ff4d4f;
+}
+.real-tag {
+  background: var(--danger-color);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.detail {
+  padding: 20px;
+}
 </style>

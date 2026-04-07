@@ -1,141 +1,126 @@
 <template>
-  <div class="emergency-contact">
-    <div class="header">
-      <h2>紧急联系人</h2>
-    </div>
+  <div class="emergency-setup">
+    <h2>设置紧急联系人</h2>
     
-    <div class="contact-content">
-      <!-- 联系人列表 -->
-      <van-list
-        v-model:loading="loading"
-        :finished="finished"
-        finished-text="没有更多了"
-        @load="onLoad"
-      >
-        <van-card
-          v-for="item in contactList"
-          :key="item.id"
-          :title="item.name"
-          :desc="`电话: ${item.phone}`"
-        >
-          <template #footer>
-            <div class="card-footer">
-              <span class="relation">{{ item.relation }}</span>
-              <div class="btn-group">
-                <van-button size="small" type="primary" @click="callContact(item.phone)">
-                  拨打电话
-                </van-button>
-              </div>
-            </div>
-          </template>
-        </van-card>
-      </van-list>
+    <van-form @submit="onSubmit" ref="formRef">
+      <van-cell-group inset>
+        <van-field
+          v-model="form.name"
+          label="联系人姓名"
+          placeholder="请输入紧急联系人姓名"
+          :rules="rules.name"
+          required
+        />
+        <van-field
+          v-model="form.phone"
+          label="联系电话"
+          placeholder="请输入手机号"
+          :rules="rules.phone"
+          required
+        />
+        <van-field
+          v-model="form.relation"
+          label="关系"
+          placeholder="如：儿子、女儿、邻居"
+          :rules="rules.relation"
+          required
+        />
+      </van-cell-group>
       
-      <!-- 提示信息 -->
-      <div v-if="contactList.length === 0 && !loading" class="empty-tip">
-        <van-icon name="info-o" size="48" />
-        <p>暂无紧急联系人</p>
-        <p class="sub-tip">请联系家属添加紧急联系人</p>
+      <div style="margin: 16px">
+        <van-button type="primary" block native-type="submit" :loading="submitting">
+          保存设置
+        </van-button>
       </div>
-    </div>
+    </van-form>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { showToast } from 'vant'
-import { getEmergencyContactsApi } from '@/api/family'
+import { useUserStore } from '@/store/user'
+import { getElderInfoByUserId, updateElderInfo } from '@/api/elderInfo'
 
-const loading = ref(false)
-const finished = ref(false)
-const contactList = ref([])
+const userStore = useUserStore()
+const formRef = ref(null)
+const submitting = ref(false)
 
-// 加载联系人列表
-const onLoad = async () => {
-  loading.value = true
+const form = reactive({
+  name: '',
+  phone: '',
+  relation: ''
+})
+
+const rules = {
+  name: [{ required: true, message: '请输入联系人姓名' }],
+  phone: [
+    { required: true, message: '请输入联系电话' },
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号' }
+  ],
+  relation: [{ required: true, message: '请填写与您的关系' }]
+}
+
+// 加载已有的紧急联系人信息,if
+const loadEmergencyContact = async () => {
   try {
-    const res = await getEmergencyContactsApi()
-    if (res && res.success === 200) {
-      contactList.value = res.data || []
-      finished.value = true
+    const res = await getElderInfoByUserId(userStore.userInfo.id)
+    if (res.code === 200 && res.data) {
+      form.name = res.data.emergencyName || ''
+      form.phone = res.data.emergencyPhone || ''
+      form.relation = res.data.emergencyRelation || ''
     }
   } catch (err) {
-    showToast('加载联系人失败')
-  } finally {
-    loading.value = false
+    console.error('加载紧急联系人失败', err)
   }
 }
 
-// 拨打电话
-const callContact = (phone) => {
-  window.location.href = `tel:${phone}`
+const onSubmit = async () => {
+  try {
+    await formRef.value?.validate()
+    submitting.value = true
+
+    const updateData = {
+      userId: userStore.userInfo.id,
+      emergencyName: form.name,
+      emergencyPhone: form.phone,
+      emergencyRelation: form.relation
+    }
+    
+    const res = await updateElderInfo(updateData)
+    if (res.code === 200) {
+      showToast('设置成功')
+      // 清空表单
+      form.name = ''
+      form.phone = ''
+      form.relation = ''
+      formRef.value?.resetValidation()
+    } else {
+      showToast(res.msg || res.errorMsg || '保存失败')
+    }
+  } catch (err) {
+    console.error('保存紧急联系人失败', err)
+    showToast('网络异常，请重试')
+  } finally {
+    submitting.value = false
+  }
 }
 
-// 初始化
 onMounted(() => {
-  onLoad()
+  loadEmergencyContact()
 })
 </script>
 
 <style scoped>
-.emergency-contact {
+.emergency-setup {
   padding: 20px;
-  background-color: #f8f9fa;
+  background: var(--bg-color);
   min-height: 100vh;
 }
-
-.header {
-  margin-bottom: 30px;
-}
-
-.header h2 {
-  font-size: 24px;
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 22px;
   font-weight: 600;
-  text-align: center;
-  color: #333;
-}
-
-.contact-content {
-  min-height: 60vh;
-}
-
-.van-card {
-  margin-bottom: 12px;
-}
-
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.relation {
-  color: #666;
-  font-size: 14px;
-}
-
-.btn-group {
-  display: flex;
-  gap: 8px;
-}
-
-.empty-tip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-}
-
-.empty-tip p {
-  font-size: 16px;
-  color: #666;
-  margin: 16px 0 8px;
-}
-
-.sub-tip {
-  font-size: 14px;
-  color: #999;
 }
 </style>

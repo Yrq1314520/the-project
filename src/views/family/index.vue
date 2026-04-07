@@ -1,20 +1,11 @@
 <template>
-  <div class="family-home">
-    <!-- 
-      家庭首页：
-      家庭端登录后有的功能：
-      1. 绑定老人
-      2. 老人档案
-      3. 药品管理
-      4. 预警通知
-      5. 实时预警
-      6. 紧急联系人
-      7. 用户注销
-    -->
-    <van-cell-group>
+  <div class="family-home page-container">
+    <!-- 注销按钮单独卡片 -->
+    <van-cell-group inset class="logout-card">
       <van-cell title="用户注销" icon="delete" is-link @click="handleLogout" />
     </van-cell-group>
-    <van-grid column-num="2" :gutter="12">
+    <!-- 功能网格 -->
+    <van-grid :column-num="2" :gutter="16" class="func-grid">
       <van-grid-item icon="user-o" text="绑定老人" to="/family/bind-oldman" />
       <van-grid-item icon="records" text="老人档案" to="/family/oldman-profile" />
       <van-grid-item icon="medal-o" text="药品管理" to="/family/drug-manage" />
@@ -24,7 +15,6 @@
     </van-grid>
   </div>
 </template>
-
 <script setup>
 import { useRouter } from 'vue-router'
 import { showDialog, showToast } from 'vant'
@@ -59,6 +49,18 @@ const handleLogout = async () => {
 
 <style scoped>
 .family-home {
-  padding: 20px;
+  background: var(--bg-color);
+}
+.logout-card {
+  margin-bottom: 20px;
+}
+.func-grid .van-grid-item {
+  background: var(--card-bg);
+  border-radius: var(--border-radius-md);
+  padding: 12px 0;
+  transition: transform 0.1s;
+}
+.func-grid .van-grid-item:active {
+  transform: scale(0.98);
 }
 </style>

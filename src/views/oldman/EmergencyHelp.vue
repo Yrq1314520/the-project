@@ -136,36 +136,31 @@ onMounted(() => {
 <style scoped>
 .emergency-help {
   padding: 20px;
-  background-color: #f8f9fa;
+  background-color: var(--bg-color);
   min-height: 100vh;
 }
-
 .header {
   margin-bottom: 30px;
 }
-
 .header h2 {
   font-size: 24px;
   font-weight: 600;
   text-align: center;
-  color: #333;
+  color: var(--text-primary);
 }
-
 .emergency-content {
   display: flex;
   flex-direction: column;
   gap: 30px;
 }
-
 .emergency-button-container {
   display: flex;
   justify-content: center;
 }
-
 .emergency-button {
-  width: 200px;
-  height: 200px;
-  background-color: #ff4d4f;
+  width: 220px;
+  height: 220px;
+  background-color: var(--danger-color);
   color: white;
   border-radius: 50%;
   display: flex;
@@ -173,31 +168,30 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(255, 77, 79, 0.3);
+  box-shadow: 0 12px 24px rgba(232, 106, 106, 0.4);
   transition: transform 0.3s ease;
 }
-
-.emergency-button:hover {
-  transform: scale(1.05);
+.emergency-button:active {
+  transform: scale(0.95);
 }
-
 .emergency-button h3 {
-  font-size: 20px;
+  font-size: 28px;
   font-weight: 600;
   margin: 16px 0 8px;
 }
-
 .emergency-button p {
-  font-size: 14px;
+  font-size: 15px;
   opacity: 0.9;
   margin: 0;
 }
-
 .contact-section h3,
 .history-section h3 {
   font-size: 18px;
   font-weight: 600;
   margin-bottom: 16px;
-  color: #333;
+  color: var(--text-primary);
+}
+.van-cell-group--inset .van-cell {
+  font-size: 18px;
 }
 </style>

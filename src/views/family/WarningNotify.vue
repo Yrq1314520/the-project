@@ -80,52 +80,49 @@ onMounted(() => {
 <style scoped>
 .warning-page {
   padding: 16px;
-  background-color: #f8f9fa;
+  background-color: var(--bg-color);
   min-height: 100vh;
 }
-
 .header {
   margin-bottom: 16px;
 }
-
 .header h2 {
   margin: 0 0 6px;
   font-size: 20px;
   font-weight: 600;
 }
-
 .tip {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0;
 }
-
 .list-group {
-  background-color: #f8f9fa;
+  background-color: transparent;
 }
-
+.list-group .van-cell-group {
+  margin-bottom: 12px;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
 .tag {
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 500;
 }
-
 .email-tag {
-  background-color: #e6f7ff;
-  color: #1890ff;
+  background-color: #E8F4FD;
+  color: var(--primary-color);
 }
-
 .alert-tag {
-  background-color: #fff2f0;
-  color: #ff4d4f;
+  background-color: #FFEFEF;
+  color: var(--danger-color);
 }
-
 .detail-content {
   padding: 20px;
   height: 100%;
   overflow-y: auto;
 }
-
 .detail-content h3 {
   text-align: center;
   margin-bottom: 20px;

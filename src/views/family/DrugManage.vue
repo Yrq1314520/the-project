@@ -342,46 +342,45 @@ const handleDelete = (item) => {
 </script>
 
 <style scoped>
-.family-drug-page {
+.drug-manage {
+  background: var(--bg-color);
   padding: 16px;
-  background: #f8f9fa;
-  min-height: 100vh;
 }
-
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
 }
-
-.page-title {
+.page-header h2 {
   font-size: 22px;
   font-weight: 600;
+  color: var(--text-primary);
   margin: 0;
 }
-
-.dialog-content {
-  padding: 20px;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-.dialog-title {
-  font-size: 18px;
-  font-weight: 600;
+.search-card,
+.drug-list-card {
+  border-radius: var(--border-radius-lg) !important;
   margin-bottom: 20px;
   text-align: center;
 }
-
-.dialog-buttons {
+.search-form {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.pagination {
+  display: flex;
+  justify-content: flex-end;
   margin-top: 20px;
 }
-
-.dialog-buttons van-button {
-  flex: 1;
-  margin: 0 10px;
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.el-button--small {
+  padding: 8px 12px;
 }
 </style>
