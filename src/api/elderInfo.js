@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 添加档案
 export function addElderInfo(data) {
   return request({
-    url: '/elderInfo/add',
+    url: '/v1/elderInfo/add',
     method: 'post',
     data
   })
@@ -12,7 +12,7 @@ export function addElderInfo(data) {
 // 修改档案，老人/家属
 export function updateElderInfo(data) {
   return request({
-    url: '/elderInfo/update',
+    url: '/v1/elderInfo/update',
     method: 'post',
     data
   })
@@ -21,7 +21,7 @@ export function updateElderInfo(data) {
 // 删除档案，家属端用
 export function deleteElderInfo(id) {
   return request({
-    url: `/elderInfo/delete/${id}`,
+    url: `/v1/elderInfo/delete/${id}`,
     method: 'post'
   })
 }
@@ -29,7 +29,7 @@ export function deleteElderInfo(id) {
 // 家属绑定老人账号（家属端绑定页使用）
 export function bindElderAccount(data) {
   return request({
-    url: '/elderInfo/bind-account',
+    url: '/v1/elderInfo/bind-account',
     method: 'post',
     data
   })
@@ -38,7 +38,7 @@ export function bindElderAccount(data) {
 // 通过用户名查询用户信息
 export function searchUserByUsername(data) {
   return request({
-    url: '/elderInfo/search/byusername',
+    url: '/v1/elderInfo/search/byusername',
     method: 'post',
     data
   })
@@ -47,7 +47,7 @@ export function searchUserByUsername(data) {
 // 根据用户id查询档案（老人 / 家属都可用）
 export function getElderInfoByUserId(userId) {
   return request({
-    url: `/elderInfo/user/${userId}`,
+    url: `/v1/elderInfo/user/${userId}`,
     method: 'post'
   })
 }
@@ -56,7 +56,7 @@ export function getElderInfoByUserId(userId) {
 // 设置紧急联系人（老人端）
 export function setEmergencyContactForElder(data) {
   return request({
-    url: '/elderInfo/update',
+    url: '/v1/elderInfo/update',
     method: 'post',
     data
   })
@@ -65,7 +65,7 @@ export function setEmergencyContactForElder(data) {
 // 获取老人档案列表（家属端）
 export function getElderListApi() {
   return request({
-    url: '/elderInfo/list',
+    url: '/v1/elderInfo/list',
     method: 'get'
   })
 }

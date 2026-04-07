@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 用户登录
 export function loginApi(data) {
   return request({
-    url: '/users/login',
+    url: '/v1/users/login',
     method: 'post',
     data: {
       phone: data.phone,
@@ -15,7 +15,7 @@ export function loginApi(data) {
 // 获取邮箱验证码，找回密码，修改密码
 export function sendEmailCodeApi(email) {
   return request({
-    url: '/codes',
+    url: '/v1/codes',
     method: 'post',
     data
   })
@@ -24,7 +24,7 @@ export function sendEmailCodeApi(email) {
 // 用户注册
 export function registerApi(data) {
   return request({
-    url: '/users',
+    url: '/v1/users',
     method: 'post',
     data
   })
@@ -33,16 +33,19 @@ export function registerApi(data) {
 //获取验证码注册
 export function getCodeApi(data) {
   return request({
-    url: '/codes/email',
+    url: '/v1/codes/email',
     method: 'post',
-    data
+    data: {
+      email: data.email,
+      type: data.type || 1
+    }
   })
 }
 
 //修改用户密码，登录状态下
 export function updatePasswordApi(userId, data) {
   return request({
-    url: `/users/${userId}/password`,
+    url: `/v1/users/${userId}/password`,
     method: 'post',
     data
   })
@@ -51,7 +54,7 @@ export function updatePasswordApi(userId, data) {
 //找回密码，密码重置
 export function resetPasswordApi(data) {
   return request({
-    url: '/password-reset',
+    url: '/v1/password-reset',
     method: 'post',
     data
   })
@@ -60,7 +63,7 @@ export function resetPasswordApi(data) {
 //文字提问，语音回答
 export function voiceChatApi(data) {
   return request({
-    url: '/voice/chat/text',
+    url: '/v1/voice/chat/text',
     method: 'post',
     data
   })
@@ -69,7 +72,7 @@ export function voiceChatApi(data) {
 // 修改个人信息（需要登录后才能实现）
 export function updateProfileApi(data) {
   return request({
-    url: '/users/info',
+    url: '/v1/users/info',
     method: 'post',
     data
   })
@@ -78,7 +81,7 @@ export function updateProfileApi(data) {
 // 查询当前登录信息
 export function getUserInfoApi(userId) {
   return request({
-    url: `/users/${userId}`,
+    url: `/v1/users/${userId}`,
     method: 'get'
   })
 }
@@ -86,7 +89,7 @@ export function getUserInfoApi(userId) {
 // 退出登录
 export function logoutApi(data) {
   return request({
-    url: '/users/logout',
+    url: '/v1/users/logout',
     method: 'post',
     data
   })
@@ -95,7 +98,7 @@ export function logoutApi(data) {
 // 注销账号
 export function cancelAccountApi() {
   return request({
-    url: '/users/canel',
+    url: '/v1/users/canel',
     method: 'delete'
   })
 }
@@ -104,7 +107,7 @@ export function cancelAccountApi() {
 // 密码修改（需要登录后才能实现）
 export function changePasswordApi(data) {
   return request({
-    url: '/users/changePassword',
+    url: '/v1/users/changePassword',
     method: 'post',
     data
   })

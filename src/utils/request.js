@@ -3,7 +3,7 @@ import { showToast } from 'vant'
 import router from '@/router'
 
 const service = axios.create({
-  baseURL: '/api/v1', //vite代理地址
+  baseURL: '/api', //vite代理地址
   timeout: 10000
 })
 

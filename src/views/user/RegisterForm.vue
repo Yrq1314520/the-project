@@ -49,11 +49,26 @@
         :rules="rules.email"
       />
 
+      <!-- 验证码 -->
+      <van-field
+        v-model="registerForm.verifyCode"
+        label="验证码"
+        placeholder="请输入验证码"
+        :rules="rules.verifyCode"
+      >
+        <template #button>
+          <van-button
+            size="small"
+            type="primary"
+            :disabled="countdown > 0"
+            @click="sendVerifyCode"
+          >
+            {{ countdown > 0 ? `${countdown}s后重发` : '获取验证码' }}
+          </van-button>
+        </template>
+      </van-field>
+
       <!-- 职能选择 -->
-<<<<<<< HEAD
-      <van-field v-model="registerForm.roleText" label="职能" placeholder="请选择职能" is-link readonly :rules="rules.role"
-        @click="showRolePicker = true" />
-=======
       <van-field
         v-model="registerForm.roleText"
         label="职能"
@@ -63,7 +78,6 @@
         :rules="rules.role"
         @click="showRolePicker = true"
       />
->>>>>>> 61a43874514644d13c9b6660fa4e7beadf03bd6e
       <van-popup v-model:show="showRolePicker" position="bottom">
         <van-picker
           :columns="roleColumns"
@@ -90,7 +104,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { showToast } from 'vant'
-import { registerApi } from '@/api/user'
+import { registerApi, getCodeApi } from '@/api/user'
 
 const emit = defineEmits(['switchToLogin'])
 const formRef = ref(null)
@@ -102,32 +116,20 @@ const registerForm = reactive({
   password: '',
   confirmPassword: '',
   email: '',
-<<<<<<< HEAD
-  nickname: '',
-  role: 0,
-  roleText: '',
-  verifyCode: ''
-})
-
-// 加载状态
-=======
+  verifyCode: '',
   nickname: '',        
   role: 0,            
   roleText: ''
 })
 
 // UI 状态
->>>>>>> 61a43874514644d13c9b6660fa4e7beadf03bd6e
 const registerLoading = ref(false)
 const showRegisterPassword = ref(false)
 const showRegisterConfirmPassword = ref(false)
 const showRolePicker = ref(false)
+const countdown = ref(0)
 
-<<<<<<< HEAD
-// ✅ 修复：职能选择数组（正确写法，不是二维数组）
-=======
 // 职能选项
->>>>>>> 61a43874514644d13c9b6660fa4e7beadf03bd6e
 const roleColumns = [
   { text: '老人端', value: 1 },
   { text: '家庭端', value: 2 }
@@ -138,11 +140,11 @@ const onRoleConfirm = (selected) => {
   let selectedValue
   if (selected && typeof selected === 'object') {
     if (Array.isArray(selected)) {
-      selectedValue = selected[0]
+      selectedValue = Number(selected[0])
     } else if (selected.selectedValues) {
-      selectedValue = selected.selectedValues[0]
+      selectedValue = Number(selected.selectedValues[0])
     } else if (selected.value !== undefined) {
-      selectedValue = selected.value
+      selectedValue = Number(selected.value)
     }
   }
   const option = roleColumns.find(item => item.value === selectedValue)
@@ -184,6 +186,9 @@ const rules = {
       validator: () => registerForm.role === 1 || registerForm.role === 2,
       message: '请选择有效的职能'
     }
+  ],
+  verifyCode: [
+    { required: true, message: '请输入验证码' }
   ]
 }
 
@@ -195,31 +200,51 @@ const toggleRegisterConfirmPassword = () => {
   showRegisterConfirmPassword.value = !showRegisterConfirmPassword.value
 }
 
-<<<<<<< HEAD
-// ✅ 修复：职能选择确认事件
-const handleRoleConfirm = ({ selectedOptions }) => {
-  const item = selectedOptions[0]
-  registerForm.role = item.value
-  registerForm.roleText = item.text
-  showRolePicker.value = false
+// 发送验证码
+const sendVerifyCode = async () => {
+  if (!registerForm.email) {
+    showToast('请输入邮箱')
+    return
+  }
+  
+  // 验证邮箱格式
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(registerForm.email)) {
+    showToast('邮箱格式不正确')
+    return
+  }
+  
+  try {
+    const res = await getCodeApi({
+      email: registerForm.email,
+      type: 1 // 注册类型固定为1
+    })
+    console.log(res)
+    if (res.code === 200) {
+      showToast('验证码已发送')
+      // 开始倒计时
+      countdown.value = 60
+      const timer = setInterval(() => {
+        countdown.value--
+        if (countdown.value <= 0) {
+          clearInterval(timer)
+        }
+      }, 1000)
+    } else {
+      showToast(res.msg || '发送失败')
+    }
+  } catch (err) {
+    console.error('发送验证码失败', err)
+    showToast('网络异常，请重试')
+  }
 }
 
-=======
->>>>>>> 61a43874514644d13c9b6660fa4e7beadf03bd6e
 // 注册提交
 const onRegister = async () => {
   try {
     await formRef.value?.validate()
     registerLoading.value = true
 
-<<<<<<< HEAD
-    // 过滤掉不需要传给后端的字段
-    const { confirmPassword, ...registerData } = registerForm
-    const res = await registerApi(registerData)
-
-    if (res.code === 200) {
-      showToast('注册成功')
-=======
     // nickname 未填，默认用 username
     if (!registerForm.nickname) {
       registerForm.nickname = registerForm.username
@@ -231,34 +256,27 @@ const onRegister = async () => {
     submitData.role = Number(submitData.role)
 
     const res = await registerApi(submitData)
+    console.log(res)
     if (res.code === 200) {
       showToast('注册成功')
       // 清空表单
->>>>>>> 61a43874514644d13c9b6660fa4e7beadf03bd6e
       Object.assign(registerForm, {
         username: '',
         phone: '',
         password: '',
         confirmPassword: '',
         email: '',
-<<<<<<< HEAD
-        role: 0,
-        roleText: '',
-        verifyCode: ''
-      })
-      emit('switchToLogin')
-    } else {
-      showToast(res.msg || '注册失败')
-=======
+        verifyCode: '',
         nickname: '',
         role: 0,
         roleText: ''
       })
+      // 重置倒计时
+      countdown.value = 0
       // 切换到登录选项卡
       emit('switchToLogin')
     } else {
       showToast(res.msg || res.errorMsg || '注册失败')
->>>>>>> 61a43874514644d13c9b6660fa4e7beadf03bd6e
     }
   } catch (err) {
     console.error('注册失败', err)
