@@ -37,7 +37,7 @@ export function getCodeApi(data) {
     method: 'post',
     data: {
       email: data.email,
-      type: data.type || 1
+      type: data.type
     }
   })
 }
