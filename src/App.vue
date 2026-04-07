@@ -1,17 +1,23 @@
 <template>
-  <!-- 路由出口：所有页面都会在这里渲染 -->
-  <router-view />
+  <div id="app">
+    <router-view />
+  </div>
 </template>
 
 <script setup>
-// 不需要额外代码
+// 
 </script>
 
 <style>
-/* 全局样式重置 */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+#app {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #f5f7fa;
 }
 </style>

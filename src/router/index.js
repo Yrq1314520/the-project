@@ -73,14 +73,35 @@ const routes = [
   {
     path: '/oldman/drug',
     component: () => import('@/views/oldman/DrugList.vue'),
+<<<<<<< HEAD
+    meta: { requiresAuth: true, role: '1' }
+=======
     meta: { requiresAuth: true, role: 1 }
   },
+<<<<<<< HEAD
+=======
+  {
+    path: '/oldman/remind',
+    component: () => import('@/views/oldman/RemindList.vue'),
+    meta: { requiresAuth: true, role: 1 }
+>>>>>>> 067fde764c4f0740523ab8185088536dd8ffc3f4
+  },
+  // {
+  //   path: '/oldman/remind',
+  //   component: () => import('@/views/oldman/RemindList.vue'),
+  //   meta: { requiresAuth: true, role: '1' }
+  // },
+>>>>>>> 61a43874514644d13c9b6660fa4e7beadf03bd6e
 
   // 新增：老人端我的档案
   {
     path: '/oldman/profile',
     component: () => import('@/views/oldman/MyProfile.vue'),
+<<<<<<< HEAD
+    meta: { requiresAuth: true, role: '1' }
+=======
     meta: { requiresAuth: true, role: 1 }
+>>>>>>> 067fde764c4f0740523ab8185088536dd8ffc3f4
   },
 
   // 重定向旧路由
@@ -103,6 +124,7 @@ const router = createRouter({
 
 // 路由守卫,未登录不能进需要权限的页面
 router.beforeEach((to, from, next) => {
+  return next()
   // 从本地存储获取token和用户信息
   const token = localStorage.getItem('token')
   const userInfoStr = localStorage.getItem('userInfo')
@@ -154,7 +176,7 @@ router.beforeEach((to, from, next) => {
   }
 
   // 权限验证通过，继续访问
-  next()
+  return next()
 })
 
 export default router
