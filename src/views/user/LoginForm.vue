@@ -51,17 +51,12 @@ const userStore = useUserStore()
 const formRef = ref(null)
 
 const loginForm = reactive({
-<<<<<<< HEAD
-  phone: '',      
-=======
   phone: '',
->>>>>>> 51676807013fff7e6e441f3ab3bed229d165f305
   password: ''
 })
 
 const loading = ref(false)
 const showPassword = ref(false)
-
 
 const rules = {
   phone: [
@@ -69,12 +64,8 @@ const rules = {
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号' }
   ],
   password: [
-<<<<<<< HEAD
-    { required: true, message: '请输入密码' }
-=======
     { required: true, message: '请输入密码' },
     { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,20}$/, message: '密码必须包含大小写字母和数字，8-20位' }
->>>>>>> 51676807013fff7e6e441f3ab3bed229d165f305
   ]
 }
 
@@ -82,92 +73,31 @@ const togglePassword = () => {
   showPassword.value = !showPassword.value
 }
 
-// 调用接口登录
-// const onLogin = async () => {
-//   try {
-//     await formRef.value?.validate()
-//     loading.value = true
-//     const res = await loginApi(loginForm)
-//     console.log(res)
-//     if (res && res.success === 200 && res.data) {
-//       userStore.setLoginInfo(res.data.token, res.data)
-//       showToast('登录成功')
-
-//       // 根据角色跳转不同的页面：
-//       // 1.老人
-//       // 2.家庭成员
-//       // 3.管理员
-//       if(res.data.role === 1){
-//         router.push('/oldman')
-//       } else if(res.data.role === 2){
-//         router.push('/family')
-//       } else if(res.data.role === 3){
-//         router.push('/admin')
-//       }
-
-//     } else {
-//       showToast(res?.errorMsg || '登录失败')
-//     }
-//   } catch (err) {
-//     console.error('登录请求失败', err)
-//     showToast('网络异常，请重试')
-//   } finally {
-//     loading.value = false
-//   }
-// }
-
-
-
-// =====================================================
-
-// 不调用接口登录
+// API 调用
 const onLogin = async () => {
   try {
     await formRef.value?.validate()
     loading.value = true
-
-<<<<<<< HEAD
     const res = await loginApi(loginForm)
-    console.log('后端返回：', res)
-    if (res.success === 200 && res.data) {
-      const token = res.data.token
-      localStorage.setItem('token', token)
-      userStore.setLoginInfo(token, res.data)
+    if (res.code === 200 && res.data) {
+      userStore.setLoginInfo(res.data.token, res.data)
       showToast('登录成功')
-      
-      setTimeout(() => {
+
+      // 根据角色跳转不同的页面
+      if (res.data.role === 1) {
+        router.push('/oldman')
+      } else if (res.data.role === 2) {
         router.push('/family')
-      }, 300)
+      } else if (res.data.role === 3) {
+        router.push('/admin')
+      } else {
+        router.push('/family')
+      }
     } else {
-      showToast(res.errorMsg || '登录失败')
+      showToast(res.msg || '登录失败')
     }
   } catch (err) {
-    showToast('网络异常')
-=======
-    // 模拟登录成功
-    const mockUser = {
-      token: 'mock-token-' + Date.now(),
-      phone: loginForm.phone,
-      role: 3 // 模拟角色，可根据需要修改 1.老人 2.家庭成员 3.管理员
-    }
-
-    // 保存登录信息
-    userStore.setLoginInfo(mockUser.token, mockUser)
-    showToast('登录成功')
-
-    // 根据角色跳转不同的页面
-    if (mockUser.role === 1) {
-      router.push('/oldman')
-    } else if (mockUser.role === 2) {
-      router.push('/family')
-    } else if (mockUser.role === 3) {
-      router.push('/admin')
-    } else {
-      router.push('/family')
-    }
-  } catch (err) {
-    showToast('登录失败，请检查账号密码')
->>>>>>> 51676807013fff7e6e441f3ab3bed229d165f305
+    showToast('网络异常，请重试')
   } finally {
     loading.value = false
   }

@@ -29,7 +29,7 @@
           placeholder="请输入新密码"
           :rules="[
             { required: true, message: '请输入新密码' },
-            { min: 6, message: '密码至少6位' }
+            { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,20}$/, message: '密码必须包含大小写字母和数字，8-20位' }
           ]"
         >
           <template #right-icon>
@@ -80,7 +80,7 @@ const router = useRouter()
 const formRef = ref(null)
 const loading = ref(false)
 
-// 密码可见性
+// 密码可见
 const showOldPassword = ref(false)
 const showNewPassword = ref(false)
 const showConfirmPassword = ref(false)
@@ -97,18 +97,21 @@ const validateConfirmPassword = (value) => {
   return value === form.newPassword
 }
 
-// 提交修改
+// 提交修改，只传oldPassword和newPassword
 const onSubmit = async () => {
   try {
     await formRef.value?.validate()
     loading.value = true
     
-    const res = await changePasswordApi(form)
-    if (res && res.success === 200) {
+    const res = await changePasswordApi({
+      oldPassword: form.oldPassword,
+      newPassword: form.newPassword
+    })
+    if (res.code === 200) {
       showToast('密码修改成功')
       router.push('/user/profile')
     } else {
-      showToast(res?.errorMsg || '密码修改失败')
+      showToast(res.msg || '密码修改失败')
     }
   } catch (err) {
     showToast('网络异常，请重试')

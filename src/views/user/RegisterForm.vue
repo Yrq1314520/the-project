@@ -24,7 +24,6 @@
         </template>
       </van-field>
 
-      <!-- 确认密码字段 -->
       <van-field
         v-model="registerForm.confirmPassword"
         label="确认密码"
@@ -98,10 +97,10 @@ const registerForm = ref({
   code: ''
 })
 
-// 加载状态
+// 加载
 const registerLoading = ref(false)
 
-// 密码可见性
+// 密码可见
 const showRegisterPassword = ref(false)
 const showRegisterConfirmPassword = ref(false)
 
@@ -110,7 +109,7 @@ const loadingRegisterCode = ref(false)
 const registerCount = ref(0)
 let registerTimer = null
 
-// 表单验证规则
+// 表单验证
 const rules = {
   account: [
     { required: true, message: '请输入账号' },
@@ -141,9 +140,7 @@ const rules = {
   ]
 }
 
-
-
-// 切换密码可见性
+// 切换密码可见
 const toggleRegisterPassword = () => {
   showRegisterPassword.value = !showRegisterPassword.value
 }
@@ -152,7 +149,7 @@ const toggleRegisterConfirmPassword = () => {
   showRegisterConfirmPassword.value = !showRegisterConfirmPassword.value
 }
 
-// 发送注册验证码
+// 发送注册验证码（修正 API 调用）
 const sendRegisterCode = async () => {
   if (!registerForm.value.email) {
     showToast('请输入邮箱')
@@ -161,10 +158,8 @@ const sendRegisterCode = async () => {
 
   try {
     loadingRegisterCode.value = true
-    const res = await sendEmailCodeApi({
-      email: registerForm.value.email,
-      type: 'register'
-    })
+    // API 只接收 email
+    const res = await sendEmailCodeApi(registerForm.value.email)
     if (res.code === 200) {
       showToast('验证码已发送')
       startRegisterCountdown()
@@ -197,7 +192,7 @@ const onRegister = async () => {
     await formRef.value?.validate()
     registerLoading.value = true
 
-    // 移除confirmPassword字段，只发送必要字段
+    // 移除 confirmPassword 字段
     const { confirmPassword, ...registerData } = registerForm.value
     const res = await registerApi(registerData)
     if (res.code === 200) {
@@ -210,7 +205,7 @@ const onRegister = async () => {
         email: '',
         code: ''
       }
-      // 触发切换到登录选项卡
+      // 切换到登录选项卡
       emit('switchToLogin')
     } else {
       showToast(res.msg || '注册失败')
@@ -236,7 +231,6 @@ const emit = defineEmits(['switchToLogin'])
   font-size: 18px;
 }
 
-/* 密码切换图标样式 */
 .password-toggle-icon {
   font-size: 20px;
   color: #999;
