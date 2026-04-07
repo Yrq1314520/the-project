@@ -79,11 +79,13 @@ const del = async (id) => {
 <style scoped>
 .contact-page {
   padding: 16px;
-  background: #f5f7fa;
+  background: var(--bg-color);
   min-height: 100vh;
 }
 h2 {
   text-align: center;
   margin-bottom: 20px;
+  font-size: 22px;
+  font-weight: 600;
 }
 </style>

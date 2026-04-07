@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
-// 引入Vant/Element Plus
+//引入Vant/Element Plus
 import Components from 'unplugin-vue-components/vite'
 import { VantResolver, ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
@@ -12,20 +12,30 @@ export default defineConfig({
       resolvers: [VantResolver(), ElementPlusResolver()]
     })
   ],
-  // 路径别名，@ 指向 src 目录
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src')
     }
   },
-  // 跨域代理（对接后端接口）
   server: {
     proxy: {
       '/api': {
-        target: 'http://118.195.215.81/yiguardsilverfa', // 后端实际地址
+        target: 'http://118.195.215.81/yiguardsilverfa',
         changeOrigin: true,
         rewrite: (path) => path
       }
     }
-  }
+  },
+  css: {
+    preprocessorOptions: {
+      less: {
+        modifyVars: {
+          'primary-color': '#3B7C9E',
+          'border-radius-base': '12px',
+          'button-primary-background-color': '#3B7C9E',
+          'cell-line-height': '1.5',
+        },
+      },
+    },
+  },
 })

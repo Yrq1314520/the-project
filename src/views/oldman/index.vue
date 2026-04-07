@@ -1,5 +1,5 @@
 <template>
-  <div class="oldman-home">
+  <div class="oldman-home page-container oldman">
     <div class="header">
       <h2>老人端</h2>
       <div class="user-info">
@@ -7,35 +7,30 @@
       </div>
     </div>
     
-    <!-- 语音问答入口 -->
     <div class="voice-section">
       <div class="voice-card" @click="startVoiceQnA">
-        <div class="voice-icon">
-          <van-icon name="microphone" size="48" />
+        <div class="voice-icon pulse">
+          <van-icon name="microphone" size="56" />
         </div>
         <h3>语音问答</h3>
-        <p>点击开始语音交互</p>
+        <p>按住说话，方言也懂您</p>
       </div>
     </div>
     
-    <!-- 功能网格 -->
     <div class="function-grid">
       <van-grid :column-num="2" gap="16">
+        <van-grid-item icon="chat-o" text="智能助手" to="/oldman/chat" />
         <van-grid-item icon="medicine-box" text="药品信息" to="/oldman/drug" />
-
         <van-grid-item icon="phone-o" text="紧急求助" to="/oldman/emergency" />
         <van-grid-item icon="contacts" text="紧急联系人" to="/oldman/emergency-contact" />
       </van-grid>
     </div>
     
-    <!-- 健康状态 -->
     <div class="health-section">
       <h3>健康状态</h3>
       <div class="health-cards">
         <van-card>
-          <template #title>
-            今日状态
-          </template>
+          <template #title>今日状态</template>
           <div class="health-info">
             <div class="health-item">
               <span class="label">血压</span>
@@ -54,7 +49,6 @@
       </div>
     </div>
     
-    <!-- 紧急求助按钮 -->
     <div class="emergency-button">
       <van-button type="danger" block size="large" @click="goToEmergency">
         <van-icon name="warning" style="margin-right: 8px" />
@@ -127,109 +121,107 @@ const goToEmergency = () => {
 
 <style scoped>
 .oldman-home {
-  padding: 20px;
-  background-color: #f8f9fa;
-  min-height: 100vh;
+  background: var(--bg-color);
 }
-
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
 }
-
 .header h2 {
   font-size: 24px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
 }
-
 .user-info {
   font-size: 16px;
-  color: #666;
+  color: var(--text-secondary);
 }
-
 .voice-section {
   margin-bottom: 30px;
 }
-
 .voice-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 30px;
-  border-radius: 12px;
+  background: linear-gradient(135deg, #5F9DB5 0%, #3B7C9E 100%);
+  border-radius: 28px;
+  padding: 32px 20px;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  color: white;
+  box-shadow: 0 8px 20px rgba(59, 124, 158, 0.2);
   cursor: pointer;
-  transition: transform 0.3s ease;
+  transition: transform 0.2s;
 }
-
-.voice-card:hover {
-  transform: translateY(-5px);
+.voice-card:active {
+  transform: scale(0.98);
 }
-
+.pulse {
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  70% { transform: scale(1.08); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
 .voice-icon {
   margin-bottom: 16px;
 }
-
 .voice-card h3 {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600;
   margin-bottom: 8px;
 }
-
 .voice-card p {
-  font-size: 14px;
+  font-size: 15px;
   opacity: 0.9;
-  margin-bottom: 0;
 }
-
 .function-grid {
   margin-bottom: 30px;
 }
-
 .health-section {
   margin-bottom: 30px;
 }
-
 .health-section h3 {
   font-size: 18px;
   font-weight: 600;
   margin-bottom: 16px;
-  color: #333;
+  color: var(--text-primary);
 }
-
+.health-cards .van-card {
+  background: var(--card-bg);
+  border-radius: var(--border-radius-lg);
+}
 .health-info {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
-
 .health-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 18px;
 }
-
 .health-item:last-child {
   border-bottom: none;
 }
-
 .health-item .label {
-  font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
 }
-
 .health-item .value {
-  font-size: 16px;
-  font-weight: 500;
-  color: #333;
+  font-weight: 600;
+  color: var(--text-primary);
 }
-
 .emergency-button {
   margin-top: 20px;
+}
+.emergency-button .van-button {
+  background: var(--danger-color);
+  border: none;
+  font-size: 18px;
+  font-weight: bold;
+  height: 56px;
+  border-radius: 40px;
 }
 </style>

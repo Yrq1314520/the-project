@@ -7,7 +7,7 @@ import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
 // 全局样式
-//import '@/styles/index.css'
+import '@/styles/theme.css'
 
 const app = createApp(App)
 

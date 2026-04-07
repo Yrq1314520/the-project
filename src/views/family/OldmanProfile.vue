@@ -400,64 +400,53 @@ onMounted(() => {
 <style scoped>
 .profile-page {
   padding: 16px;
-  background: #f8f9fa;
+  background: var(--bg-color);
   min-height: 100vh;
 }
-
 .action-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
 }
-
 .action-bar h2 {
   font-size: 20px;
   font-weight: 600;
   margin: 0;
 }
-
 .search-bar {
   margin-bottom: 16px;
 }
-
 .van-card {
   margin-bottom: 12px;
-  background: #fff;
-  border-radius: 8px;
+  background: var(--card-bg);
+  border-radius: var(--border-radius-lg);
 }
-
 .gender-tag {
   margin-right: 8px;
 }
-
 .illness-tag {
   margin-right: 8px;
 }
-
 .card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
 }
-
 .time {
-  color: #999;
+  color: var(--text-secondary);
   font-size: 12px;
 }
-
 .btn-group {
   display: flex;
   gap: 8px;
 }
-
 .dialog-content {
   padding: 20px;
   height: 100%;
   overflow-y: auto;
 }
-
 .dialog-content h3 {
   text-align: center;
   margin-bottom: 20px;

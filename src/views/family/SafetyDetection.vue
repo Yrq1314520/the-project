@@ -202,28 +202,18 @@ onUnmounted(() => {
 <style scoped>
 .safety-detection {
   padding: 20px;
-  background-color: #f8f9fa;
+  background-color: var(--bg-color);
   min-height: 100vh;
 }
-
 .header {
   margin-bottom: 30px;
 }
-
 .header h2 {
   font-size: 24px;
   font-weight: 600;
   text-align: center;
-  color: #333;
+  color: var(--text-primary);
 }
-
-.status-section,
-.video-section,
-.activity-section,
-.settings-section {
-  margin-bottom: 30px;
-}
-
 .status-section h3,
 .video-section h3,
 .activity-section h3,
@@ -231,55 +221,46 @@ onUnmounted(() => {
   font-size: 18px;
   font-weight: 600;
   margin-bottom: 16px;
-  color: #333;
+  color: var(--text-primary);
 }
-
 .status-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 16px;
 }
-
 .status-info {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
-
 .status-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-light);
 }
-
 .status-item:last-child {
   border-bottom: none;
 }
-
 .status-item .label {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
 }
-
 .status-item .value {
   font-size: 16px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
 }
-
 .value.normal {
-  color: #52c41a;
+  color: var(--success-color);
 }
-
 .value.abnormal {
-  color: #ff4d4f;
+  color: var(--danger-color);
 }
-
 .video-container {
   background-color: #000;
-  border-radius: 8px;
+  border-radius: var(--border-radius-lg);
   height: 300px;
   display: flex;
   align-items: center;
@@ -287,26 +268,22 @@ onUnmounted(() => {
   position: relative;
   overflow: hidden;
 }
-
 .video-placeholder {
   text-align: center;
   color: #fff;
   z-index: 1;
 }
-
 .video-placeholder p {
   margin: 8px 0;
   font-size: 16px;
 }
-
 .sub-text {
   font-size: 14px;
   opacity: 0.7;
 }
-
 .van-cell {
   margin-bottom: 8px;
-  border-radius: 8px;
+  border-radius: var(--border-radius-lg);
   overflow: hidden;
 }
 </style>

@@ -324,49 +324,43 @@ onMounted(() => {
 
 <style scoped>
 .drug-manage {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 20px;
+  background: var(--bg-color);
+  padding: 16px;
 }
-
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
 }
-
 .page-header h2 {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600;
+  color: var(--text-primary);
   margin: 0;
-  color: #303133;
 }
-
-.search-card {
+.search-card,
+.drug-list-card {
+  border-radius: var(--border-radius-lg) !important;
   margin-bottom: 20px;
 }
-
 .search-form {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-wrap: wrap;
 }
-
-.drug-list-card {
-  margin-bottom: 20px;
-}
-
 .pagination {
   display: flex;
   justify-content: flex-end;
   margin-top: 20px;
 }
-
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+.el-button--small {
+  padding: 8px 12px;
 }
 </style>

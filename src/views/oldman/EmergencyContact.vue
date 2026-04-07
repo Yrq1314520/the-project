@@ -80,45 +80,39 @@ onMounted(() => {
 <style scoped>
 .emergency-contact {
   padding: 20px;
-  background-color: #f8f9fa;
+  background-color: var(--bg-color);
   min-height: 100vh;
 }
-
 .header {
   margin-bottom: 30px;
 }
-
 .header h2 {
   font-size: 24px;
   font-weight: 600;
   text-align: center;
-  color: #333;
+  color: var(--text-primary);
 }
-
 .contact-content {
   min-height: 60vh;
 }
-
 .van-card {
   margin-bottom: 12px;
+  background: var(--card-bg);
+  border-radius: var(--border-radius-lg);
 }
-
 .card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-
 .relation {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 14px;
 }
-
 .btn-group {
   display: flex;
   gap: 8px;
 }
-
 .empty-tip {
   display: flex;
   flex-direction: column;
@@ -127,13 +121,11 @@ onMounted(() => {
   padding: 60px 20px;
   text-align: center;
 }
-
 .empty-tip p {
   font-size: 16px;
-  color: #666;
+  color: var(--text-secondary);
   margin: 16px 0 8px;
 }
-
 .sub-tip {
   font-size: 14px;
   color: #999;
