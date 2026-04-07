@@ -44,6 +44,24 @@ export const searchDrugApi = (keyword) => {
   })
 }
 
+// 模糊查询药品信息
+export const fuzzySearchDrugApi = (data) => {
+  return request({
+    url: '/medicine/list',
+    method: 'post',
+    data
+  })
+}
+
+// 家属查询所有绑定老人的药品
+export const getFamilyBindElderDrugListApi = (data) => {
+  return request({
+    url: '/medicine/list',
+    method: 'post',
+    data
+  })
+}
+
 // 添加药品
 export const addDrugApi = (data) => {
   return request({

@@ -61,3 +61,11 @@ export function setEmergencyContactForElder(data) {
     data
   })
 }
+
+// 获取老人档案列表（家属端）
+export function getElderListApi() {
+  return request({
+    url: '/elderInfo/list',
+    method: 'get'
+  })
+}

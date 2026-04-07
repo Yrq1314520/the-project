@@ -26,8 +26,16 @@
         :key="item.id"
         :title="item.drugName"
         :desc="`规格：${item.spec || '暂无'} | 功效：${item.effect || '暂无'}`"
-        is-link
-      />
+      >
+        <template #right>
+          <van-button type="primary" size="small" @click="handleEdit(item)">
+            编辑
+          </van-button>
+          <van-button type="danger" size="small" @click="handleDelete(item)">
+            删除
+          </van-button>
+        </template>
+      </van-cell>
     </van-list>
 
     <van-empty v-if="!loading && drugList.length === 0" description="暂无药品信息" />
@@ -75,13 +83,57 @@
         </van-form>
       </div>
     </van-popup>
+
+    <!-- 编辑药品对话框 -->
+    <van-popup v-model:show="showEditDialog" position="bottom" round>
+      <div class="dialog-content">
+        <h3 class="dialog-title">编辑药品</h3>
+        <van-form @submit="handleEditSubmit">
+          <van-field
+            v-model="editForm.medicineName"
+            label="药品名称"
+            placeholder="请输入药品名称"
+            required
+          />
+          <van-field
+            v-model="editForm.expiryDate"
+            label="有效期"
+            placeholder="请输入有效期，如2025-12-31"
+            required
+          />
+          <van-field
+            v-model="editForm.type"
+            label="类型"
+            placeholder="请输入药品类型，如感冒发烧"
+            required
+          />
+          <van-field
+            v-model="editForm.quantity"
+            label="数量"
+            type="number"
+            placeholder="请输入数量"
+            required
+          />
+          <van-field
+            v-model="editForm.remark"
+            label="备注"
+            type="textarea"
+            placeholder="请输入备注，如饭后服用"
+          />
+          <div class="dialog-buttons">
+            <van-button type="default" @click="showEditDialog = false">取消</van-button>
+            <van-button type="primary" native-type="submit">确定</van-button>
+          </div>
+        </van-form>
+      </div>
+    </van-popup>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive } from 'vue'
-import { showToast } from 'vant'
-import { getMyDrugListApi, addDrugApi } from '@/api/medicine'
+import { showToast, showConfirmDialog } from 'vant'
+import { getMyDrugListApi, addDrugApi, updateDrugApi, deleteDrugApi } from '@/api/medicine'
 
 // 搜索
 const searchKey = ref('')
@@ -96,6 +148,17 @@ const pageSize = 10
 // 添加药品
 const showAddDialog = ref(false)
 const drugForm = reactive({
+  medicineName: '',
+  expiryDate: '',
+  type: '',
+  quantity: '',
+  remark: ''
+})
+
+// 编辑药品
+const showEditDialog = ref(false)
+const editForm = reactive({
+  id: '',
   medicineName: '',
   expiryDate: '',
   type: '',
@@ -157,6 +220,71 @@ const handleSubmit = async () => {
   } catch (err) {
     showToast('添加失败，请稍后重试')
   }
+}
+
+// 编辑药品
+const handleEdit = (item) => {
+  // 填充编辑表单
+  Object.assign(editForm, {
+    id: item.id,
+    medicineName: item.medicineName || '',
+    expiryDate: item.expiryDate || '',
+    type: item.type || '',
+    quantity: item.quantity || '',
+    remark: item.remark || ''
+  })
+  showEditDialog.value = true
+}
+
+// 提交编辑
+const handleEditSubmit = async () => {
+  try {
+    const { id, ...updateData } = editForm
+    const res = await updateDrugApi(id, updateData)
+    if (res.code === 200) {
+      showToast('修改成功')
+      showEditDialog.value = false
+      // 重新加载数据
+      drugList.value = []
+      page.value = 1
+      finished.value = false
+      loadData()
+    } else {
+      showToast('修改失败')
+    }
+  } catch (err) {
+    showToast('修改失败，请稍后重试')
+  }
+}
+
+// 删除药品
+const handleDelete = (item) => {
+  showConfirmDialog({
+    title: '确认删除',
+    message: `确定要删除药品"${item.drugName}"吗？`,
+    confirmButtonText: '确定',
+    cancelButtonText: '取消'
+  })
+  .then(async () => {
+    try {
+      const res = await deleteDrugApi(item.id)
+      if (res.code === 200) {
+        showToast('删除成功')
+        // 重新加载数据
+        drugList.value = []
+        page.value = 1
+        finished.value = false
+        loadData()
+      } else {
+        showToast('删除失败')
+      }
+    } catch (err) {
+      showToast('删除失败，请稍后重试')
+    }
+  })
+  .catch(() => {
+    // 取消删除
+  })
 }
 </script>
 
