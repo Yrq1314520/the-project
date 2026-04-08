@@ -253,7 +253,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { showToast, showConfirmDialog, vanIcon, vanLoading } from 'vant'
+import { showToast, showConfirmDialog } from 'vant'
 import {
   addOldmanProfileApi,
   updateOldmanProfileApi,

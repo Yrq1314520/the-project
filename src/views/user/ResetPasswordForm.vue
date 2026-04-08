@@ -9,7 +9,7 @@
       />
 
       <van-field
-        v-model="form.code"
+        v-model="form.verifyCode"
         label="验证码"
         placeholder="请输入验证码"
         :rules="rules.code"
@@ -68,7 +68,7 @@ const formRef = ref(null)
 // 重置密码表单
 const form = reactive({
   email: '',
-  code: '',
+  verifyCode: '',
   newPassword: ''
 })
 
@@ -152,14 +152,15 @@ const onResetPassword = async () => {
 
     const res = await resetPasswordApi({
       email: form.email,
-      verifyCode: form.code,
+      verifyCode: form.verifyCode,
       newPassword: form.newPassword
     })
+    console.log(res)
     if (res.success === 200) {
       showToast('密码重置成功')
       // 清空
       form.email = ''
-      form.code = ''
+      form.verifyCode = ''
       form.newPassword = ''
       // 切换到登录选项卡
       emit('switchToLogin')

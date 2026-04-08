@@ -63,7 +63,7 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { showToast, vanIcon } from 'vant'
+import { showToast } from 'vant'
 import {
   searchElderByUsernameApi,
   bindElderAccountApi,
