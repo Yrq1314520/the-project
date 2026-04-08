@@ -5,17 +5,14 @@ export function loginApi(data) {
   return request({
     url: '/v1/users/login',
     method: 'post',
-    data: {
-      phone: data.phone,
-      password: data.password
-    }
+    data
   })
 }
 
 // 获取邮箱验证码，找回密码，修改密码
-export function sendEmailCodeApi(email) {
+export function sendEmailCodeApi(data) {
   return request({
-    url: '/v1/codes',
+    url: '/v1/codes/email',
     method: 'post',
     data
   })
@@ -30,6 +27,7 @@ export function registerApi(data) {
   })
 }
 
+<<<<<<< HEAD
 //获取验证码注册
 export function getCodeApi(data) {
   return request({
@@ -38,6 +36,9 @@ export function getCodeApi(data) {
     data
   })
 }
+=======
+
+>>>>>>> fc29ad19f9bdc6ab0a269005e27d6546cc0ab46d
 
 //修改用户密码，登录状态下
 export function updatePasswordApi(userId, data) {

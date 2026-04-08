@@ -55,6 +55,15 @@ export function setEmergencyContactForElder(data) {
   })
 }
 
+// 根据用户ID查询档案
+export function getElderProfileByUserIdApi(userId) {
+  return request({
+    url: `/v1/elderInfo/user/${userId}`,
+    method: 'post',
+    data: { userId }
+  })
+}
+
 // 紧急求助
 export function sendEmergencyHelpApi() {
   return request({

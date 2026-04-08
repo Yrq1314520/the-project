@@ -104,7 +104,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { showToast } from 'vant'
-import { registerApi, getCodeApi } from '@/api/user'
+import { registerApi, sendEmailCodeApi } from '@/api/user'
 
 const emit = defineEmits(['switchToLogin'])
 const formRef = ref(null)
@@ -215,9 +215,9 @@ const sendVerifyCode = async () => {
   }
   
   try {
-    const res = await getCodeApi({
+    const res = await sendEmailCodeApi({
       email: registerForm.email,
-      type: registerForm.role // 使用选择的职能作为type参数
+      type: 1 // 注册时使用 type=1
     })
     console.log(res)
     if (res.success === 200) {
@@ -250,15 +250,23 @@ const onRegister = async () => {
       registerForm.nickname = registerForm.username
     }
 
+<<<<<<< HEAD
     // 移除 confirmPassword 和 roleText 
+=======
+    // 移除confirmPassword、roleText和phone字段
+>>>>>>> fc29ad19f9bdc6ab0a269005e27d6546cc0ab46d
     const { confirmPassword, roleText, ...submitData } = registerForm
     // 确保 role 是数字
     submitData.role = Number(submitData.role)
 
     const res = await registerApi(submitData)
     console.log(res)
+<<<<<<< HEAD
     
     if (res.code === 200) {
+=======
+    if (res.success === 200) {
+>>>>>>> fc29ad19f9bdc6ab0a269005e27d6546cc0ab46d
       showToast('注册成功')
       // 清空表单
       Object.assign(registerForm, {
@@ -277,6 +285,7 @@ const onRegister = async () => {
       // 切换到登录选项卡
       emit('switchToLogin')
     } else {
+<<<<<<< HEAD
       // 细化错误提示
       const errorMsg = res.msg || res.errorMsg || '注册失败'
       if (errorMsg.includes('邮箱已被注册')) {
@@ -290,6 +299,9 @@ const onRegister = async () => {
       } else {
         showToast(errorMsg)
       }
+=======
+      showToast(res.errorMsg || '注册失败')
+>>>>>>> fc29ad19f9bdc6ab0a269005e27d6546cc0ab46d
     }
   } catch (err) {
     console.error('注册失败', err)

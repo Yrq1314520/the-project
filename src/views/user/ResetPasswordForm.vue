@@ -2,14 +2,14 @@
   <van-form @submit="onResetPassword" ref="formRef" class="form">
     <van-cell-group inset>
       <van-field
-        v-model="resetForm.email"
+        v-model="form.email"
         label="邮箱"
         placeholder="请输入邮箱"
         :rules="rules.email"
       />
 
       <van-field
-        v-model="resetForm.code"
+        v-model="form.verifyCode"
         label="验证码"
         placeholder="请输入验证码"
         :rules="rules.code"
@@ -18,27 +18,27 @@
           <van-button
             size="small"
             type="primary"
-            :loading="loadingResetCode"
-            :disabled="resetCount > 0"
-            @click="sendResetCode"
+            :loading="loadingCode"
+            :disabled="countdown > 0"
+            @click="sendVerifyCode"
           >
-            {{ resetCount > 0 ? `${resetCount}s` : '发送' }}
+            {{ countdown > 0 ? `${countdown}s` : '发送' }}
           </van-button>
         </template>
       </van-field>
 
       <van-field
-        v-model="resetForm.newPassword"
+        v-model="form.newPassword"
         label="新密码"
-        :type="showResetPassword ? 'text' : 'password'"
+        :type="showPassword ? 'text' : 'password'"
         placeholder="请设置新密码"
         :rules="rules.newPassword"
       >
         <template #right-icon>
           <van-icon 
-            :name="showResetPassword ? 'eye' : 'eye-o'" 
+            :name="showPassword ? 'eye' : 'eye-o'" 
             class="password-toggle-icon" 
-            @click="toggleResetPassword"
+            @click="togglePassword"
           />
         </template>
       </van-field>
@@ -49,7 +49,7 @@
         type="primary"
         block
         native-type="submit"
-        :loading="resetLoading"
+        :loading="loading"
         class="action-btn"
       >
         重置密码
@@ -59,28 +59,28 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { showToast } from 'vant'
 import { resetPasswordApi, sendEmailCodeApi } from '@/api/user'
 
 const formRef = ref(null)
 
-// 重置密码表单，移除 account
-const resetForm = ref({
+// 重置密码表单
+const form = reactive({
   email: '',
-  code: '',
+  verifyCode: '',
   newPassword: ''
 })
 
-const resetLoading = ref(false)
+const loading = ref(false)
 
 // 密码可见性
-const showResetPassword = ref(false)
+const showPassword = ref(false)
 
 // 验证码相关
-const loadingResetCode = ref(false)
-const resetCount = ref(0)
-let resetTimer = null
+const loadingCode = ref(false)
+const countdown = ref(0)
+let countdownTimer = null
 
 // 表单验证
 const rules = {
@@ -99,75 +99,78 @@ const rules = {
 }
 
 // 切换密码可见性
-const toggleResetPassword = () => {
-  showResetPassword.value = !showResetPassword.value
+const togglePassword = () => {
+  showPassword.value = !showPassword.value
 }
 
-// 发送重置密码验证码
-const sendResetCode = async () => {
-  if (!resetForm.value.email) {
+// 发送验证码
+const sendVerifyCode = async () => {
+  if (!form.email) {
     showToast('请输入邮箱')
     return
   }
 
   try {
-    loadingResetCode.value = true
-    // API 只接收 email 字符串
-    const res = await sendEmailCodeApi(resetForm.value.email)
-    if (res.code === 200) {
+    loadingCode.value = true
+    // 忘记密码使用type=2
+    const res = await sendEmailCodeApi({
+      email: form.email,
+      type: 2
+    })
+    console.log(res)
+    if (res.success === 200) {
       showToast('验证码已发送')
-      startResetCountdown()
+      startCountdown()
     } else {
-      showToast(res.msg || '发送失败')
+      showToast(res.errorMsg || '发送失败')
     }
   } catch (err) {
     showToast('网络异常，请重试')
   } finally {
-    loadingResetCode.value = false
+    loadingCode.value = false
   }
 }
 
-// 重置密码验证码倒计时
-const startResetCountdown = () => {
-  resetCount.value = 60
-  clearInterval(resetTimer)
-  resetTimer = setInterval(() => {
-    if (resetCount.value > 0) {
-      resetCount.value--
+// 开始倒计时
+const startCountdown = () => {
+  countdown.value = 60
+  clearInterval(countdownTimer)
+  countdownTimer = setInterval(() => {
+    if (countdown.value > 0) {
+      countdown.value--
     } else {
-      clearInterval(resetTimer)
+      clearInterval(countdownTimer)
     }
   }, 1000)
 }
 
-// 重置密码，只传 email, code, newPassword
+// 重置密码
 const onResetPassword = async () => {
   try {
     await formRef.value?.validate()
-    resetLoading.value = true
+    loading.value = true
 
     const res = await resetPasswordApi({
-      email: resetForm.value.email,
-      code: resetForm.value.code,
-      newPassword: resetForm.value.newPassword
+      email: form.email,
+      verifyCode: form.verifyCode,
+      newPassword: form.newPassword
     })
-    if (res.code === 200) {
+    console.log(res)
+    if (res.success === 200) {
       showToast('密码重置成功')
       // 清空
-      resetForm.value = {
-        email: '',
-        code: '',
-        newPassword: ''
-      }
+      form.email = ''
+      form.verifyCode = ''
+      form.newPassword = ''
       // 切换到登录选项卡
       emit('switchToLogin')
     } else {
-      showToast(res.msg || '重置失败')
+      showToast(res.errorMsg || '重置失败')
     }
   } catch (err) {
     showToast('网络异常，请重试')
   } finally {
-    resetLoading.value = false
+    loading.value = false
   }
 }
 
