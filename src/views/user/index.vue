@@ -70,7 +70,6 @@ const switchToLogin = () => {
   border-radius: 3px;
 }
 
-/* 选项卡样式 - 去除半圆背景，简洁风格 */
 .login-tabs {
   width: 100%;
   max-width: 480px;

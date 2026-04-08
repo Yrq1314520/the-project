@@ -12,7 +12,7 @@
           required
         />
         <van-field
-          v-model="form.gender"
+          v-model="form.genderText"
           label="性别"
           placeholder="请选择性别"
           readonly
@@ -48,7 +48,7 @@
           rows="2"
         />
         <van-field
-          v-model="form.illness"
+          v-model="form.medicalHistory"
           label="基础病史"
           placeholder="如：高血压、糖尿病等"
           type="textarea"
@@ -58,13 +58,6 @@
           v-model="form.allergy"
           label="过敏史"
           placeholder="请输入过敏史"
-        />
-        <van-field
-          v-model="form.bloodType"
-          label="血型"
-          placeholder="请选择血型"
-          readonly
-          @click="showBloodTypePicker = true"
         />
         <van-field
           v-model="form.height"
@@ -77,6 +70,22 @@
           label="体重(kg)"
           type="number"
           placeholder="请输入体重"
+        />
+        <!-- 紧急联系人字段（后端要求） -->
+        <van-field
+          v-model="form.emergencyContact"
+          label="紧急联系人"
+          placeholder="请输入紧急联系人姓名"
+        />
+        <van-field
+          v-model="form.emergencyPhone"
+          label="紧急联系电话"
+          placeholder="请输入紧急联系电话"
+        />
+        <van-field
+          v-model="form.relation"
+          label="与本人关系"
+          placeholder="如：配偶、子女"
         />
       </van-cell-group>
       
@@ -98,15 +107,6 @@
         @cancel="showGenderPicker = false"
       />
     </van-popup>
-
-    <!-- 血型选择器 -->
-    <van-popup v-model:show="showBloodTypePicker" position="bottom">
-      <van-picker
-        :columns="bloodTypeColumns"
-        @confirm="onBloodTypeConfirm"
-        @cancel="showBloodTypePicker = false"
-      />
-    </van-popup>
   </div>
 </template>
 
@@ -123,35 +123,29 @@ const formRef = ref(null)
 const submitLoading = ref(false)
 const isEdit = ref(false)
 const showGenderPicker = ref(false)
-const showBloodTypePicker = ref(false)
+const elderInfoId = ref(null)   // 档案主键
 
-// 选择器数据
+// 性别选择器（显示用中文）
 const genderColumns = [
   { text: '男', value: '男' },
   { text: '女', value: '女' }
 ]
-const bloodTypeColumns = [
-  { text: 'A型', value: 'A型' },
-  { text: 'B型', value: 'B型' },
-  { text: 'AB型', value: 'AB型' },
-  { text: 'O型', value: 'O型' },
-  { text: 'RH阳性', value: 'RH阳性' },
-  { text: 'RH阴性', value: 'RH阴性' }
-]
 
+// 表单数据
 const form = reactive({
-  id: null,
   name: '',
-  gender: '',
+  genderText: '',     
   age: '',
   phone: '',
   idCard: '',
   address: '',
-  illness: '',
+  medicalHistory: '',
   allergy: '',
-  bloodType: '',
   height: '',
-  weight: ''
+  weight: '',
+  emergencyContact: '',
+  emergencyPhone: '',
+  relation: ''
 })
 
 const rules = {
@@ -171,29 +165,55 @@ const rules = {
 const loadProfile = async () => {
   try {
     const res = await getElderInfoByUserId(userStore.userInfo.id)
-    if (res.code === 200 && res.data && res.data.name) {
-      isEdit.value = true
-      Object.assign(form, res.data)
+    console.log('加载档案返回:', res)
+    if (res.code === 200 && res.data) {
+      let data = res.data
+      if (Array.isArray(data) && data.length > 0) {
+        data = data[0]
+      }
+      if (data && data.id) {
+        isEdit.value = true
+        elderInfoId.value = data.id
+        let genderText = ''
+        if (data.gender === 1) genderText = '男'
+        else if (data.gender === 2) genderText = '女'
+        else genderText = data.gender || ''
+        
+        form.name = data.name || ''
+        form.genderText = genderText
+        form.age = data.age || ''
+        form.phone = data.phone || ''
+        form.idCard = data.idCard || ''
+        form.address = data.address || ''
+        form.medicalHistory = data.medicalHistory || data.illness || ''
+        form.allergy = data.allergy || ''
+        form.height = data.height || ''
+        form.weight = data.weight || ''
+        form.emergencyContact = data.emergencyContact || ''
+        form.emergencyPhone = data.emergencyPhone || ''
+        form.relation = data.relation || ''
+        console.log('已加载档案，ID:', elderInfoId.value)
+      } else {
+        elderInfoId.value = null
+        isEdit.value = false
+      }
+    } else {
+      elderInfoId.value = null
+      isEdit.value = false
     }
   } catch (err) {
     console.error('加载档案失败', err)
+    elderInfoId.value = null
+    isEdit.value = false
   }
 }
 
 // 性别选择确认
 const onGenderConfirm = ({ selectedOptions }) => {
   if (selectedOptions && selectedOptions.length > 0) {
-    form.gender = selectedOptions[0].text
+    form.genderText = selectedOptions[0].text
   }
   showGenderPicker.value = false
-}
-
-// 血型选择确认
-const onBloodTypeConfirm = ({ selectedOptions }) => {
-  if (selectedOptions && selectedOptions.length > 0) {
-    form.bloodType = selectedOptions[0].text
-  }
-  showBloodTypePicker.value = false
 }
 
 // 提交表单
@@ -201,48 +221,51 @@ const onSubmit = async () => {
   try {
     await formRef.value?.validate()
     submitLoading.value = true
-    const baseData = {
+
+    // 性别转换为数字
+    let genderValue = 0
+    if (form.genderText === '男') genderValue = 1
+    else if (form.genderText === '女') genderValue = 2
+    const submitData = {
       name: form.name,
-      gender: form.gender,
-      age: Number(form.age),               // 转为数字
+      gender: genderValue,
+      age: Number(form.age),
       phone: form.phone,
-      idCard: form.idCard || '',
+      idCard: form.idCard || null,
       address: form.address || '',
-      illness: form.illness || '',
+      medicalHistory: form.medicalHistory || '',
       allergy: form.allergy || '',
-      bloodType: form.bloodType || '',
       height: form.height ? Number(form.height) : null,
       weight: form.weight ? Number(form.weight) : null,
+      emergencyContact: form.emergencyContact || '',
+      emergencyPhone: form.emergencyPhone || '',
+      relation: form.relation || '',
       userId: userStore.userInfo.id
     }
 
-    let submitData
     let res
-    if (isEdit.value && form.id) {
-      submitData = { ...baseData, id: Number(form.id) }
+    if (elderInfoId.value) {
+      // 更新带 id
+      submitData.id = elderInfoId.value
+      console.log('更新档案，ID:', elderInfoId.value, submitData)
       res = await updateElderInfo(submitData)
     } else {
-      submitData = baseData
+      // 新增不id
+      console.log('创建档案', submitData)
       res = await addElderInfo(submitData)
     }
 
-    console.log('提交数据:', submitData)
-    console.log('返回结果:', res)
+    console.log('提交结果:', res)
 
     if (res.code === 200) {
       showToast(isEdit.value ? '修改成功' : '创建成功')
       router.push('/oldman/profile')
     } else {
-      const errorMsg = res.msg || res.errorMsg || '保存失败'
-      showToast(errorMsg)
+      showToast(res.msg || res.errorMsg || '保存失败')
     }
   } catch (err) {
-    console.error('保存档案失败:', err)
-    if (err.response) {
-      showToast(err.response.data?.msg || '服务器错误')
-    } else {
-      showToast('网络异常，请重试')
-    }
+    console.error('保存档案失败', err)
+    showToast('网络异常，请重试')
   } finally {
     submitLoading.value = false
   }

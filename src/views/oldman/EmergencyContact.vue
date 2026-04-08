@@ -21,7 +21,7 @@
         <van-field
           v-model="form.relation"
           label="关系"
-          placeholder="如：儿子、女儿、邻居"
+          placeholder="如：儿子、女儿、护工"
           :rules="rules.relation"
           required
         />
@@ -38,13 +38,18 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { useUserStore } from '@/store/user'
 import { getElderInfoByUserId, updateElderInfo } from '@/api/elderInfo'
 
+const router = useRouter()
 const userStore = useUserStore()
 const formRef = ref(null)
 const submitting = ref(false)
+
+// 档案主键
+const elderInfoId = ref(null)
 
 const form = reactive({
   name: '',
@@ -61,36 +66,55 @@ const rules = {
   relation: [{ required: true, message: '请填写与您的关系' }]
 }
 
-// 加载已有的紧急联系人信息,if
-const loadEmergencyContact = async () => {
+const loadElderInfo = async () => {
   try {
     const res = await getElderInfoByUserId(userStore.userInfo.id)
     if (res.code === 200 && res.data) {
-      form.name = res.data.emergencyName || ''
-      form.phone = res.data.emergencyPhone || ''
-      form.relation = res.data.emergencyRelation || ''
+      let data = res.data
+      if (Array.isArray(data) && data.length > 0) {
+        data = data[0]
+      }
+      if (data && data.id) {
+        elderInfoId.value = data.id
+        form.name = data.emergencyContact || data.emergencyName || ''
+        form.phone = data.emergencyPhone || ''
+        form.relation = data.relation || ''
+      } else {
+        showToast('未找到档案，请先创建档案')
+      }
+    } else {
+      showToast('未找到档案，请先创建档案')
     }
   } catch (err) {
-    console.error('加载紧急联系人失败', err)
+    console.error('加载档案失败', err)
+    showToast('加载档案失败，请稍后重试')
   }
 }
 
 const onSubmit = async () => {
   try {
     await formRef.value?.validate()
+    if (!elderInfoId.value) {
+      showToast('档案不存在，请先创建档案')
+      return
+    }
     submitting.value = true
 
-    const updateData = {
-      userId: userStore.userInfo.id,
-      emergencyName: form.name,
+    const submitData = {
+      id: elderInfoId.value,
+      emergencyContact: form.name,
       emergencyPhone: form.phone,
-      emergencyRelation: form.relation
+      relation: form.relation,
+      userId: userStore.userInfo.id
     }
     
-    const res = await updateElderInfo(updateData)
+    console.log('更新紧急联系人:', submitData)
+    const res = await updateElderInfo(submitData)
+    console.log('提交结果:', res)
+
     if (res.code === 200) {
       showToast('设置成功')
-      // 清空表单
+      // 清空
       form.name = ''
       form.phone = ''
       form.relation = ''
@@ -107,7 +131,7 @@ const onSubmit = async () => {
 }
 
 onMounted(() => {
-  loadEmergencyContact()
+  loadElderInfo()
 })
 </script>
 

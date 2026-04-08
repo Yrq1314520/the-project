@@ -35,10 +35,7 @@ export function getCodeApi(data) {
   return request({
     url: '/v1/codes/email',
     method: 'post',
-    data: {
-      email: data.email,
-      type: data.type
-    }
+    data
   })
 }
 

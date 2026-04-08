@@ -148,7 +148,7 @@ router.beforeEach((to, from, next) => {
     }
 
     if (to.meta.role) {
-      const requiredRole = Number(to.meta.role)  // 关键：转为数字
+      const requiredRole = Number(to.meta.role)
       const userRoleNum = Number(userRole)
 
       if (userRoleNum !== requiredRole) {

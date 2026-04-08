@@ -2,22 +2,22 @@
   <div class="elder-profile">
     <h2>我的档案</h2>
     
-    <!-- 有档案显示 -->
     <van-cell-group inset v-if="hasProfile">
-      <van-field v-model="info.name" label="姓名" readonly />
-      <van-field v-model="info.age" label="年龄" readonly />
-      <van-field v-model="info.gender" label="性别" readonly />
-      <van-field v-model="info.phone" label="电话" readonly />
-      <van-field v-model="info.illness" label="病史" type="textarea" readonly />
-      <van-field v-model="info.allergy" label="过敏史" readonly />
-      <van-field v-model="info.address" label="居住地址" readonly />
+      <van-field v-model="profile.name" label="姓名" readonly />
+      <van-field v-model="profile.genderText" label="性别" readonly />
+      <van-field v-model="profile.age" label="年龄" readonly />
+      <van-field v-model="profile.phone" label="电话" readonly />
+      <van-field v-model="profile.medicalHistory" label="病史" type="textarea" readonly />
+      <van-field v-model="profile.allergy" label="过敏史" readonly />
+      <van-field v-model="profile.address" label="居住地址" readonly />
+      <van-field v-model="profile.height" label="身高(cm)" readonly />
+      <van-field v-model="profile.weight" label="体重(kg)" readonly />
     </van-cell-group>
     
-    <!-- 无档案提示 -->
     <div v-else class="empty-profile">
       <van-icon name="records-o" size="48" color="#999" />
       <p>暂无档案信息</p>
-      <p class="sub">请点击下方按钮完善您的档案</p>
+      <p class="sub">请点击下方按钮创建您的档案</p>
     </div>
 
     <div style="padding:16px;margin-top:20px">
@@ -31,35 +31,69 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { getElderInfoByUserId } from '@/api/elderInfo'
+import { showToast } from 'vant'
 import { useUserStore } from '@/store/user'
+import { getElderInfoByUserId } from '@/api/elderInfo'
 
 const router = useRouter()
 const userStore = useUserStore()
-const info = ref({})
+const profile = ref({})
 
 const hasProfile = computed(() => {
-  return info.value && Object.keys(info.value).length > 0 && info.value.name
+  return profile.value && (profile.value.id || (profile.value.name && profile.value.name !== '未填写'))
 })
 
-onMounted(async () => {
+// 加载档案信息
+const loadProfile = async () => {
   try {
     const res = await getElderInfoByUserId(userStore.userInfo.id)
+    console.log('获取档案返回:', res)
     if (res.code === 200 && res.data) {
-      info.value = res.data
+      
+      let data = res.data
+      if (Array.isArray(data) && data.length > 0) {
+        data = data[0]
+      }
+      if (!data) {
+        profile.value = {}
+        return
+      }
+      console.log('完整档案数据:', data)
+    
+      let genderText = ''
+      if (data.gender === 1 || data.gender === '男') genderText = '男'
+      else if (data.gender === 2 || data.gender === '女') genderText = '女'
+      else genderText = data.gender || ''
+      
+      profile.value = {
+        id: data.id,
+        name: data.name || '未填写',
+        genderText: genderText,
+        age: data.age || '',
+        phone: data.phone || '',
+        medicalHistory: data.medicalHistory || data.illness || '',
+        allergy: data.allergy || '',
+        address: data.address || '',
+        height: data.height || '',
+        weight: data.weight || ''
+      }
     } else {
-      info.value = {}
+      profile.value = {}
     }
   } catch (err) {
     console.error('获取档案失败', err)
-    info.value = {}
+    profile.value = {}
+    showToast('加载档案失败，请稍后重试')
   }
-})
+}
 
 const goEdit = () => {
-  // 统一使用 /oldman/profile-edit 路由
   router.push('/oldman/profile-edit')
 }
+
+onMounted(() => {
+  loadProfile()
+})
 </script>
 
 <style scoped>
