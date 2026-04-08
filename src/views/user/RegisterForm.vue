@@ -104,7 +104,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { showToast } from 'vant'
-import { registerApi, getCodeApi } from '@/api/user'
+import { registerApi, sendEmailCodeApi } from '@/api/user'
 
 const emit = defineEmits(['switchToLogin'])
 const formRef = ref(null)
@@ -215,9 +215,9 @@ const sendVerifyCode = async () => {
   }
   
   try {
-    const res = await getCodeApi({
+    const res = await sendEmailCodeApi({
       email: registerForm.email,
-      type: registerForm.role // 使用选择的职能作为type参数
+      type: 1 // 注册时使用 type=1
     })
     console.log(res)
     if (res.success === 200) {

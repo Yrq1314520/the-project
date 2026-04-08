@@ -4,7 +4,8 @@
       <h2>修改密码</h2>
     </div>
     
-    <van-form @submit="onSubmit" ref="formRef" class="password-form">
+    <!-- 修改密码表单 -->
+    <van-form @submit="onChangeSubmit" ref="formRef" class="password-form">
       <van-cell-group inset>
         <van-field
           v-model="form.oldPassword"
@@ -19,6 +20,34 @@
               class="password-toggle-icon" 
               @click="showOldPassword = !showOldPassword"
             />
+          </template>
+        </van-field>
+        
+        <van-field
+          v-model="form.email"
+          label="邮箱"
+          type="email"
+          placeholder="请输入注册邮箱"
+          :rules="[
+            { required: true, message: '请输入邮箱' },
+            { pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, message: '请输入正确的邮箱地址' }
+          ]"
+        />
+        
+        <van-field
+          v-model="form.verifyCode"
+          label="验证码"
+          placeholder="请输入验证码"
+          :rules="[{ required: true, message: '请输入验证码' }]"
+        >
+          <template #button>
+            <van-button 
+              size="small" 
+              :disabled="counting" 
+              @click="sendVerifyCode"
+            >
+              {{ counting ? `${countdown}s后重新获取` : '获取验证码' }}
+            </van-button>
           </template>
         </van-field>
         
@@ -74,7 +103,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
-import { changePasswordApi } from '@/api/user'
+import { changePasswordApi, sendEmailCodeApi } from '@/api/user'
 
 const router = useRouter()
 const formRef = ref(null)
@@ -85,9 +114,16 @@ const showOldPassword = ref(false)
 const showNewPassword = ref(false)
 const showConfirmPassword = ref(false)
 
+// 验证码相关
+const counting = ref(false)
+const countdown = ref(60)
+let countdownTimer = null
+
 // 表单数据
 const form = reactive({
   oldPassword: '',
+  email: '',
+  verifyCode: '',
   newPassword: '',
   confirmPassword: ''
 })
@@ -97,21 +133,66 @@ const validateConfirmPassword = (value) => {
   return value === form.newPassword
 }
 
-// 提交修改，只传oldPassword和newPassword
-const onSubmit = async () => {
+// 发送验证码
+const sendVerifyCode = async () => {
+  if (!form.email) {
+    showToast('请输入邮箱')
+    return
+  }
+  
+  try {
+    const res = await sendEmailCodeApi({
+      email: form.email,
+      type: 3 // 3 = 修改密码
+    })
+    
+    if (res.success === 200) {
+      showToast('验证码发送成功')
+      startCountdown()
+    } else {
+      showToast(res.errorMsg || '验证码发送失败')
+    }
+  } catch (err) {
+    showToast('网络异常，请重试')
+  }
+}
+
+// 开始倒计时
+const startCountdown = () => {
+  counting.value = true
+  countdown.value = 60
+  
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+  }
+  
+  countdownTimer = setInterval(() => {
+    countdown.value--
+    if (countdown.value <= 0) {
+      clearInterval(countdownTimer)
+      counting.value = false
+    }
+  }, 1000)
+}
+
+// 修改密码提交
+const onChangeSubmit = async () => {
   try {
     await formRef.value?.validate()
     loading.value = true
     
     const res = await changePasswordApi({
       oldPassword: form.oldPassword,
-      newPassword: form.newPassword
+      newPassword: form.newPassword,
+      verifyCode: form.verifyCode
     })
-    if (res.code === 200) {
+    
+    console.log('修改密码结果:', res)
+    if (res.success === 200) {
       showToast('密码修改成功')
       router.push('/user/profile')
     } else {
-      showToast(res.msg || '密码修改失败')
+      showToast(res.errorMsg || '密码修改失败')
     }
   } catch (err) {
     showToast('网络异常，请重试')
@@ -137,6 +218,7 @@ const onSubmit = async () => {
   font-weight: 600;
   text-align: center;
   color: #333;
+  margin-bottom: 20px;
 }
 
 .password-form {

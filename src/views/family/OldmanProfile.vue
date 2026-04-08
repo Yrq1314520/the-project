@@ -1,10 +1,10 @@
 <template>
-  <div class="profile-page">
-    <!-- 顶部操作栏 -->
-    <div class="action-bar">
+  <div class="profile-page page-container">
+    <div class="header">
       <h2>老人档案管理</h2>
-      <van-button type="primary" @click="openAddDialog">
-        + 新增档案
+      <van-button type="primary" round @click="openAddDialog" size="large">
+        <van-icon name="plus" style="margin-right: 8px" />
+        新增档案
       </van-button>
     </div>
 
@@ -12,77 +12,93 @@
     <div class="search-bar">
       <van-field
         v-model="searchKeyword"
-        placeholder="搜索姓名"
+        placeholder="搜索老人姓名"
         clearable
         @keyup.enter="onSearch"
       >
+        <template #left-icon>
+          <van-icon name="search" />
+        </template>
         <template #button>
-          <van-button size="small" type="primary" @click="onSearch">搜索</van-button>
+          <van-button size="small" type="primary" round @click="onSearch">搜索</van-button>
         </template>
       </van-field>
     </div>
 
     <!-- 档案列表 -->
-    <van-list
-      v-model:loading="loading"
-      :finished="finished"
-      finished-text="没有更多了"
-      @load="onLoad"
-    >
-      <van-card
-        v-for="item in list"
-        :key="item.id"
-        :title="item.name || '未命名'"
-        :desc="item.noProfile ? item.errorMsg : `年龄: ${item.age}岁`"
-      >
-        <template #tags>
-          <van-tag v-if="item.noProfile" type="danger">
-            无档案
-          </van-tag>
-          <template v-else>
-            <van-tag v-if="item.gender" :type="item.gender === 1 ? 'primary' : 'danger'" class="gender-tag">
-              {{ item.gender === 1 ? '男' : '女' }}
-            </van-tag>
-            <van-tag v-if="item.medicalHistory" type="warning" class="illness-tag">
-              {{ item.medicalHistory }}
-            </van-tag>
-          </template>
-        </template>
-        <template #footer>
-          <div class="card-footer">
-            <span class="time">{{ item.createTime || '未知时间' }}</span>
-            <div class="btn-group">
-              <template v-if="item.noProfile">
-                <van-button size="small" type="primary" @click="openAddDialogForUser(item)">
-                  添加档案
-                </van-button>
-              </template>
-              <template v-else>
-                <van-button size="small" type="primary" @click="openViewDialog(item)">
-                  查看
-                </van-button>
-                <van-button size="small" type="success" @click="openEditDialog(item)">
-                  编辑
-                </van-button>
-                <van-button size="small" type="danger" @click="onDelete(item.id)">
-                  删除
-                </van-button>
-              </template>
+    <div v-if="list.length > 0" class="profile-list">
+      <div v-for="item in list" :key="item.id" class="profile-card">
+        <div class="profile-header">
+          <div class="profile-info">
+            <div class="profile-name">{{ item.name || '未命名' }}</div>
+            <div class="profile-basic">
+              <span v-if="!item.noProfile">{{ item.age }}岁</span>
+              <span v-if="!item.noProfile" class="gender-tag" :class="{ 'male': item.gender === 1, 'female': item.gender === 2 }">
+                {{ item.gender === 1 ? '男' : item.gender === 2 ? '女' : '' }}
+              </span>
             </div>
           </div>
-        </template>
-      </van-card>
-    </van-list>
+          <div v-if="item.noProfile" class="no-profile-tag">
+            <van-tag type="danger">无档案</van-tag>
+          </div>
+        </div>
+        
+        <div v-if="!item.noProfile" class="profile-details">
+          <div v-if="item.medicalHistory" class="medical-history">
+            <van-tag type="warning">{{ item.medicalHistory }}</van-tag>
+          </div>
+          <div v-if="item.relation" class="relation">
+            关系：{{ item.relation }}
+          </div>
+        </div>
+        
+        <div v-if="item.noProfile" class="no-profile-message">
+          {{ item.errorMsg }}
+        </div>
+        
+        <div class="profile-footer">
+          <span class="create-time">{{ item.createTime || '未知时间' }}</span>
+          <div class="btn-group">
+            <template v-if="item.noProfile">
+              <van-button size="small" type="primary" round @click="openAddDialogForUser(item)">
+                添加档案
+              </van-button>
+            </template>
+            <template v-else>
+              <van-button size="small" type="primary" round @click="openViewDialog(item)">
+                查看
+              </van-button>
+              <van-button size="small" type="success" round @click="openEditDialog(item)">
+                编辑
+              </van-button>
+              <van-button size="small" type="danger" round @click="onDelete(item.id)">
+                删除
+              </van-button>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- 空状态 -->
-    <van-empty v-if="list.length === 0 && !loading" description="暂无老人档案" />
+    <div v-if="list.length === 0 && !loading" class="empty-state">
+      <van-icon name="profile" size="48" color="#ccc" />
+      <p>暂无老人档案</p>
+      <p class="empty-hint">请搜索老人姓名或点击新增档案</p>
+    </div>
+
+    <!-- 加载状态 -->
+    <div v-if="loading" class="loading-state">
+      <van-loading type="spinner" color="#1989fa" />
+      <p>加载中...</p>
+    </div>
 
     <!-- 新增/编辑弹窗 -->
     <van-popup v-model:show="showDialog" position="bottom" style="height: 85%">
       <div class="dialog-content">
         <h3>{{ isEdit ? '编辑老人档案' : '新增老人档案' }}</h3>
         <van-form @submit="onSubmit">
-          <van-cell-group>
+          <van-cell-group inset>
             <!-- 基本信息 -->
             <van-field
               v-model="form.userId"
@@ -156,11 +172,11 @@
               placeholder="请输入关系，如：子女"
             />
           </van-cell-group>
-          <div style="margin: 16px">
-            <van-button type="primary" block native-type="submit" :loading="submitLoading">
+          <div style="margin: 20px 0;">
+            <van-button type="primary" block native-type="submit" :loading="submitLoading" size="large">
               {{ isEdit ? '保存修改' : '提交' }}
             </van-button>
-            <van-button style="margin-top: 10px" block @click="showDialog = false">
+            <van-button style="margin-top: 12px" block @click="showDialog = false" size="large">
               取消
             </van-button>
           </div>
@@ -172,21 +188,54 @@
     <van-popup v-model:show="showViewDialog" position="bottom" style="height: 80%">
       <div class="dialog-content">
         <h3>老人档案详情</h3>
-        <van-cell-group v-if="currentProfile">
-          <van-cell title="用户ID" :value="currentProfile.userId" />
-          <van-cell title="年龄" :value="currentProfile.age + '岁'" />
-          <van-cell title="性别" :value="currentProfile.gender === 1 ? '男' : currentProfile.gender === 2 ? '女' : '未填写'" />
-          <van-cell title="身高" :value="currentProfile.height ? currentProfile.height + 'cm' : '未填写'" />
-          <van-cell title="体重" :value="currentProfile.weight ? currentProfile.weight + 'kg' : '未填写'" />
-          <van-cell title="基础病史" :value="currentProfile.medicalHistory || '无'" />
-          <van-cell title="过敏史" :value="currentProfile.allergy || '无'" />
-          <van-cell title="紧急联系人" :value="currentProfile.emergencyContact || '未填写'" />
-          <van-cell title="紧急联系电话" :value="currentProfile.emergencyPhone || '未填写'" />
-          <van-cell title="居住地址" :value="currentProfile.address || '未填写'" />
-          <van-cell title="关系" :value="currentProfile.relation || '未填写'" />
-        </van-cell-group>
-        <div style="margin: 16px">
-          <van-button block @click="showViewDialog = false">关闭</van-button>
+        <div v-if="currentProfile" class="profile-detail-content">
+          <div class="detail-item">
+            <span class="detail-label">用户ID</span>
+            <span class="detail-value">{{ currentProfile.userId }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">年龄</span>
+            <span class="detail-value">{{ currentProfile.age + '岁' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">性别</span>
+            <span class="detail-value">{{ currentProfile.gender === 1 ? '男' : currentProfile.gender === 2 ? '女' : '未填写' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">身高</span>
+            <span class="detail-value">{{ currentProfile.height ? currentProfile.height + 'cm' : '未填写' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">体重</span>
+            <span class="detail-value">{{ currentProfile.weight ? currentProfile.weight + 'kg' : '未填写' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">基础病史</span>
+            <span class="detail-value">{{ currentProfile.medicalHistory || '无' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">过敏史</span>
+            <span class="detail-value">{{ currentProfile.allergy || '无' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">紧急联系人</span>
+            <span class="detail-value">{{ currentProfile.emergencyContact || '未填写' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">紧急联系电话</span>
+            <span class="detail-value">{{ currentProfile.emergencyPhone || '未填写' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">居住地址</span>
+            <span class="detail-value">{{ currentProfile.address || '未填写' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">关系</span>
+            <span class="detail-value">{{ currentProfile.relation || '未填写' }}</span>
+          </div>
+        </div>
+        <div style="margin: 20px 0;">
+          <van-button block @click="showViewDialog = false" size="large">关闭</van-button>
         </div>
       </div>
     </van-popup>
@@ -204,7 +253,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { showToast, showConfirmDialog } from 'vant'
+import { showToast, showConfirmDialog, vanIcon, vanLoading } from 'vant'
 import {
   addOldmanProfileApi,
   updateOldmanProfileApi,
@@ -465,58 +514,209 @@ onMounted(() => {
 
 <style scoped>
 .profile-page {
-  padding: 16px;
   background: var(--bg-color);
-  min-height: 100vh;
 }
-.action-bar {
+
+.header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 30px;
 }
-.action-bar h2 {
-  font-size: 20px;
+
+.header h2 {
+  font-size: 24px;
   font-weight: 600;
+  color: var(--text-primary);
   margin: 0;
 }
+
 .search-bar {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
-.van-card {
-  margin-bottom: 12px;
+
+.search-bar .van-field {
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+
+.profile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-card {
   background: var(--card-bg);
   border-radius: var(--border-radius-lg);
+  padding: 20px;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.2s;
 }
+
+.profile-card:active {
+  transform: scale(0.98);
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.profile-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.profile-basic {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .gender-tag {
-  margin-right: 8px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
 }
-.illness-tag {
-  margin-right: 8px;
+
+.gender-tag.male {
+  background: #E6F7FF;
+  color: var(--primary-color);
 }
-.card-footer {
+
+.gender-tag.female {
+  background: #FFF1F0;
+  color: #F5222D;
+}
+
+.no-profile-tag {
+  margin-left: 12px;
+}
+
+.profile-details {
+  margin-bottom: 12px;
+}
+
+.medical-history {
+  margin-bottom: 8px;
+}
+
+.relation {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.no-profile-message {
+  font-size: 14px;
+  color: #F5222D;
+  margin-bottom: 12px;
+}
+
+.profile-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
 }
-.time {
-  color: var(--text-secondary);
+
+.create-time {
   font-size: 12px;
+  color: var(--text-secondary);
 }
+
 .btn-group {
   display: flex;
   gap: 8px;
 }
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: var(--card-bg);
+  border-radius: var(--border-radius-lg);
+  color: var(--text-secondary);
+  margin-top: 30px;
+}
+
+.empty-state p {
+  margin: 8px 0;
+  font-size: 16px;
+}
+
+.empty-hint {
+  font-size: 14px !important;
+  opacity: 0.8;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
+
+.loading-state p {
+  margin-top: 12px;
+  font-size: 14px;
+}
+
 .dialog-content {
   padding: 20px;
   height: 100%;
   overflow-y: auto;
+  background: white;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
 }
+
 .dialog-content h3 {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   font-size: 18px;
   font-weight: 600;
+  color: var(--text-primary);
+}
+
+.profile-detail-content {
+  background: var(--bg-color);
+  border-radius: var(--border-radius-lg);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.detail-value {
+  font-size: 14px;
+  color: var(--text-primary);
+  flex: 2;
+  text-align: right;
+  word-break: break-all;
 }
 </style>

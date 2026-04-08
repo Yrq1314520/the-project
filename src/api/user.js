@@ -10,9 +10,9 @@ export function loginApi(data) {
 }
 
 // 获取邮箱验证码，找回密码，修改密码
-export function sendEmailCodeApi(email) {
+export function sendEmailCodeApi(data) {
   return request({
-    url: '/v1/codes',
+    url: '/v1/codes/email',
     method: 'post',
     data
   })
@@ -27,17 +27,7 @@ export function registerApi(data) {
   })
 }
 
-//获取验证码注册
-export function getCodeApi(data) {
-  return request({
-    url: '/v1/codes/email',
-    method: 'post',
-    data: {
-      email: data.email,
-      type: data.type
-    }
-  })
-}
+
 
 //修改用户密码，登录状态下
 export function updatePasswordApi(userId, data) {
