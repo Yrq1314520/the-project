@@ -228,7 +228,7 @@ const loadDrugList = async () => {
       category: searchForm.category,
       status: searchForm.status
     })
-    if (res.code === 200) {
+    if (res.success === 200) {
       drugList.value = res.data.list
       total.value = res.data.total
     }
@@ -296,7 +296,7 @@ const handleDeleteDrug = (id) => {
   }).then(async () => {
     try {
       const res = await deleteDrugApi(id)
-      if (res.code === 200) {
+      if (res.success === 200) {
         ElMessage.success('删除成功')
         loadDrugList()
       }
@@ -311,7 +311,7 @@ const handleDeleteDrug = (id) => {
 const handleStatusChange = async (drug) => {
   try {
     const res = await updateDrugStatusApi(drug.id, drug.status)
-    if (res.code === 200) {
+    if (res.success === 200) {
       ElMessage.success(drug.status === '1' ? '启用成功' : '禁用成功')
     }
   } catch (error) {
@@ -325,12 +325,15 @@ const handleSubmit = async () => {
   try {
     await formRef.value.validate()
     let res
+    console.log('提交的表单数据:', form)
     if (isEdit.value) {
       res = await updateDrugApi(form.id, form)
+      console.log('编辑药品返回结果:', res)
     } else {
       res = await addDrugApi(form)
+      console.log('添加药品返回结果:', res)
     }
-    if (res.code === 200) {
+    if (res.success === 200) {
       ElMessage.success(isEdit.value ? '编辑成功' : '添加成功')
       dialogVisible.value = false
       loadDrugList()

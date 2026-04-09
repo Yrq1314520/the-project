@@ -182,19 +182,19 @@ const getActivityTypeText = (type) => {
 // 刷新数据
 const refreshData = () => {
   // 模拟刷新数据
-  console.log('刷新数据')
+
 }
 
 // 查看全部活动
 const viewAllActivities = () => {
   // 跳转到活动日志页面
-  console.log('查看全部活动')
+
 }
 
 // 初始化
 onMounted(() => {
   // 加载数据
-  console.log('初始化管理端仪表盘')
+
 })
 </script>
 

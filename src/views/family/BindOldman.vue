@@ -87,7 +87,6 @@ const onSearch = async () => {
   try {
     loading.value = true
     const res = await searchElderByUsernameApi({ username: searchForm.username })
-    console.log('搜索结果:', res)
     if (res.success === 200) {
       const data = res.data
       const users = Array.isArray(data) ? data : (data ? [data] : [])
@@ -98,12 +97,11 @@ const onSearch = async () => {
         
         try {
           const profileRes = await getElderProfileByUserIdApi(user.id)
-          console.log('档案信息:', profileRes)
-          if (profileRes.success === 200 && profileRes.data) {
+          if (profileRes.success === 200 && profileRes.data && profileRes.data.length > 0) {
             elderItems.push({
               ...user,
-              elderUserId: user.id,
-              elderInfoId: profileRes.data.id
+              elderuserId: user.id,
+              elderInfoId: profileRes.data[0].id
             })
           }
         } catch (err) {
@@ -126,12 +124,11 @@ const onSearch = async () => {
 const onBind = async (elderItem) => {
   try {
     loading.value = true
-    console.log(elderItem)
     const res = await bindElderAccountApi({
       elderInfoId: elderItem.elderInfoId,
-      elderUserId: elderItem.elderUserId
+      elderuserId: elderItem.elderuserId
     })
-    console.log(res)
+    console.log('绑定老人账号返回结果:', res)
     if (res.success === 200) {
       showToast('绑定成功')
       // 跳转到老人档案页面

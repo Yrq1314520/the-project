@@ -328,7 +328,7 @@ const handleDeleteOldman = (id) => {
 // 查看档案
 const handleViewProfile = (oldman) => {
   // 跳转到老人档案详情页
-  console.log('查看老人档案:', oldman)
+
 }
 
 // 提交表单

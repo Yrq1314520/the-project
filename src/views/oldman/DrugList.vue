@@ -24,8 +24,8 @@
       <van-cell
         v-for="item in drugList"
         :key="item.id"
-        :title="item.drugName"
-        :desc="`规格：${item.spec || '暂无'} | 功效：${item.effect || '暂无'}`"
+        :title="item.medicineName"
+        :desc="`类型：${item.type || '暂无'} | 数量：${item.quantity || '暂无'}`"
       >
         <template #right>
           <van-button type="primary" size="small" @click="handleEdit(item)">
@@ -54,9 +54,19 @@
           <van-field
             v-model="drugForm.expiryDate"
             label="有效期"
-            placeholder="请输入有效期，如2025-12-31"
+            placeholder="请选择有效期"
+            readonly
             required
+            @click="showAddDatePicker = true"
           />
+          <van-popup v-model:show="showAddDatePicker" position="bottom" round>
+            <van-date-picker
+              v-model="addDatePickerValue"
+              title="选择日期"
+              @confirm="onAddDateConfirm"
+              @cancel="showAddDatePicker = false"
+            />
+          </van-popup>
           <van-field
             v-model="drugForm.type"
             label="类型"
@@ -98,9 +108,19 @@
           <van-field
             v-model="editForm.expiryDate"
             label="有效期"
-            placeholder="请输入有效期，如2025-12-31"
+            placeholder="请选择有效期"
+            readonly
             required
+            @click="showEditDatePicker = true"
           />
+          <van-popup v-model:show="showEditDatePicker" position="bottom" round>
+            <van-date-picker
+              v-model="editDatePickerValue"
+              title="选择日期"
+              @confirm="onEditDateConfirm"
+              @cancel="showEditDatePicker = false"
+            />
+          </van-popup>
           <van-field
             v-model="editForm.type"
             label="类型"
@@ -166,21 +186,50 @@ const editForm = reactive({
   remark: ''
 })
 
+// 日期选择器
+const showAddDatePicker = ref(false)
+const showEditDatePicker = ref(false)
+const addDatePickerValue = ref(['2025', '01', '01'])
+const editDatePickerValue = ref(['2025', '01', '01'])
+
+// 添加日期确认
+const onAddDateConfirm = (value) => {
+  const year = value.selectedValues[0]
+  const month = value.selectedValues[1]
+  const day = value.selectedValues[2]
+  drugForm.expiryDate = `${year}-${month}-${day}`
+  showAddDatePicker.value = false
+}
+
+// 编辑日期确认
+const onEditDateConfirm = (value) => {
+  const year = value.selectedValues[0]
+  const month = value.selectedValues[1]
+  const day = value.selectedValues[2]
+  editForm.expiryDate = `${year}-${month}-${day}`
+  showEditDatePicker.value = false
+}
+
 // 加载药品列表
 const loadData = async () => {
   loading.value = true
   try {
     const res = await getMyDrugListApi()
     console.log(res)
-    if (res.code === 200) {
-      drugList.value.push(...res.data.list)
-      page.value++
-      if (drugList.value.length >= res.data.total) {
-        finished.value = true
-      }
+    if (res.success === 200) {
+      // 直接使用 res.data 作为药品列表
+      drugList.value = res.data
+      finished.value = true
+    } else {
+      // 查询不到药品信息
+      drugList.value = []
+      finished.value = true
+      showToast(res.errorMsg || '查询不到药品信息')
     }
   } catch (err) {
     showToast('加载失败，请稍后重试')
+    drugList.value = []
+    finished.value = true
   } finally {
     loading.value = false
   }
@@ -189,7 +238,6 @@ const loadData = async () => {
 // 搜索
 const onSearch = () => {
   drugList.value = []
-  page.value = 1
   finished.value = false
   loadData()
 }
@@ -197,8 +245,15 @@ const onSearch = () => {
 // 添加药品
 const handleSubmit = async () => {
   try {
-    const res = await addDrugApi(drugForm)
-    if (res.code === 200) {
+    // 将quantity转换为数字类型
+    const submitData = {
+      ...drugForm,
+      quantity: Number(drugForm.quantity)
+    }
+    console.log(submitData)
+    const res = await addDrugApi(submitData)
+    console.log(res)
+    if (res.success === 200) {
       showToast('添加成功')
       showAddDialog.value = false
       // 重置表单
@@ -211,7 +266,6 @@ const handleSubmit = async () => {
       })
       // 重新加载数据
       drugList.value = []
-      page.value = 1
       finished.value = false
       loadData()
     } else {
@@ -240,13 +294,17 @@ const handleEdit = (item) => {
 const handleEditSubmit = async () => {
   try {
     const { id, ...updateData } = editForm
-    const res = await updateDrugApi(id, updateData)
-    if (res.code === 200) {
+    // 将quantity转换为数字类型
+    const submitData = {
+      ...updateData,
+      quantity: Number(updateData.quantity)
+    }
+    const res = await updateDrugApi(id, submitData)
+    if (res.success === 200) {
       showToast('修改成功')
       showEditDialog.value = false
       // 重新加载数据
       drugList.value = []
-      page.value = 1
       finished.value = false
       loadData()
     } else {
@@ -261,18 +319,17 @@ const handleEditSubmit = async () => {
 const handleDelete = (item) => {
   showConfirmDialog({
     title: '确认删除',
-    message: `确定要删除药品"${item.drugName}"吗？`,
+    message: `确定要删除药品"${item.medicineName}"吗？`,
     confirmButtonText: '确定',
     cancelButtonText: '取消'
   })
   .then(async () => {
     try {
       const res = await deleteDrugApi(item.id)
-      if (res.code === 200) {
+      if (res.success === 200) {
         showToast('删除成功')
         // 重新加载数据
         drugList.value = []
-        page.value = 1
         finished.value = false
         loadData()
       } else {

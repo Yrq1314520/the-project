@@ -79,7 +79,6 @@ const onLogin = async () => {
     await formRef.value?.validate()
     loading.value = true
     const res = await loginApi(loginForm)
-    console.log(res)
     if (res.success === 200) {
       userStore.setLoginInfo(res.data.token, res.data)
       showToast('登录成功')

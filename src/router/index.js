@@ -101,10 +101,35 @@ const routes = [
   { path: '/medicine', redirect: '/family/drug-manage' },
   { path: '/waring', redirect: '/family/warning' },
 
+  // 家庭端健康分析路由
+  {
+    path: '/family/health-analysis',
+    component: () => import('@/views/family/HealthAnalysis.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/family/health-data',
+    component: () => import('@/views/family/HealthData.vue'),
+    meta: { requiresAuth: true }
+  },
+
+  // 用户相关路由
   {
     path: '/user/cancel-account',
     name: 'CancelAccount',
     component: () => import('@/views/user/CancelAccount.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/user/change-password',
+    name: 'ChangePassword',
+    component: () => import('@/views/user/ChangePassword.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/user/profile',
+    name: 'Profile',
+    component: () => import('@/views/user/Profile.vue'),
     meta: { requiresAuth: true }
   }
 ]
