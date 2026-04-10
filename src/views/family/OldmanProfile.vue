@@ -329,7 +329,6 @@ const onLoad = async () => {
 
   loading.value = true
   try {
-    // 这里应该使用获取已绑定老人列表的接口
     // 暂时使用搜索接口作为替代
     const res = await searchElderByUsernameApi({
       username: searchKeyword.value
@@ -373,7 +372,6 @@ const onLoad = async () => {
         }
       } catch (err) {
         console.error('获取档案失败', err)
-        // 网络错误时，也显示用户信息
         profiles.push({
           id: user.id,
           userId: user.id,

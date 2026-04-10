@@ -2,9 +2,7 @@
   <div class="family-home page-container">
     <div class="header">
       <h2>家庭端</h2>
-      <div class="user-info">
-        <span>{{ userInfo.nickname || '家属' }}</span>
-      </div>
+      <user-menu/>
     </div>
     
     <!-- 已绑定老人信息 -->
@@ -78,6 +76,7 @@ import { showDialog, showToast } from 'vant'
 import { useUserStore } from '@/store/user'
 import { logoutApi } from '@/api/user'
 import { computed, ref } from 'vue'
+import UserMenu from '../../components/UserMenu.vue'
 
 const router = useRouter()
 const userStore = useUserStore()

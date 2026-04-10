@@ -2,9 +2,7 @@
   <div class="oldman-home page-container oldman">
     <div class="header">
       <h2>老人端</h2>
-      <div class="user-info">
-        <span>{{ userInfo.nickname || '老人' }}</span>
-      </div>
+      <UserMenu />
     </div>
     
     <div class="voice-section">
@@ -69,6 +67,7 @@ import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { useUserStore } from '@/store/user'
+import UserMenu from '../../components/UserMenu.vue'
 
 const router = useRouter()
 const userStore = useUserStore()

@@ -4,7 +4,6 @@
       <h2>修改密码</h2>
     </div>
     
-    <!-- 修改密码表单 -->
     <van-form @submit="onChangeSubmit" ref="formRef" class="password-form">
       <van-cell-group inset>
         <van-field
@@ -100,14 +99,17 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { changePasswordApi, sendEmailCodeApi } from '@/api/user'
-
+import { useUserStore } from '@/store/user'   
 const router = useRouter()
+const userStore = useUserStore()   
 const formRef = ref(null)
 const loading = ref(false)
+const store = useUserStore()
+console.log('当前登录用户邮箱:', store.userInfo?.email)
 
 // 密码可见
 const showOldPassword = ref(false)
@@ -143,16 +145,17 @@ const sendVerifyCode = async () => {
   try {
     const res = await sendEmailCodeApi({
       email: form.email,
-      type: 3 // 3 = 修改密码
+      type: 3
     })
     
-    if (res.success === 200) {
+    if (res.code === 200) {   
       showToast('验证码发送成功')
       startCountdown()
     } else {
-      showToast(res.errorMsg || '验证码发送失败')
+      showToast(res.msg || res.errorMsg || '验证码发送失败')
     }
   } catch (err) {
+    console.error(err)
     showToast('网络异常，请重试')
   }
 }
@@ -162,9 +165,7 @@ const startCountdown = () => {
   counting.value = true
   countdown.value = 60
   
-  if (countdownTimer) {
-    clearInterval(countdownTimer)
-  }
+  if (countdownTimer) clearInterval(countdownTimer)
   
   countdownTimer = setInterval(() => {
     countdown.value--
@@ -180,39 +181,55 @@ const onChangeSubmit = async () => {
   try {
     await formRef.value?.validate()
     loading.value = true
+
+    const userId = userStore.userInfo?.id
+    const userEmail = userStore.userInfo?.email || form.email
     
-    const res = await changePasswordApi({
+    if (!userId) {
+      showToast('无法获取用户信息，请重新登录')
+      return
+    }
+    if (!userEmail) {
+      showToast('无法获取邮箱，请重新登录')
+      return
+    }
+
+    const res = await changePasswordApi(userId, {
+      email: userEmail,
       oldPassword: form.oldPassword,
       newPassword: form.newPassword,
       verifyCode: form.verifyCode
     })
-    
-    console.log('修改密码结果:', res)
-    if (res.success === 200) {
-      showToast('密码修改成功')
-      router.push('/user/profile')
+
+    if (res.code === 200 || res.success === 200) {
+      showToast('修改成功，请重新登录')
+      userStore.logout()
+      router.push('/login')
     } else {
-      showToast(res.errorMsg || '密码修改失败')
+      showToast(res.msg || res.errorMsg || '修改失败')
     }
   } catch (err) {
-    showToast('网络异常，请重试')
+    showToast('网络异常')
   } finally {
     loading.value = false
   }
 }
+
+onUnmounted(() => {
+  if (countdownTimer) clearInterval(countdownTimer)
+})
 </script>
 
 <style scoped>
+/* 样式保持不变 */
 .change-password-page {
   padding: 20px;
   background-color: #f8f9fa;
   min-height: 100vh;
 }
-
 .header {
   margin-bottom: 30px;
 }
-
 .header h2 {
   font-size: 24px;
   font-weight: 600;
@@ -220,21 +237,18 @@ const onChangeSubmit = async () => {
   color: #333;
   margin-bottom: 20px;
 }
-
 .password-form {
   background-color: #fff;
   border-radius: 8px;
   padding: 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-
 .password-toggle-icon {
   font-size: 20px;
   color: #999;
   cursor: pointer;
   padding: 0 10px;
 }
-
 .password-toggle-icon:hover {
   color: #1976d2;
 }

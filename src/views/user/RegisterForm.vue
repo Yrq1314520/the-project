@@ -250,23 +250,14 @@ const onRegister = async () => {
       registerForm.nickname = registerForm.username
     }
 
-<<<<<<< HEAD
-    // 移除 confirmPassword 和 roleText 
-=======
     // 移除confirmPassword、roleText和phone字段
->>>>>>> fc29ad19f9bdc6ab0a269005e27d6546cc0ab46d
     const { confirmPassword, roleText, ...submitData } = registerForm
     // 确保 role 是数字
     submitData.role = Number(submitData.role)
 
     const res = await registerApi(submitData)
     console.log(res)
-<<<<<<< HEAD
-    
-    if (res.code === 200) {
-=======
     if (res.success === 200) {
->>>>>>> fc29ad19f9bdc6ab0a269005e27d6546cc0ab46d
       showToast('注册成功')
       // 清空表单
       Object.assign(registerForm, {
@@ -285,23 +276,7 @@ const onRegister = async () => {
       // 切换到登录选项卡
       emit('switchToLogin')
     } else {
-<<<<<<< HEAD
-      // 细化错误提示
-      const errorMsg = res.msg || res.errorMsg || '注册失败'
-      if (errorMsg.includes('邮箱已被注册')) {
-        showToast('该邮箱已被注册，请更换邮箱')
-      } else if (errorMsg.includes('用户名已被占用')) {
-        showToast('用户名已被占用，请更换用户名')
-      } else if (errorMsg.includes('验证码错误')) {
-        showToast('验证码错误，请重新输入')
-      } else if (errorMsg.includes('密码格式不符合要求')) {
-        showToast('密码需包含大小写字母和数字，长度8-20位')
-      } else {
-        showToast(errorMsg)
-      }
-=======
       showToast(res.errorMsg || '注册失败')
->>>>>>> fc29ad19f9bdc6ab0a269005e27d6546cc0ab46d
     }
   } catch (err) {
     console.error('注册失败', err)

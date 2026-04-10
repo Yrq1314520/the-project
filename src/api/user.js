@@ -27,18 +27,6 @@ export function registerApi(data) {
   })
 }
 
-<<<<<<< HEAD
-//获取验证码注册
-export function getCodeApi(data) {
-  return request({
-    url: '/v1/codes/email',
-    method: 'post',
-    data
-  })
-}
-=======
-
->>>>>>> fc29ad19f9bdc6ab0a269005e27d6546cc0ab46d
 
 //修改用户密码，登录状态下
 export function updatePasswordApi(userId, data) {
@@ -103,9 +91,9 @@ export function cancelAccountApi() {
 
 
 // 密码修改（需要登录后才能实现）
-export function changePasswordApi(data) {
+export function changePasswordApi(userId, data) {
   return request({
-    url: '/v1/users/changePassword',
+    url: `/v1/users/${userId}/password`,
     method: 'post',
     data
   })

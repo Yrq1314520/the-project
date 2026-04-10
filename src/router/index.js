@@ -106,6 +106,12 @@ const routes = [
     name: 'CancelAccount',
     component: () => import('@/views/user/CancelAccount.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/user/change-password',
+    name: 'ChangePassword',
+    component: () => import('@/views/user/ChangePassword.vue'),
+    meta: { requiresAuth: true }
   }
 ]
 
