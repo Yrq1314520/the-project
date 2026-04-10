@@ -125,15 +125,12 @@ const routes = [
     name: 'ChangePassword',
     component: () => import('@/views/user/ChangePassword.vue'),
     meta: { requiresAuth: true }
-<<<<<<< HEAD
-=======
   },
   {
     path: '/user/profile',
     name: 'Profile',
     component: () => import('@/views/user/Profile.vue'),
     meta: { requiresAuth: true }
->>>>>>> 3d9022e8b11e7757f25782ee4f89c2818064572a
   }
 ]
 
