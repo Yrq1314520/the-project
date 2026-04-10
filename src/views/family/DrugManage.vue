@@ -227,10 +227,17 @@ const loadData = async () => {
       if (list.length < pageSize) {
         finished.value = true
       }
+    } else {
+      // 查询不到药品信息
+      drugList.value = []
+      finished.value = true
+      showToast(res.errorMsg || '查询不到药品信息')
     }
   } catch (err) {
     showToast('加载失败，请稍后重试')
     console.error(err)
+    drugList.value = []
+    finished.value = true
   } finally {
     loading.value = false
   }

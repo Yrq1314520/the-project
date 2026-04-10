@@ -101,6 +101,19 @@ const routes = [
   { path: '/medicine', redirect: '/family/drug-manage' },
   { path: '/waring', redirect: '/family/warning' },
 
+  // 家庭端健康分析路由
+  {
+    path: '/family/health-analysis',
+    component: () => import('@/views/family/HealthAnalysis.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/family/health-data',
+    component: () => import('@/views/family/HealthData.vue'),
+    meta: { requiresAuth: true }
+  },
+
+  // 用户相关路由
   {
     path: '/user/cancel-account',
     name: 'CancelAccount',
@@ -112,6 +125,15 @@ const routes = [
     name: 'ChangePassword',
     component: () => import('@/views/user/ChangePassword.vue'),
     meta: { requiresAuth: true }
+<<<<<<< HEAD
+=======
+  },
+  {
+    path: '/user/profile',
+    name: 'Profile',
+    component: () => import('@/views/user/Profile.vue'),
+    meta: { requiresAuth: true }
+>>>>>>> 3d9022e8b11e7757f25782ee4f89c2818064572a
   }
 ]
 

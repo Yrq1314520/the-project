@@ -2,80 +2,51 @@
   <div class="profile-page page-container">
     <div class="header">
       <h2>老人档案管理</h2>
-      <van-button type="primary" round @click="openAddDialog" size="large">
+    </div>
+    
+    <div style="margin: 20px 0;">
+      <van-button type="primary" block round @click="openAddDialog" size="large">
         <van-icon name="plus" style="margin-right: 8px" />
         新增档案
       </van-button>
     </div>
 
-    <!-- 搜索栏 -->
-    <div class="search-bar">
-      <van-field
-        v-model="searchKeyword"
-        placeholder="搜索老人姓名"
-        clearable
-        @keyup.enter="onSearch"
-      >
-        <template #left-icon>
-          <van-icon name="search" />
-        </template>
-        <template #button>
-          <van-button size="small" type="primary" round @click="onSearch">搜索</van-button>
-        </template>
-      </van-field>
-    </div>
+
 
     <!-- 档案列表 -->
-    <div v-if="list.length > 0" class="profile-list">
-      <div v-for="item in list" :key="item.id" class="profile-card">
-        <div class="profile-header">
-          <div class="profile-info">
-            <div class="profile-name">{{ item.name || '未命名' }}</div>
-            <div class="profile-basic">
-              <span v-if="!item.noProfile">{{ item.age }}岁</span>
-              <span v-if="!item.noProfile" class="gender-tag" :class="{ 'male': item.gender === 1, 'female': item.gender === 2 }">
-                {{ item.gender === 1 ? '男' : item.gender === 2 ? '女' : '' }}
-              </span>
-            </div>
-          </div>
-          <div v-if="item.noProfile" class="no-profile-tag">
-            <van-tag type="danger">无档案</van-tag>
+    <div v-if="list.length > 0" class="elder-list">
+      <div v-for="item in list" :key="item.id" class="elder-card">
+        <div class="elder-avatar">
+          <van-icon name="user-o" size="48" />
+        </div>
+        <div class="elder-info">
+          <div class="elder-username">{{ item.name || '未命名' }}</div>
+          <div class="elder-phone">
+            <span v-if="!item.noProfile">{{ item.age }}岁</span>
+            <span v-if="!item.noProfile" class="gender-tag" :class="{ 'male': item.gender === 1, 'female': item.gender === 2 }">
+              {{ item.gender === 1 ? '男' : item.gender === 2 ? '女' : '' }}
+            </span>
+            <span v-if="!item.noProfile && item.relation" class="relation">关系：{{ item.relation }}</span>
+            <span v-if="item.noProfile" class="no-profile">{{ item.errorMsg }}</span>
           </div>
         </div>
-        
-        <div v-if="!item.noProfile" class="profile-details">
-          <div v-if="item.medicalHistory" class="medical-history">
-            <van-tag type="warning">{{ item.medicalHistory }}</van-tag>
-          </div>
-          <div v-if="item.relation" class="relation">
-            关系：{{ item.relation }}
-          </div>
-        </div>
-        
-        <div v-if="item.noProfile" class="no-profile-message">
-          {{ item.errorMsg }}
-        </div>
-        
-        <div class="profile-footer">
-          <span class="create-time">{{ item.createTime || '未知时间' }}</span>
-          <div class="btn-group">
-            <template v-if="item.noProfile">
-              <van-button size="small" type="primary" round @click="openAddDialogForUser(item)">
-                添加档案
-              </van-button>
-            </template>
-            <template v-else>
-              <van-button size="small" type="primary" round @click="openViewDialog(item)">
-                查看
-              </van-button>
-              <van-button size="small" type="success" round @click="openEditDialog(item)">
-                编辑
-              </van-button>
-              <van-button size="small" type="danger" round @click="onDelete(item.id)">
-                删除
-              </van-button>
-            </template>
-          </div>
+        <div class="btn-group">
+          <template v-if="item.noProfile">
+            <van-button size="small" type="primary" round @click="openAddDialogForUser(item)">
+              添加档案
+            </van-button>
+          </template>
+          <template v-else>
+            <van-button size="small" type="primary" round @click="openViewDialog(item)">
+              查看
+            </van-button>
+            <van-button size="small" type="success" round @click="openEditDialog(item)">
+              编辑
+            </van-button>
+            <van-button size="small" type="danger" round @click="onDelete(item.id)">
+              删除
+            </van-button>
+          </template>
         </div>
       </div>
     </div>
@@ -84,7 +55,7 @@
     <div v-if="list.length === 0 && !loading" class="empty-state">
       <van-icon name="profile" size="48" color="#ccc" />
       <p>暂无老人档案</p>
-      <p class="empty-hint">请搜索老人姓名或点击新增档案</p>
+      <p class="empty-hint">请先绑定老人账号或点击新增档案</p>
     </div>
 
     <!-- 加载状态 -->
@@ -267,7 +238,6 @@ const list = ref([])
 const loading = ref(false)
 const finished = ref(false)
 const page = ref(1)
-const searchKeyword = ref('')
 
 // 弹窗状态
 const showDialog = ref(false)
@@ -320,35 +290,32 @@ const rules = {
 
 // 加载列表
 const onLoad = async () => {
-  if (!searchKeyword.value) {
-    loading.value = false
-    finished.value = true
-    list.value = []
-    return
-  }
-
   loading.value = true
   try {
+<<<<<<< HEAD
     // 暂时使用搜索接口作为替代
+=======
+    // 这里应该使用获取已绑定老人列表的接口
+    // 暂时使用搜索接口作为替代，不传关键词时获取所有已绑定老人
+>>>>>>> 3d9022e8b11e7757f25782ee4f89c2818064572a
     const res = await searchElderByUsernameApi({
-      username: searchKeyword.value
+      username: ''
     })
-    console.log('加载列表:', res)
     
     if (res.success !== 200) {
-      showToast(res.errorMsg || '搜索失败')
+      showToast(res.errorMsg || '加载失败')
       list.value = []
       finished.value = true
       return
     }
     
-    const users = res.data || []
+    const data = res.data
+    const users = Array.isArray(data) ? data : (data ? [data] : [])
     const profiles = []
     
     for (const user of users) {
       try {
         const profileRes = await getElderProfileByUserIdApi(user.id)
-        console.log(`用户 ${user.username} 的档案查询结果:`, profileRes)
         
         if (profileRes.success === 200 && profileRes.data) {
           const profileData = Array.isArray(profileRes.data) ? profileRes.data[0] : profileRes.data
@@ -396,13 +363,10 @@ const onLoad = async () => {
   }
 }
 
-// 搜索
-const onSearch = () => {
-  list.value = []
-  page.value = 1
-  finished.value = false
+// 页面加载时自动加载已绑定老人列表
+onMounted(() => {
   onLoad()
-}
+})
 
 // 打开新增弹窗
 const openAddDialog = () => {
@@ -448,22 +412,20 @@ const onSubmit = async () => {
     if (isEdit.value) {
       // 编辑
       const res = await updateOldmanProfileApi(form)
-      console.log('编辑结果:', res)
       if (res.success === 200) {
         showToast('修改成功')
         showDialog.value = false
-        onSearch()
+        onLoad()
       } else {
         showToast(res.errorMsg || '修改失败')
       }
     } else {
       // 新增
       const res = await addOldmanProfileApi(form)
-      console.log('新增结果:', res)
       if (res.success === 200) {
         showToast('添加成功')
         showDialog.value = false
-        onSearch()
+        onLoad()
       } else {
         showToast(res.errorMsg || '添加失败')
       }
@@ -485,10 +447,9 @@ const onDelete = async (id) => {
       message: '确定要删除这条老人档案吗？'
     })
     const res = await deleteOldmanProfileApi(id)
-    console.log('删除结果:', res)
     if (res.success === 200) {
       showToast('删除成功')
-      onSearch()
+      onLoad()
     } else {
       showToast(res.errorMsg || '删除失败')
     }
@@ -516,9 +477,6 @@ onMounted(() => {
 }
 
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 30px;
 }
 
@@ -526,116 +484,90 @@ onMounted(() => {
   font-size: 24px;
   font-weight: 600;
   color: var(--text-primary);
+  text-align: center;
   margin: 0;
 }
 
-.search-bar {
-  margin-bottom: 20px;
-}
-
-.search-bar .van-field {
-  border-radius: var(--border-radius-lg);
-  overflow: hidden;
-}
-
-.profile-list {
+.elder-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
-.profile-card {
+.elder-card {
   background: var(--card-bg);
   border-radius: var(--border-radius-lg);
-  padding: 20px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
   box-shadow: var(--card-shadow);
   transition: transform 0.2s;
 }
 
-.profile-card:active {
+.elder-card:active {
   transform: scale(0.98);
 }
 
-.profile-header {
+.elder-avatar {
+  margin-right: 16px;
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #5F9DB5 0%, #3B7C9E 100%);
+  border-radius: 50%;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
+  align-items: center;
+  justify-content: center;
+  color: white;
 }
 
-.profile-info {
+.elder-info {
   flex: 1;
 }
 
-.profile-name {
+.elder-username {
   font-size: 18px;
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 4px;
 }
 
-.profile-basic {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.elder-phone {
+  font-size: 14px;
+  color: var(--text-secondary);
 }
 
 .gender-tag {
   padding: 2px 8px;
   border-radius: 12px;
   font-size: 12px;
-  font-weight: 500;
+  margin-left: 8px;
 }
 
 .gender-tag.male {
-  background: #E6F7FF;
-  color: var(--primary-color);
+  background: #e6f7ff;
+  color: #1890ff;
 }
 
 .gender-tag.female {
-  background: #FFF1F0;
-  color: #F5222D;
-}
-
-.no-profile-tag {
-  margin-left: 12px;
-}
-
-.profile-details {
-  margin-bottom: 12px;
-}
-
-.medical-history {
-  margin-bottom: 8px;
+  background: #fff1f0;
+  color: #ff4d4f;
 }
 
 .relation {
+  margin-left: 8px;
   font-size: 14px;
   color: var(--text-secondary);
 }
 
-.no-profile-message {
-  font-size: 14px;
-  color: #F5222D;
-  margin-bottom: 12px;
-}
-
-.profile-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 12px;
-  border-top: 1px solid var(--border-color);
-}
-
-.create-time {
-  font-size: 12px;
+.no-profile {
   color: var(--text-secondary);
+  font-size: 14px;
 }
 
 .btn-group {
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
 .empty-state {

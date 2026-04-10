@@ -117,7 +117,6 @@ const sendVerifyCode = async () => {
       email: form.email,
       type: 2
     })
-    console.log(res)
     if (res.success === 200) {
       showToast('验证码已发送')
       startCountdown()
@@ -155,7 +154,6 @@ const onResetPassword = async () => {
       verifyCode: form.verifyCode,
       newPassword: form.newPassword
     })
-    console.log(res)
     if (res.success === 200) {
       showToast('密码重置成功')
       // 清空

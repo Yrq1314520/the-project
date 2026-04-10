@@ -219,7 +219,6 @@ const sendVerifyCode = async () => {
       email: registerForm.email,
       type: 1 // 注册时使用 type=1
     })
-    console.log(res)
     if (res.success === 200) {
       showToast('验证码已发送')
       // 开始倒计时
@@ -256,7 +255,10 @@ const onRegister = async () => {
     submitData.role = Number(submitData.role)
 
     const res = await registerApi(submitData)
+<<<<<<< HEAD
     console.log(res)
+=======
+>>>>>>> 3d9022e8b11e7757f25782ee4f89c2818064572a
     if (res.success === 200) {
       showToast('注册成功')
       // 清空表单
@@ -276,7 +278,23 @@ const onRegister = async () => {
       // 切换到登录选项卡
       emit('switchToLogin')
     } else {
+<<<<<<< HEAD
       showToast(res.errorMsg || '注册失败')
+=======
+      // 细化错误提示
+      const errorMsg = res.msg || res.errorMsg || '注册失败'
+      if (errorMsg.includes('邮箱已被注册')) {
+        showToast('该邮箱已被注册，请更换邮箱')
+      } else if (errorMsg.includes('用户名已被占用')) {
+        showToast('用户名已被占用，请更换用户名')
+      } else if (errorMsg.includes('验证码错误')) {
+        showToast('验证码错误，请重新输入')
+      } else if (errorMsg.includes('密码格式不符合要求')) {
+        showToast('密码需包含大小写字母和数字，长度8-20位')
+      } else {
+        showToast(errorMsg)
+      }
+>>>>>>> 3d9022e8b11e7757f25782ee4f89c2818064572a
     }
   } catch (err) {
     console.error('注册失败', err)

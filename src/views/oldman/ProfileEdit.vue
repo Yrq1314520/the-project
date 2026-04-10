@@ -165,8 +165,7 @@ const rules = {
 const loadProfile = async () => {
   try {
     const res = await getElderInfoByUserId(userStore.userInfo.id)
-    console.log('加载档案返回:', res)
-    if (res.code === 200 && res.data) {
+    if (res.success === 200 && res.data) {
       let data = res.data
       if (Array.isArray(data) && data.length > 0) {
         data = data[0]
@@ -192,7 +191,6 @@ const loadProfile = async () => {
         form.emergencyContact = data.emergencyContact || ''
         form.emergencyPhone = data.emergencyPhone || ''
         form.relation = data.relation || ''
-        console.log('已加载档案，ID:', elderInfoId.value)
       } else {
         elderInfoId.value = null
         isEdit.value = false
@@ -247,17 +245,13 @@ const onSubmit = async () => {
     if (elderInfoId.value) {
       // 更新带 id
       submitData.id = elderInfoId.value
-      console.log('更新档案，ID:', elderInfoId.value, submitData)
       res = await updateElderInfo(submitData)
     } else {
       // 新增不id
-      console.log('创建档案', submitData)
       res = await addElderInfo(submitData)
     }
 
-    console.log('提交结果:', res)
-
-    if (res.code === 200) {
+    if (res.success === 200) {
       showToast(isEdit.value ? '修改成功' : '创建成功')
       router.push('/oldman/profile')
     } else {

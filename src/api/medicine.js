@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-// 获取药品列表（通用）
+// 家属查询所有绑定老人的药品
 export const getDrugListApi = (params) => {
   return request({
     url: '/v1/medicine/list',

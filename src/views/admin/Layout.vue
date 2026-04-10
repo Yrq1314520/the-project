@@ -186,7 +186,7 @@ const toggleSidebar = () => {
 
 // 菜单选择
 const handleMenuSelect = (key, keyPath) => {
-  console.log('菜单选择:', key, keyPath)
+
 }
 
 // 个人信息
