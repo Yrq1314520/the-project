@@ -219,6 +219,7 @@ const sendVerifyCode = async () => {
       email: registerForm.email,
       type: 1 // 注册时使用 type=1
     })
+    console.log(res)
     if (res.success === 200) {
       showToast('验证码已发送')
       // 开始倒计时
