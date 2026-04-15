@@ -162,7 +162,7 @@ const rules = {
 }
 
 // 加载已有档案
-const loadProfile = async () => {
+const loadProfile = async () => { 
   try {
     const res = await getElderInfoByUserId(userStore.userInfo.id)
     if (res.success === 200 && res.data) {
@@ -218,41 +218,31 @@ const onGenderConfirm = ({ selectedOptions }) => {
 const onSubmit = async () => {
   try {
     await formRef.value?.validate()
+    if (!elderInfoId.value) {
+      showToast('档案不存在，请先创建档案')
+      return
+    }
     submitLoading.value = true
 
-    // 性别转换为数字
-    let genderValue = 0
-    if (form.genderText === '男') genderValue = 1
-    else if (form.genderText === '女') genderValue = 2
     const submitData = {
-      name: form.name,
-      gender: genderValue,
+      id: elderInfoId.value,
+      eldername: form.name,                   
       age: Number(form.age),
-      phone: form.phone,
-      idCard: form.idCard || null,
-      address: form.address || '',
-      medicalHistory: form.medicalHistory || '',
-      allergy: form.allergy || '',
+      gender: form.genderText === '男' ? 1 : 2,
       height: form.height ? Number(form.height) : null,
       weight: form.weight ? Number(form.weight) : null,
+      medicalHistory: form.medicalHistory || '',
+      allergy: form.allergy || '',
+      address: form.address || '',
       emergencyContact: form.emergencyContact || '',
       emergencyPhone: form.emergencyPhone || '',
-      relation: form.relation || '',
-      userId: userStore.userInfo.id
+      relation: form.relation || ''
     }
 
-    let res
-    if (elderInfoId.value) {
-      // 更新带 id
-      submitData.id = elderInfoId.value
-      res = await updateElderInfo(submitData)
-    } else {
-      // 新增不id
-      res = await addElderInfo(submitData)
-    }
-
-    if (res.success === 200) {
-      showToast(isEdit.value ? '修改成功' : '创建成功')
+    console.log('更新档案提交数据:', submitData)
+    const res = await updateElderInfo(submitData)
+    if (res.code === 200) {
+      showToast('修改成功')
       router.push('/oldman/profile')
     } else {
       showToast(res.msg || res.errorMsg || '保存失败')

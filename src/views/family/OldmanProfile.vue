@@ -292,12 +292,8 @@ const rules = {
 const onLoad = async () => {
   loading.value = true
   try {
-<<<<<<< HEAD
-    // 暂时使用搜索接口作为替代
-=======
     // 这里应该使用获取已绑定老人列表的接口
     // 暂时使用搜索接口作为替代，不传关键词时获取所有已绑定老人
->>>>>>> 3d9022e8b11e7757f25782ee4f89c2818064572a
     const res = await searchElderByUsernameApi({
       username: ''
     })

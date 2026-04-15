@@ -3,15 +3,15 @@
     <h2>我的档案</h2>
     
     <van-cell-group inset v-if="hasProfile">
-      <van-field v-model="profile.name" label="姓名" readonly />
       <van-field v-model="profile.genderText" label="性别" readonly />
       <van-field v-model="profile.age" label="年龄" readonly />
-      <van-field v-model="profile.phone" label="电话" readonly />
       <van-field v-model="profile.medicalHistory" label="病史" type="textarea" readonly />
       <van-field v-model="profile.allergy" label="过敏史" readonly />
       <van-field v-model="profile.address" label="居住地址" readonly />
       <van-field v-model="profile.height" label="身高(cm)" readonly />
       <van-field v-model="profile.weight" label="体重(kg)" readonly />
+      <van-field v-model="profile.emergencyContact" label="紧急联系人" readonly />
+      <van-field v-model="profile.emergencyPhone" label="紧急联系人电话" readonly />
     </van-cell-group>
     
     <div v-else class="empty-profile">
@@ -40,7 +40,7 @@ const userStore = useUserStore()
 const profile = ref({})
 
 const hasProfile = computed(() => {
-  return profile.value && (profile.value.id || (profile.value.name && profile.value.name !== '未填写'))
+  return profile.value && (profile.value.id || profile.value.age)
 })
 
 // 加载档案信息
@@ -66,16 +66,15 @@ const loadProfile = async () => {
       else genderText = data.gender || ''
       
       profile.value = {
-        id: data.id,
-        name: data.name || '未填写',
         genderText: genderText,
         age: data.age || '',
-        phone: data.phone || '',
         medicalHistory: data.medicalHistory || data.illness || '',
         allergy: data.allergy || '',
         address: data.address || '',
         height: data.height || '',
-        weight: data.weight || ''
+        weight: data.weight || '',
+        emergencyContact: data.emergencyContact || '',
+        emergencyPhone:data.emergencyPhone || '',
       }
     } else {
       profile.value = {}

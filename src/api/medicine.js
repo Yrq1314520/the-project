@@ -1,9 +1,10 @@
 import request from '@/utils/request'
+// import { quantity } from 'echarts/types/src/util/number.js'
 
 // 家属查询所有绑定老人的药品
 export const getDrugListApi = (params) => {
   return request({
-    url: '/v1/medicine/list',
+    url: `/v1/medicine/list`,
     method: 'get',
     params
   })
@@ -12,7 +13,7 @@ export const getDrugListApi = (params) => {
 // 老人查询自己所有的药品
 export const getMyDrugListApi = (params) => {
   return request({
-    url: '/v1/medicine/my-list',
+    url: `/v1/medicine/my-list`,
     method: 'get',
     params
   })
@@ -38,7 +39,7 @@ export const getDrugDetailApi = (id) => {
 // 搜索药品
 export const searchDrugApi = (keyword) => {
   return request({
-    url: '/v1/medicine/search',
+    url: `/v1/medicine/search`,
     method: 'get',
     params: { keyword }
   })
@@ -47,7 +48,7 @@ export const searchDrugApi = (keyword) => {
 // 模糊查询药品信息
 export const fuzzySearchDrugApi = (data) => {
   return request({
-    url: '/v1/medicine/list',
+    url: `/v1/medicine/list`,
     method: 'post',
     data
   })
@@ -56,7 +57,7 @@ export const fuzzySearchDrugApi = (data) => {
 // 家属查询所有绑定老人的药品
 export const getFamilyBindElderDrugListApi = (data) => {
   return request({
-    url: '/v1/medicine/list',
+    url: `/v1/medicine/list`,
     method: 'post',
     data
   })
@@ -65,7 +66,7 @@ export const getFamilyBindElderDrugListApi = (data) => {
 // 添加药品
 export const addDrugApi = (data) => {
   return request({
-    url: '/v1/medicine/add',
+    url: `/v1/medicine/add`,
     method: 'post',
     data
   })
@@ -74,9 +75,13 @@ export const addDrugApi = (data) => {
 // 编辑药品
 export const updateDrugApi = (id, data) => {
   return request({
-    url: `/v1/medicine/update/${id}`,
-    method: 'put',
-    data
+    url: `/v1/medicine/update`,
+    method: 'post',
+    data: {
+      id,
+      medicineName: data.medicineName,
+      quantity: data.quantity
+    }
   })
 }
 
