@@ -3,6 +3,7 @@
     <h2>我的档案</h2>
     
     <van-cell-group inset v-if="hasProfile">
+      <van-field v-model="profile.name" label="姓名" readonly />
       <van-field v-model="profile.genderText" label="性别" readonly />
       <van-field v-model="profile.age" label="年龄" readonly />
       <van-field v-model="profile.medicalHistory" label="病史" type="textarea" readonly />
@@ -66,6 +67,7 @@ const loadProfile = async () => {
       else genderText = data.gender || ''
       
       profile.value = {
+        name:data.name || '',
         genderText: genderText,
         age: data.age || '',
         medicalHistory: data.medicalHistory || data.illness || '',

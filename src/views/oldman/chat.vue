@@ -62,7 +62,7 @@
 import { ref, nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
-import { voiceChatApi } from '@/api/user'
+import request from '@/utils/request'   
 
 const router = useRouter()
 const chatContentRef = ref(null)
@@ -98,7 +98,11 @@ const sendMessage = async () => {
 
   isLoading.value = true
   try {
-    const res = await voiceChatApi({ content: text })
+    const res = await request({
+      url: '/v1/voice/chat/text',
+      method: 'post',
+      data: { question: text }
+    })
     if (res.code === 200 && res.data) {
       const reply = res.data.answer || res.data.reply || res.data
       messages.value.push({
@@ -139,6 +143,7 @@ onMounted(() => {
   scrollToBottom()
 })
 </script>
+
 
 <style scoped>
 .chat-page {

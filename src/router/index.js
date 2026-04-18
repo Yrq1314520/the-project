@@ -114,6 +114,13 @@ const routes = [
     meta: { requiresAuth: true }
   },
 
+  // 家属端老人问答记录
+  {
+    path: '/family/questions-records',
+    component: () => import('@/views/family/QuestionsRecords.vue'),
+    meta: { requiresAuth: true }
+  },
+
   // 用户相关路由
   {
     path: '/user/cancel-account',

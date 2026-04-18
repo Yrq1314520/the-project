@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+// import { url } from 'node:inspector'
 
 // 添加老人档案
 export function addOldmanProfileApi(data) {
@@ -26,7 +27,6 @@ export function deleteOldmanProfileApi(id) {
   })
 }
 
-// 绑定老人账号
 // 通过 username 模糊查询老人信息
 export function searchElderByUsernameApi(data) {
   return request({
@@ -67,8 +67,24 @@ export function getElderProfileByUserIdApi(userId) {
 // 紧急求助
 export function sendEmergencyHelpApi() {
   return request({
-    url: '/v1/elderInfo/update',
+    url: `/v1/elderInfo/update`,
     method: 'post'
   })
 }
 
+// 家属获取所有绑定老人的提问记录，可分页
+export function getAllQuestionsRecordsApi(params) {
+  return request({
+    url: `/v1/health-qa/family/questions`,
+    method: 'post',
+    data: params
+  })
+}
+
+// 查询当前用户绑定的所有老人姓名
+export function getBoundEldersApi() {
+  return request({
+    url: `/v1/elderInfo/bound-elders/names`,
+    method: 'get'
+  })
+}
