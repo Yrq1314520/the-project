@@ -43,13 +43,20 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { showToast } from 'vant'
-
+const props = defineProps({
+  userId: {
+    type: [String, Number],
+    default: ''
+  }
+})
 const list = ref([])
 const showAdd = ref(false)
 const addForm = ref({ name: '', phone: '' })
 
 onMounted(() => {
-  // 这里可以添加初始化逻辑
+  if (props.userId) {
+    loadProfile(props.userId)
+  }
 })
 
 const add = async () => {

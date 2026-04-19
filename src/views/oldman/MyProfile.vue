@@ -21,9 +21,12 @@
       <p class="sub">请点击下方按钮创建您的档案</p>
     </div>
 
-    <div style="padding:16px;margin-top:20px">
+    <div style="padding:16px;margin-top:20px; display: flex; gap: 12px; flex-direction: column;">
       <van-button type="primary" block @click="goEdit">
         {{ hasProfile ? '修改档案' : '创建档案' }}
+      </van-button>
+      <van-button v-if="hasProfile" type="danger" block plain @click="handleDelete">
+        删除档案
       </van-button>
     </div>
   </div>
@@ -32,9 +35,9 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { showToast } from 'vant'
+import { showToast, showConfirmDialog } from 'vant'
 import { useUserStore } from '@/store/user'
-import { getElderInfoByUserId } from '@/api/elderInfo'
+import { getElderInfoByUserId, deleteElderInfo } from '@/api/elderInfo'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -50,7 +53,6 @@ const loadProfile = async () => {
     const res = await getElderInfoByUserId(userStore.userInfo.id)
     console.log('获取档案返回:', res)
     if (res.code === 200 && res.data) {
-      
       let data = res.data
       if (Array.isArray(data) && data.length > 0) {
         data = data[0]
@@ -67,7 +69,8 @@ const loadProfile = async () => {
       else genderText = data.gender || ''
       
       profile.value = {
-        name:data.name || '',
+        id: data.id,  // 保存档案ID，用于删除
+        name: data.name || '',
         genderText: genderText,
         age: data.age || '',
         medicalHistory: data.medicalHistory || data.illness || '',
@@ -76,7 +79,7 @@ const loadProfile = async () => {
         height: data.height || '',
         weight: data.weight || '',
         emergencyContact: data.emergencyContact || '',
-        emergencyPhone:data.emergencyPhone || '',
+        emergencyPhone: data.emergencyPhone || '',
       }
     } else {
       profile.value = {}
@@ -92,10 +95,38 @@ const goEdit = () => {
   router.push('/oldman/profile-edit')
 }
 
+// 删除档案
+const handleDelete = () => {
+  showConfirmDialog({
+    title: '确认删除',
+    message: '确定要删除您的档案吗？此操作不可恢复。',
+    confirmButtonText: '确定',
+    cancelButtonText: '取消'
+  }).then(async () => {
+    try {
+      const res = await deleteElderInfo(profile.value.id)
+      if (res.code === 200) {
+        showToast('删除成功')
+        // 清空档案信息，显示空状态
+        profile.value = {}
+        // 可选：跳转到创建档案页面或停留在当前页
+        // router.push('/oldman/profile-edit')
+      } else {
+        showToast(res.msg || res.errorMsg || '删除失败')
+      }
+    } catch (err) {
+      console.error(err)
+      showToast('网络异常，请重试')
+    }
+  }).catch(() => {})
+}
+
 onMounted(() => {
   loadProfile()
 })
 </script>
+
+
 
 <style scoped>
 .elder-profile {

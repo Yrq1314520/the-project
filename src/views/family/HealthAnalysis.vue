@@ -1,412 +1,244 @@
 <template>
   <div class="health-analysis">
-    <div class="header">
-      <h2>健康数据分析</h2>
+    <div class="time-switch">
+      <van-button
+        v-for="item in timeOptions"
+        :key="item.value"
+        :type="selectedTime === item.value ? 'primary' : 'default'"
+        size="small"
+        @click="selectedTime = item.value"
+        style="margin-right: 8px; margin-bottom: 8px;"
+      >
+        {{ item.label }}
+      </van-button>
     </div>
-    
-    <!-- 时间范围选择 -->
-    <div class="time-selector">
-      <van-button-group>
-        <van-button 
-          v-for="item in timeOptions" 
-          :key="item.value"
-          :type="selectedTime === item.value ? 'primary' : 'default'"
-          @click="selectedTime = item.value"
-        >
-          {{ item.label }}
-        </van-button>
-      </van-button-group>
-    </div>
-    
-    <!-- 健康数据概览 -->
-    <div class="overview-section">
-      <van-grid :column-num="3" gap="16">
-        <van-grid-item>
-          <div class="overview-card">
-            <h3>平均血压</h3>
-            <p class="value">{{ avgBloodPressure }}</p>
-            <p class="status" :class="bloodPressureStatus">{{ bloodPressureStatusText }}</p>
+
+    <div v-if="loading" class="loading-tip">加载中...</div>
+    <div v-else-if="statsData.length === 0" class="empty-tip">暂无问答记录，无法分析</div>
+    <template v-else>
+      <div class="chart-container">
+        <v-chart v-if="chartData" :option="chartOption" autoresize />
+      </div>
+      <div class="suggestions-section">
+        <h3>💊 用药建议</h3>
+        <div class="suggestions-list">
+          <div v-for="item in drugSuggestions" :key="item.disease" class="suggestion-card">
+            <div class="disease-name">{{ item.disease }}</div>
+            <div class="drugs">推荐药品：{{ item.drugs.join('、') }}</div>
+            <div class="note">请咨询医生或药师后使用，不可自行增减剂量</div>
           </div>
-        </van-grid-item>
-        <van-grid-item>
-          <div class="overview-card">
-            <h3>平均血糖</h3>
-            <p class="value">{{ avgBloodSugar }} mmol/L</p>
-            <p class="status" :class="bloodSugarStatus">{{ bloodSugarStatusText }}</p>
-          </div>
-        </van-grid-item>
-        <van-grid-item>
-          <div class="overview-card">
-            <h3>平均心率</h3>
-            <p class="value">{{ avgHeartRate }} 次/分</p>
-            <p class="status" :class="heartRateStatus">{{ heartRateStatusText }}</p>
-          </div>
-        </van-grid-item>
-      </van-grid>
-    </div>
-    
-    <!-- 数据趋势图表 -->
-    <div class="chart-section">
-      <h3>血压趋势</h3>
-      <div class="chart-container" ref="bloodPressureChart"></div>
-    </div>
-    
-    <div class="chart-section">
-      <h3>血糖趋势</h3>
-      <div class="chart-container" ref="bloodSugarChart"></div>
-    </div>
-    
-    <div class="chart-section">
-      <h3>心率趋势</h3>
-      <div class="chart-container" ref="heartRateChart"></div>
-    </div>
-    
-    <!-- 健康建议 -->
-    <div class="advice-section">
-      <h3>健康建议</h3>
-      <van-card>
-        <div class="advice-content">
-          <ul>
-            <li v-for="(advice, index) in healthAdvice" :key="index">
-              {{ advice }}
-            </li>
-          </ul>
         </div>
-      </van-card>
-    </div>
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { BarChart } from 'echarts/charts'
+import { TitleComponent, TooltipComponent, GridComponent, LegendComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
 import { showToast } from 'vant'
-import { getHealthDataListApi } from '@/api/family'
+import { getAllQuestionsRecordsApi } from '@/api/family'
 
-const selectedTime = ref('week')
-const bloodPressureChart = ref(null)
-const bloodSugarChart = ref(null)
-const heartRateChart = ref(null)
-const healthData = ref([])
+//  ECharts
+use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, GridComponent, LegendComponent])
+
+const props = defineProps({
+  userId: { type: [String, Number], default: '' }
+})
 
 // 时间选项
 const timeOptions = [
-  { label: '最近7天', value: 'week' },
-  { label: '最近30天', value: 'month' },
-  { label: '最近90天', value: 'quarter' }
+  { label: '一天', value: 'day', days: 1 },
+  { label: '一个月', value: 'month', days: 30 },
+  { label: '一个季度', value: 'quarter', days: 90 }
+]
+const selectedTime = ref('month')
+
+const loading = ref(false)
+const allRecords = ref([])       // 所有问答记录
+const statsData = ref([])        // 症状统计 [{ symptom, count }]
+
+// 疾病关键词库
+const diseaseKeywords = [
+  '高血压', '糖尿病', '冠心病', '心力衰竭', '动脉粥样硬化', '胃食管反流病', '消化性溃疡',
+  '便秘', '腹泻', '尿路感染', '良性前列腺增生', '贫血', '血脂异常', '骨关节炎', '骨质疏松',
+  '帕金森病', '阿尔茨海默病', '癫痫', '慢性支气管炎', '慢性阻塞性肺疾病', '肺炎', '支气管哮喘',
+  '急性上呼吸道感染', '肺癌', '肺结核', '肝硬化', '胆道疾病', '尿石症', '老年性白内障', '青光眼'
 ]
 
-// 计算属性：平均血压
-const avgBloodPressure = computed(() => {
-  if (healthData.value.length === 0) return '0/0'
-  
-  const systolicValues = healthData.value.map(item => {
-    const bp = item.bloodPressure.split('/')
-    return parseInt(bp[0])
-  })
-  
-  const diastolicValues = healthData.value.map(item => {
-    const bp = item.bloodPressure.split('/')
-    return parseInt(bp[1])
-  })
-  
-  const avgSystolic = Math.round(systolicValues.reduce((a, b) => a + b, 0) / systolicValues.length)
-  const avgDiastolic = Math.round(diastolicValues.reduce((a, b) => a + b, 0) / diastolicValues.length)
-  
-  return `${avgSystolic}/${avgDiastolic}`
-})
+// 疾病然后推荐药品映射
+const diseaseMedicineMap = {
+  '急性上呼吸道感染': ['布洛芬', '对乙酰氨基酚', '氯雷他定'],
+  '慢性支气管炎': ['沙丁胺醇气雾剂', '氨溴索口服溶液'],
+  '慢性阻塞性肺疾病': ['噻托溴铵吸入剂', '布地奈德福莫特罗'],
+  '肺炎': ['阿莫西林', '头孢克肟'],
+  '支气管哮喘': ['布地奈德气雾剂', '孟鲁司特'],
+  '心力衰竭': ['呋塞米', '螺内酯', '美托洛尔'],
+  '高血压': ['氨氯地平', '厄贝沙坦', '美托洛尔'],
+  '动脉粥样硬化': ['阿司匹林', '阿托伐他汀'],
+  '冠心病': ['硝酸甘油', '阿司匹林'],
+  '胃食管反流病': ['奥美拉唑', '多潘立酮'],
+  '消化性溃疡': ['雷贝拉唑', '铝碳酸镁'],
+  '便秘': ['乳果糖', '聚乙二醇4000'],
+  '腹泻': ['蒙脱石散', '双歧杆菌三联'],
+  '尿路感染': ['左氧氟沙星', '头孢呋辛'],
+  '良性前列腺增生': ['坦索罗辛', '非那雄胺'],
+  '贫血': ['硫酸亚铁', '叶酸+维生素B12'],
+  '糖尿病': ['二甲双胍', '格列美脲', '甘精胰岛素'],
+  '血脂异常': ['阿托伐他汀', '非诺贝特'],
+  '骨关节炎': ['塞来昔布', '氨基葡萄糖'],
+  '骨质疏松': ['碳酸钙D3', '阿仑膦酸钠'],
+  '帕金森病': ['多巴丝肼'],
+  '阿尔茨海默病': ['多奈哌齐'],
+  '癫痫': ['丙戊酸钠']
+}
 
-// 计算属性：平均血糖
-const avgBloodSugar = computed(() => {
-  if (healthData.value.length === 0) return '0'
-  
-  const values = healthData.value.map(item => parseFloat(item.bloodSugar))
-  return (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1)
-})
-
-// 计算属性：平均心率
-const avgHeartRate = computed(() => {
-  if (healthData.value.length === 0) return '0'
-  
-  const values = healthData.value.map(item => parseInt(item.heartRate))
-  return Math.round(values.reduce((a, b) => a + b, 0) / values.length)
-})
-
-// 血压状态
-const bloodPressureStatus = computed(() => {
-  const bp = avgBloodPressure.value.split('/')
-  const systolic = parseInt(bp[0])
-  const diastolic = parseInt(bp[1])
-  
-  if (systolic < 90 || diastolic < 60) return 'low'
-  if (systolic < 120 && diastolic < 80) return 'normal'
-  if (systolic < 140 && diastolic < 90) return 'high-normal'
-  return 'high'
-})
-
-const bloodPressureStatusText = computed(() => {
-  switch (bloodPressureStatus.value) {
-    case 'low': return '偏低'
-    case 'normal': return '正常'
-    case 'high-normal': return '正常高值'
-    case 'high': return '偏高'
-    default: return '未知'
-  }
-})
-
-// 血糖状态
-const bloodSugarStatus = computed(() => {
-  const sugar = parseFloat(avgBloodSugar.value)
-  if (sugar < 3.9) return 'low'
-  if (sugar < 6.1) return 'normal'
-  if (sugar < 7.0) return 'high-normal'
-  return 'high'
-})
-
-const bloodSugarStatusText = computed(() => {
-  switch (bloodSugarStatus.value) {
-    case 'low': return '偏低'
-    case 'normal': return '正常'
-    case 'high-normal': return '正常高值'
-    case 'high': return '偏高'
-    default: return '未知'
-  }
-})
-
-// 心率状态
-const heartRateStatus = computed(() => {
-  const rate = parseInt(avgHeartRate.value)
-  if (rate < 60) return 'low'
-  if (rate < 100) return 'normal'
-  return 'high'
-})
-
-const heartRateStatusText = computed(() => {
-  switch (heartRateStatus.value) {
-    case 'low': return '偏低'
-    case 'normal': return '正常'
-    case 'high': return '偏高'
-    default: return '未知'
-  }
-})
-
-// 健康建议
-const healthAdvice = computed(() => {
-  const advice = []
-  
-  // 根据血压状态生成建议
-  if (bloodPressureStatus.value === 'high') {
-    advice.push('血压偏高，建议减少盐分摄入，保持适量运动')
-  } else if (bloodPressureStatus.value === 'low') {
-    advice.push('血压偏低，建议适当增加盐分摄入，避免长时间站立')
-  }
-  
-  // 根据血糖状态生成建议
-  if (bloodSugarStatus.value === 'high') {
-    advice.push('血糖偏高，建议控制碳水化合物摄入，增加运动量')
-  } else if (bloodSugarStatus.value === 'low') {
-    advice.push('血糖偏低，建议随身携带糖果，定时进食')
-  }
-  
-  // 根据心率状态生成建议
-  if (heartRateStatus.value === 'high') {
-    advice.push('心率偏高，建议避免剧烈运动，保持情绪稳定')
-  } else if (heartRateStatus.value === 'low') {
-    advice.push('心率偏低，建议定期检查，避免过度劳累')
-  }
-  
-  // 通用建议
-  advice.push('保持规律作息，充足睡眠')
-  advice.push('均衡饮食，多吃蔬菜水果')
-  advice.push('定期监测健康数据，及时调整生活方式')
-  
-  return advice
-})
-
-// 加载健康数据
-const loadHealthData = async () => {
+// 加载所有问答记录
+const loadRecords = async () => {
+  if (!props.userId) return
+  loading.value = true
   try {
-    const res = await getHealthDataListApi({ page: 1, pageSize: 100 })
-    if (res && res.success === 200) {
-      healthData.value = res.data?.list || []
-      // 按时间排序
-      healthData.value.sort((a, b) => {
-        return new Date(`${a.date} ${a.time}`) - new Date(`${b.date} ${b.time}`)
-      })
-      // 过滤时间范围
-      filterDataByTimeRange()
+    // 不分页，获取全部记录
+    const res = await getAllQuestionsRecordsApi({ page: 1, size: 100, userId: props.userId })
+    if (res.code === 200) {
+      allRecords.value = res.data?.list || []
+      computeStats()
+    } else {
+      showToast(res.msg || '加载问答记录失败')
     }
   } catch (err) {
-    showToast('加载数据失败')
+    console.error(err)
+    showToast('网络异常')
+  } finally {
+    loading.value = false
   }
 }
 
-// 根据时间范围过滤数据
-const filterDataByTimeRange = () => {
+// 根据时间范围过滤记录并统计症状
+const computeStats = () => {
   const now = new Date()
-  let startDate
-  
-  switch (selectedTime.value) {
-    case 'week':
-      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-      break
-    case 'month':
-      startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-      break
-    case 'quarter':
-      startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
-      break
-  }
-  
-  // 过滤数据
-  const filteredData = healthData.value.filter(item => {
-    const itemDate = new Date(`${item.date} ${item.time}`)
-    return itemDate >= startDate
+  let startDate = new Date()
+  const days = timeOptions.find(t => t.value === selectedTime.value)?.days || 30
+  startDate.setDate(now.getDate() - days)
+
+  const filtered = allRecords.value.filter(record => {
+    const recordTime = new Date(record.time)
+    return recordTime >= startDate
   })
-  
-  // 渲染图表
-  renderCharts(filteredData)
+
+  // 统计症状频次
+  const symptomCount = {}
+  filtered.forEach(record => {
+    const question = record.question || ''
+    // 对每条提问，检查是否包含疾病关键词
+    diseaseKeywords.forEach(disease => {
+      if (question.includes(disease)) {
+        symptomCount[disease] = (symptomCount[disease] || 0) + 1
+      }
+    })
+  })
+
+  // 转换为数组并按次数降序排序
+  const stats = Object.entries(symptomCount).map(([symptom, count]) => ({ symptom, count }))
+  stats.sort((a, b) => b.count - a.count)
+  statsData.value = stats.slice(0, 6)  // 取前6个
 }
 
-// 渲染图表
-const renderCharts = (data) => {
-  // 简化实现，实际项目中可以使用 ECharts 等图表库
-  if (bloodPressureChart.value) {
-    bloodPressureChart.value.innerHTML = `<div style="padding: 20px; text-align: center; color: #666;">血压趋势图表：共 ${data.length} 条数据</div>`
-  }
-  
-  if (bloodSugarChart.value) {
-    bloodSugarChart.value.innerHTML = `<div style="padding: 20px; text-align: center; color: #666;">血糖趋势图表：共 ${data.length} 条数据</div>`
-  }
-  
-  if (heartRateChart.value) {
-    heartRateChart.value.innerHTML = `<div style="padding: 20px; text-align: center; color: #666;">心率趋势图表：共 ${data.length} 条数据</div>`
-  }
-}
-
-// 监听时间范围变化
-watch(selectedTime, () => {
-  filterDataByTimeRange()
+// 用药建议（取前3个高频症状）
+const drugSuggestions = computed(() => {
+  const topSymptoms = statsData.value.slice(0, 3)
+  return topSymptoms.map(item => ({
+    disease: item.symptom,
+    drugs: diseaseMedicineMap[item.symptom] || ['请咨询医生']
+  }))
 })
 
-// 初始化
+// 图表配置
+const chartOption = computed(() => ({
+  title: { text: '常见不适症状频率统计', left: 'center', top: 0, textStyle: { fontSize: 14 } },
+  tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+  grid: { left: '10%', right: '5%', top: '15%', bottom: '10%', containLabel: true },
+  xAxis: {
+    type: 'category',
+    data: statsData.value.map(item => item.symptom),
+    axisLabel: { rotate: 30, interval: 0, fontSize: 11 }
+  },
+  yAxis: { type: 'value', name: '出现次数' },
+  series: [{
+    name: '频次',
+    type: 'bar',
+    data: statsData.value.map(item => item.count),
+    itemStyle: { borderRadius: [6, 6, 0, 0], color: '#3B7C9E' },
+    label: { show: true, position: 'top' }
+  }]
+}))
+
+// 监听时间范围变化，重新统计
+watch(selectedTime, () => {
+  computeStats()
+  showToast(`已切换到${timeOptions.find(t => t.value === selectedTime.value)?.label}`)
+})
+
 onMounted(() => {
-  loadHealthData()
+  loadRecords()
 })
 </script>
 
 <style scoped>
 .health-analysis {
-  padding: 20px;
-  background-color: #f8f9fa;
-  min-height: 100vh;
+  padding: 8px 0;
 }
-
-.header {
-  margin-bottom: 30px;
-}
-
-.header h2 {
-  font-size: 24px;
-  font-weight: 600;
-  text-align: center;
-  color: #333;
-}
-
-.time-selector {
-  margin-bottom: 30px;
+.time-switch {
   display: flex;
   justify-content: center;
+  margin-bottom: 20px;
 }
-
-.overview-section {
-  margin-bottom: 30px;
-}
-
-.overview-card {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
+.loading-tip, .empty-tip {
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  color: #999;
 }
-
-.overview-card h3 {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 8px;
-}
-
-.overview-card .value {
-  font-size: 20px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
-}
-
-.overview-card .status {
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 10px;
-}
-
-.status.normal {
-  background-color: #f0f9eb;
-  color: #52c41a;
-}
-
-.status.low {
-  background-color: #e6f7ff;
-  color: #1890ff;
-}
-
-.status.high-normal {
-  background-color: #fff7e6;
-  color: #fa8c16;
-}
-
-.status.high {
-  background-color: #fff1f0;
-  color: #ff4d4f;
-}
-
-.chart-section {
-  margin-bottom: 30px;
-}
-
-.chart-section h3 {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  color: #333;
-}
-
 .chart-container {
-  background-color: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  height: 300px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: white;
+  border-radius: 16px;
+  padding: 12px;
+  margin-bottom: 24px;
+  height: 360px;
 }
-
-.advice-section {
-  margin-bottom: 30px;
-}
-
-.advice-section h3 {
+.suggestions-section h3 {
   font-size: 18px;
   font-weight: 600;
-  margin-bottom: 16px;
-  color: #333;
+  margin-bottom: 12px;
 }
-
-.advice-content ul {
-  padding-left: 20px;
-  margin: 0;
+.suggestions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
-
-.advice-content li {
-  margin-bottom: 8px;
-  color: #666;
-  line-height: 1.5;
+.suggestion-card {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  border-left: 4px solid #3B7C9E;
+}
+.disease-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.drugs {
+  font-size: 14px;
+  color: #2A7F6E;
+  margin-bottom: 6px;
+}
+.note {
+  font-size: 12px;
+  color: #999;
+  border-top: 1px solid #eee;
+  padding-top: 8px;
 }
 </style>

@@ -23,11 +23,11 @@ export function updateOldmanProfileApi(data) {
 export function deleteOldmanProfileApi(id) {
   return request({
     url: `/v1/elderInfo/delete/${id}`,
-    method: 'post'
+    method: 'delete'
   })
 }
 
-// 通过 username 模糊查询老人信息
+// 通过 username 查找对应的老人信息
 export function searchElderByUsernameApi(data) {
   return request({
     url: '/v1/elderInfo/search/byusername',
@@ -55,12 +55,19 @@ export function setEmergencyContactForElder(data) {
   })
 }
 
-// 根据用户ID查询档案
+// 根据用户ID查询档案（老人用）
 export function getElderProfileByUserIdApi(userId) {
   return request({
     url: `/v1/elderInfo/user/${userId}`,
     method: 'post',
     data: { userId }
+  })
+}
+export function getElderIdApi() {
+  return request({
+    url: `/v1/elderInfo/my-elders`,
+    method: 'get',
+    data
   })
 }
 

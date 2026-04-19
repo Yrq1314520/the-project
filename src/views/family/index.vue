@@ -1,164 +1,401 @@
 <template>
-  <div class="family-home page-container">
-    <div class="header">
-      <h2>家庭端</h2>
-      <user-menu/>
+  <div class="family-home">
+    <!-- 顶部导航栏 -->
+    <div class="navbar">
+      <div class="logo">翼护银发</div>
+      <div class="nav-actions">
+        <div class="elder-selector">
+          <select v-model="selectedElderValue" @change="onElderChange" class="elder-select">
+            <option value="" disabled selected>选择老人</option>
+            <option v-for="opt in elderOptions" :key="opt.value" :value="opt.value">
+              {{ opt.text }}
+            </option>
+          </select>
+        </div>
+        <div class="nav-btn" @click="goToBindOldman">
+          <van-icon name="add-o" size="20" />
+          <span>绑定老人</span>
+        </div>
+        <div class="nav-warning" @click="scrollToWarning">
+          <van-icon name="bell-o" size="20" />
+          <span>预警通知</span>
+        </div>
+        <user-menu />
+      </div>
     </div>
-    
-    <!-- 功能网格 -->
-    <div class="function-grid">
-      <h3 class="grid-title">功能管理</h3>
-      <van-grid :column-num="2" :gutter="16">
-        <van-grid-item icon="user-o" text="绑定老人" to="/family/bind-oldman" />
-        <van-grid-item icon="records" text="老人档案" to="/family/oldman-profile" />
-        <van-grid-item icon="medal-o" text="药品管理" to="/family/drug-manage" />
-        <van-grid-item icon="bell-o" text="预警通知" to="/family/warning" />
-        <van-grid-item icon="warning-o" text="实时预警" to="/family/real-warning" />
-        <van-grid-item icon="friends-o" text="紧急联系人" to="/family/emergency-contact" />
-        <van-grid-item icon="chat-o" text="问答记录" to="/family/questions-records" />
-      </van-grid>
-    </div>
-    
-    <!-- 安全检测模块 -->
-    <div class="safety-section">
+
+    <!-- 用药安全提示卡片（图片 + 文字） -->
+    <div class="safety-tip-card" :style="{ backgroundImage: `url(${img4})` }">
+      <div class="tip-overlay"></div>
+        <div class="tip-text">
+        <p>老年人身体机能减弱，肝肾功能代谢慢，用药一定要格外谨慎。首先要严格遵从医嘱，不要自行加药、减药或停药，避免多种药物混用带来风险。平时帮老人整理好药品，做好服药提醒，防止漏服、重复服用。用药期间多观察老人反应，若出现头晕、乏力、肠胃不适等情况，要及时停药并就医。同时不要轻信偏方保健品，确保用药安全、简单、有效，守护好老人健康。</p>
+      </div>
+</div>
+
+    <!-- 预警通知模块 -->
+    <div class="warning-section" ref="warningSection">
       <div class="section-header">
-        <h3>安全检测</h3>
-        <span class="more-link" @click="goToSafetyDetection">详细检测</span>
+        <h3>⚠️ 预警通知</h3>
+        <span class="more-link" @click="goToWarningDetail">查看全部</span>
       </div>
-      <div class="safety-card">
-        <div class="safety-item">
-          <van-icon name="success" color="#52c41a" />
-          <span>老人状态正常</span>
-        </div>
-        <div class="safety-item">
-          <van-icon name="clock-o" />
-          <span>上次检测：刚刚</span>
+      <div v-if="warningList.length === 0" class="empty-warning">暂无预警通知</div>
+      <div v-else class="warning-list">
+        <div v-for="item in warningList" :key="item.id" class="warning-card">
+          <div class="warning-icon" :class="item.type === 'alert' ? 'alert' : 'email'">
+            <van-icon :name="item.type === 'alert' ? 'warning' : 'envelop-o'" />
+          </div>
+          <div class="warning-info">
+            <div class="warning-title">{{ item.title }}</div>
+            <div class="warning-desc">{{ item.content }}</div>
+            <div class="warning-time">{{ item.time }}</div>
+          </div>
         </div>
       </div>
     </div>
-    
+
     <!-- 注销按钮 -->
-    <div class="logout-section">
-      <van-button type="danger" block @click="handleLogout">
-        <van-icon name="delete" style="margin-right: 8px" />
-        用户注销
-      </van-button>
+    <div class="logout-wrapper">
+      <van-button plain type="danger" block round @click="handleLogout">注销账号</van-button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
-import { showDialog, showToast } from 'vant'
+import { ref, onMounted, watch, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { showToast, showConfirmDialog } from 'vant'
 import { useUserStore } from '@/store/user'
 import { logoutApi } from '@/api/user'
-import UserMenu from '../../components/UserMenu.vue'
+import { getBoundEldersApi } from '@/api/family'
+import UserMenu from '@/components/UserMenu.vue'
+import img4 from '@/assets/picture.jpg'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
+const userInfo = computed(() => userStore.userInfo)
+
+const elderOptions = ref([])
+const selectedElderValue = ref('')
+const warningSection = ref(null)
+
+// 预警数据（模拟数据，可替换为真实接口）
+const warningList = ref([
+  { id: 1, title: '血压异常', content: '收缩压160mmHg，超过正常范围', time: '2026-04-19 08:30', type: 'alert' },
+  { id: 2, title: '用药提醒', content: '阿司匹林需在早餐后服用', time: '2026-04-19 07:00', type: 'email' }
+])
+
+// 加载已绑定老人列表
+const loadBoundElders = async () => {
+  try {
+    const res = await getBoundEldersApi()
+    if (res.success === 200 && res.data && res.data.length > 0) {
+      let elders = res.data
+      let options = []
+      if (typeof elders[0] === 'object') {
+        const uniqueMap = new Map()
+        elders.forEach(item => {
+          const uid = item.userId || item.id
+          if (uid && !uniqueMap.has(uid)) {
+            uniqueMap.set(uid, {
+              text: item.username || item.name,
+              value: uid,
+              userId: uid,
+              username: item.username || item.name
+            })
+          }
+        })
+        options = Array.from(uniqueMap.values())
+      } else if (typeof elders[0] === 'string') {
+        console.warn('后端未返回 userId，无法直接获取档案信息')
+        options = elders.map(name => ({ text: name, value: name, userId: null }))
+      }
+      elderOptions.value = options
+    } else {
+      const localElders = JSON.parse(localStorage.getItem('localElders') || '[]')
+      if (localElders.length > 0) {
+        elderOptions.value = localElders.map(e => ({
+          text: e.name,
+          value: e.userId,
+          userId: e.userId,
+          username: e.name
+        }))
+        showToast({ message: '当前显示本地暂存老人', type: 'warning', duration: 2000 })
+      } else {
+        elderOptions.value = []
+      }
+    }
+  } catch (err) {
+    console.error(err)
+    const localElders = JSON.parse(localStorage.getItem('localElders') || '[]')
+    if (localElders.length > 0) {
+      elderOptions.value = localElders.map(e => ({
+        text: e.name,
+        value: e.userId,
+        userId: e.userId,
+        username: e.name
+      }))
+      showToast({ message: '网络异常，显示本地暂存老人', type: 'warning', duration: 2000 })
+    } else {
+      elderOptions.value = []
+    }
+  }
+}
+
+const onElderChange = (event) => {
+  const selectedValue = event.target.value
+  if (!selectedValue) return
+  const selected = elderOptions.value.find(opt => opt.value == selectedValue)
+  if (selected && selected.userId) {
+    router.push(`/family/elder-detail?userId=${selected.userId}`)
+  } else {
+    showToast('无法获取该老人的ID，请重新绑定')
+  }
+}
+
+const goToBindOldman = () => router.push('/family/bind-oldman')
+const scrollToWarning = () => {
+  if (warningSection.value) {
+    warningSection.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
+const goToWarningDetail = () => router.push('/family/warning')
 
 const handleLogout = async () => {
-  await showDialog({
+  await showConfirmDialog({
     title: '确认注销',
-    message: '确定要注销当前账号吗？此操作不可恢复。'
+    message: '注销后需重新登录，确定继续吗？',
+    confirmButtonText: '确定',
+    cancelButtonText: '取消'
   })
   try {
     await logoutApi()
     userStore.logout()
-    showToast('注销成功')
+    showToast('已注销')
     router.push('/login')
   } catch (err) {
-    showToast('注销失败，请重试')
-    console.error(err)
+    showToast('注销失败')
   }
 }
 
-const goToSafetyDetection = () => {
-  router.push('/family/safety-detection')
-}
+watch(() => route.path, (newPath) => {
+  if (newPath === '/family') loadBoundElders()
+})
+
+onMounted(() => {
+  loadBoundElders()
+})
 </script>
 
 <style scoped>
 .family-home {
-  background: var(--bg-color);
+  width: 100%;
+  margin: 0 auto;
+  background-color: #F5F7FA;
+  min-height: 100vh;
 }
-.header {
+
+/* 导航栏样式保持不变 */
+.navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  background: rgb(239, 252, 251);
+  padding: 12px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.header h2 {
-  font-size: 24px;
+.logo {
+  font-size: 22px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: #2A7F6E;
 }
-.function-grid {
-  margin-bottom: 30px;
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
-.grid-title {
+.elder-selector {
+  min-width: 120px;
+  width: auto;
+}
+.elder-select {
+  background: #F8F9FC;
+  border: none;
+  border-radius: 40px;
+  height: 40px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #2A7F6E;
+  cursor: pointer;
+  outline: none;
+  font-family: inherit;
+}
+.elder-select:hover {
+  background: #E8ECF0;
+}
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  height: 40px;
+  background: #F8F9FC;
+  border-radius: 40px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+  color: #2A7F6E;
+}
+.nav-btn:hover {
+  background: #E8ECF0;
+}
+
+/* 用药安全提示卡片：16:9比例，无圆角，整图半透明罩层 */
+.safety-tip-card {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%; /* 16:9 比例 */
+  margin: 0; /* 紧贴导航栏 */
+  background-image: v-bind('`url(${img4})`');
+  background-size: cover;
+  background-position: right center;
+  background-repeat: no-repeat;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+/* 新增：全屏半透明罩层，用于压暗图片以凸显文字 */
+.safety-tip-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* 半透明黑色，可根据需要调整透明度 */
+  z-index: 1;
+}
+
+/* 文字层：位于罩层之上，无背景，仅白色文字与阴影 */
+.tip-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 55%;        /* 文字区域宽度，可自行调整 */
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 40px;
+  box-sizing: border-box;
+  z-index: 2;
+}
+.tip-text p {
+  color: white;
   font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 16px;
-  padding: 0 8px;
+  line-height: 1.6;
+  margin: 0;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  font-weight: 500;
 }
-.function-grid .van-grid-item {
-  background: var(--card-bg);
-  border-radius: var(--border-radius-lg);
-  padding: 20px 0;
-  box-shadow: var(--card-shadow);
-  transition: transform 0.2s;
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .safety-tip-card {
+    padding-bottom: 75%; /* 移动端可适当调整比例 */
+  }
+  .tip-text {
+    width: 70%;
+    padding: 0 20px;
+  }
+  .tip-text p {
+    font-size: 14px;
+  }
 }
-.function-grid .van-grid-item:active {
-  transform: scale(0.98);
-}
-.safety-section {
-  margin-bottom: 30px;
+
+/* 预警通知模块样式，无圆角 */
+.warning-section {
+  background: white;
+  border-radius: 0;
+  padding: 20px;
+  margin: 0 0 24px 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
 }
 .section-header {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   margin-bottom: 16px;
-  padding: 0 8px;
 }
 .section-header h3 {
   font-size: 18px;
   font-weight: 600;
-  color: var(--text-primary);
   margin: 0;
 }
 .more-link {
   font-size: 14px;
-  color: var(--primary-color);
+  color: #2A7F6E;
   cursor: pointer;
 }
-.safety-card {
-  background: linear-gradient(135deg, #E6F7FF 0%, #F6FFED 100%);
-  border-radius: var(--border-radius-lg);
-  padding: 20px;
+.warning-list {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border: 1px solid #B7EB8F;
+  flex-direction: column;
+  gap: 12px;
 }
-.safety-item {
+.warning-card {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: var(--text-primary);
+  gap: 12px;
+  padding: 12px;
+  background: #F8F9FC;
+  border-radius: 0;
 }
-.logout-section {
-  margin-top: 40px;
-  margin-bottom: 20px;
+.warning-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.logout-section .van-button {
-  background: var(--danger-color);
-  border: none;
+.warning-icon.alert {
+  background: #FFEFEF;
+  color: #E76F51;
+}
+.warning-icon.email {
+  background: #E8F4FD;
+  color: #2A7F6E;
+}
+.warning-info {
+  flex: 1;
+}
+.warning-title {
+  font-weight: 600;
   font-size: 16px;
-  height: 52px;
-  border-radius: var(--border-radius-lg);
+}
+.warning-desc {
+  font-size: 14px;
+  color: #6C7A89;
+  margin-top: 2px;
+}
+.warning-time {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+}
+.empty-warning {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+.logout-wrapper {
+  text-align: center;
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
+.logout-wrapper .van-button {
+  width: 100%;
 }
 </style>

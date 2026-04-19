@@ -18,11 +18,11 @@ export function updateElderInfo(data) {
   })
 }
 
-// 删除档案，家属端用
+// 删除档案，家属、老人端用
 export function deleteElderInfo(id) {
   return request({
     url: `/v1/elderInfo/delete/${id}`,
-    method: 'post'
+    method: 'delete'
   })
 }
 

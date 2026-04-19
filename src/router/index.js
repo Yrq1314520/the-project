@@ -113,7 +113,12 @@ const routes = [
     component: () => import('@/views/family/HealthData.vue'),
     meta: { requiresAuth: true }
   },
-
+  {
+    path: '/family/elder-detail',
+    name: 'ElderDetail',
+    component: () => import('@/views/family/ElderDetail.vue'),
+    meta: { requiresAuth: true }
+  },
   // 家属端老人问答记录
   {
     path: '/family/questions-records',

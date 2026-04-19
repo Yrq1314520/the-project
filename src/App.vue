@@ -1,23 +1,22 @@
 <template>
   <div id="app">
-    <router-view />
+    <transition name="slide-up" mode="out-in">
+      <router-view />
+    </transition>
   </div>
 </template>
 
-<script setup>
-// 
-</script>
-
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
 }
-
-#app {
-  width: 100%;
-  min-height: 100vh;
-  background-color: #f5f7fa;
+.slide-up-enter-from {
+  transform: translateY(100%);
+  opacity: 0;
+}
+.slide-up-leave-to {
+  transform: translateY(-10%);
+  opacity: 0;
 }
 </style>

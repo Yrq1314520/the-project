@@ -2,35 +2,12 @@
   <div class="family-drug-page">
     <div class="page-header">
       <h2 class="page-title">药品管理</h2>
-      <van-button type="primary" @click="openAddDialog">
-        添加药品
-      </van-button>
+      <van-button type="primary" @click="openAddDialog">添加药品</van-button>
     </div>
-
-    <!-- 输入老人档案ID -->
-    <van-cell-group inset>
-      <van-field
-        v-model="elderIdInput"
-        label="老人档案ID"
-        placeholder="请输入老人档案ID"
-        type="number"
-        required
-        @keyup.enter="onConfirmElderId"
-      />
-      <div style="padding: 12px;">
-        <van-button type="primary" block @click="onConfirmElderId">
-          确认
-        </van-button>
-      </div>
-    </van-cell-group>
 
     <!-- 搜索栏：药品名称 + 类型筛选 -->
     <div class="search-wrapper">
-      <van-search
-        v-model="searchKey"
-        placeholder="输入药品名称搜索"
-        @search="onSearch"
-      />
+      <van-search v-model="searchKey" placeholder="输入药品名称搜索" @search="onSearch" />
       <div class="type-filter">
         <van-dropdown-menu>
           <van-dropdown-item v-model="selectedType" :options="typeFilterOptions" title="类型" />
@@ -38,185 +15,105 @@
       </div>
     </div>
 
-    <van-list
-      v-model:loading="loading"
-      :finished="finished"
-      finished-text="没有更多药品"
-      @load="loadData"
-    >
-      <van-cell
-        v-for="item in drugList"
-        :key="item.id"
-        :title="item.medicineName"
-        :desc="`类型：${item.type || '暂无'} | 数量：${item.quantity || '暂无'}`"
-      >
+    <!-- 药品列表 -->
+    <van-list v-model:loading="loading" :finished="finished" finished-text="没有更多药品" @load="loadData">
+      <van-cell v-for="item in drugList" :key="item.id" :title="item.medicineName"
+        :desc="`类型：${item.type || '暂无'} | 数量：${item.quantity || '暂无'}`">
         <template #right-icon>
-          <van-button type="primary" size="small" @click="openEditDialog(item)">
-            编辑
-          </van-button>
-          <van-button type="danger" size="small" @click="handleDelete(item)">
-            删除
-          </van-button>
+          <van-button type="primary" size="small" @click="openEditDialog(item)">编辑</van-button>
+          <van-button type="danger" size="small" @click="handleDelete(item)">删除</van-button>
         </template>
       </van-cell>
     </van-list>
 
     <van-empty v-if="!loading && drugList.length === 0" description="暂无药品信息" />
 
-    <!-- 添加/编辑药品对话框 -->
-   <van-popup v-model:show="showDialog" position="bottom" round>
-   <div class="dialog-content">
-    <h3 class="dialog-title">{{ isEdit ? '修改药品' : '添加药品' }}</h3>
-    <van-form @submit="handleSubmit">
-      <!-- 添加时显示老人档案ID -->
-      <van-field
-        v-if="!isEdit"
-        v-model="drugForm.elderId"
-        label="老人档案ID"
-        placeholder="请输入老人档案ID"
-        type="number"
-        required
-      />
-      <van-field
-        v-model="drugForm.medicineName"
-        label="药品名称"
-        placeholder="请输入药品名称"
-        required
-      />
-      <van-field
-        v-model="drugForm.quantity"
-        label="数量"
-        type="number"
-        placeholder="请输入数量"
-        required
-      />
-      <template v-if="!isEdit">
-        <van-field
-        v-model="drugForm.type"
-        label="类型"
-        placeholder="请选择药品类型"
-        readonly
-        required
-        class="rounded-field"
-        @click="showTypePicker = true"
-      />
-        <van-field
-          v-model="drugForm.expiryDate"
-          label="有效期"
-          placeholder="请选择有效期"
-          readonly
-          required
-          @click="showDatePicker = true"
-        />
-        <van-field
-          v-model="drugForm.remark"
-          label="备注"
-          type="textarea"
-          placeholder="请输入备注"
-        />
-      </template>
-      <div class="dialog-buttons">
-        <van-button type="default" @click="showDialog = false">取消</van-button>
-        <van-button type="primary" native-type="submit">确定</van-button>
+    <!-- 添加药品对话框 -->
+    <van-popup v-model:show="showDialog" position="bottom" round>
+      <div class="dialog-content">
+        <h3 class="dialog-title">{{ isEdit ? '修改药品' : '添加药品' }}</h3>
+        <van-form @submit="handleSubmit">
+          <van-field v-if="!isEdit" v-model="drugForm.elderId" label="老人档案ID" type="number" required />
+          <van-field v-model="drugForm.medicineName" label="药品名称" required />
+          <van-field v-model="drugForm.quantity" label="数量" type="number" required />
+          <template v-if="!isEdit">
+            <van-field v-model="drugForm.type" label="类型" readonly required @click="showTypePicker = true" />
+            <van-field v-model="drugForm.expiryDate" label="有效期" readonly required @click="showDatePicker = true" />
+            <van-field v-model="drugForm.remark" label="备注" type="textarea" />
+          </template>
+          <div class="dialog-buttons">
+            <van-button type="default" @click="showDialog = false">取消</van-button>
+            <van-button type="primary" native-type="submit">确定</van-button>
+          </div>
+        </van-form>
       </div>
-    </van-form>
-  </div>
-</van-popup>
+    </van-popup>
 
     <!-- 日期选择器 -->
     <van-popup v-model:show="showDatePicker" position="bottom" round>
-      <van-date-picker
-        v-model="datePickerValue"
-        title="选择日期"
-        @confirm="onDateConfirm"
-        @cancel="showDatePicker = false"
-      />
+      <van-date-picker v-model="datePickerValue" title="选择日期" @confirm="onDateConfirm" @cancel="showDatePicker = false" />
     </van-popup>
 
-    <!-- 类型选择器 -->
+    <!-- 类型选择器（修复：使用对象数组） -->
     <van-popup v-model:show="showTypePicker" position="bottom">
-      <van-picker
-        :columns="typeOptions"
-        :swipe-duration="500"
-        :visible-item-count="5"
-        @confirm="onTypeConfirm"
-        @cancel="showTypePicker = false"
-      />
+      <van-picker :columns="typeOptionsObj" @confirm="onTypeConfirm" @cancel="showTypePicker = false" />
     </van-popup>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { showToast, showConfirmDialog } from 'vant'
 import { getDrugListByElderIdApi, addDrugApi, updateDrugApi, deleteDrugApi, fuzzySearchDrugApi } from '@/api/medicine'
 
-// 老人档案ID输入
-const elderIdInput = ref('')
-const currentElderId = ref('')
+const props = defineProps({
+  elderInfoId: {
+    type: [String, Number],
+    default: ''
+  }
+})
 
-// 搜索关键词和类型筛选
+const currentElderId = ref('')
 const searchKey = ref('')
 const selectedType = ref('')
-
-// 药品列表
 const drugList = ref([])
 const loading = ref(false)
 const finished = ref(false)
 
-// 弹窗控制
 const showDialog = ref(false)
 const isEdit = ref(false)
 const currentId = ref(null)
-
-// 添加药品表单
-const drugForm = reactive({
-  elderId: '',
-  medicineName: '',
-  expiryDate: '',
-  type: '',
-  quantity: '',
-  remark: ''
-})
-
-// 编辑药品表单（不包含档案ID）
-const editForm = reactive({
-  id: '',
-  medicineName: '',
-  quantity: ''
-})
+const drugForm = reactive({ elderId: '', medicineName: '', expiryDate: '', type: '', quantity: '', remark: '' })
+const editForm = reactive({ id: '', medicineName: '', quantity: '' })
 
 // 日期选择器
 const showDatePicker = ref(false)
 const datePickerValue = ref(['2025', '01', '01'])
-
 const onDateConfirm = (value) => {
-  const year = value.selectedValues[0]
-  const month = value.selectedValues[1]
-  const day = value.selectedValues[2]
+  const [year, month, day] = value.selectedValues
   drugForm.expiryDate = `${year}-${month}-${day}`
   showDatePicker.value = false
 }
 
-// 药品类型选项
-const typeOptions = ref([
-  { text: '感冒发烧', value: '感冒发烧' },
-  { text: '肠胃消化', value: '肠胃消化' },
-  { text: '咳嗽咽痛', value: '咳嗽咽痛' },
-  { text: '皮肤骨科', value: '皮肤骨科' },
-  { text: '慢病用药', value: '慢病用药' },
-  { text: '儿童用药', value: '儿童用药' },
-  { text: '未分类', value: '未分类' }
-])
+// 类型选项（字符串数组，用于下拉筛选）
+const typeOptions = ref(['感冒发烧', '肠胃消化', '咳嗽咽痛', '皮肤骨科', '慢病用药', '儿童用药', '未分类'])
+const typeFilterOptions = ref([{ text: '全部', value: '' }, ...typeOptions.value.map(t => ({ text: t, value: t }))])
 
-const typeFilterOptions = ref([
-  { text: '全部', value: '' },
-  ...typeOptions.value
-])
+// 类型选择器（对象数组，用于 van-picker）
+const typeOptionsObj = ref(typeOptions.value.map(t => ({ text: t, value: t })))
 
 const showTypePicker = ref(false)
-const onTypeConfirm = ({ selectedOptions }) => {
-  drugForm.type = selectedOptions[0].value
+const onTypeConfirm = (value) => {
+  // 兼容 Vant 4 的返回格式
+  let selected = ''
+  if (value && value.selectedValues && value.selectedValues.length > 0) {
+    selected = value.selectedValues[0]
+  } else if (value && typeof value === 'string') {
+    selected = value
+  } else if (Array.isArray(value) && value.length > 0) {
+    selected = value[0]
+  }
+  drugForm.type = selected
   showTypePicker.value = false
 }
 
@@ -230,19 +127,6 @@ const resetDrugForm = () => {
   drugForm.remark = ''
 }
 
-// 确认档案ID
-const onConfirmElderId = () => {
-  if (!elderIdInput.value) {
-    showToast('请输入老人档案ID')
-    return
-  }
-  currentElderId.value = elderIdInput.value
-  // 重置列表并重新加载
-  drugList.value = []
-  finished.value = false
-  loadData()
-}
-
 // 加载药品列表
 const loadData = async () => {
   if (!currentElderId.value) {
@@ -251,24 +135,19 @@ const loadData = async () => {
   }
   loading.value = true
   try {
+    const elderIdNum = Number(currentElderId.value)
     let res
     if (searchKey.value || selectedType.value) {
       res = await fuzzySearchDrugApi({
         medicineName: searchKey.value.trim(),
         type: selectedType.value,
-        elderId: currentElderId.value
+        elderId: elderIdNum
       })
     } else {
-      res = await getDrugListByElderIdApi(currentElderId.value)
+      res = await getDrugListByElderIdApi(elderIdNum)
     }
     if (res.success === 200) {
-      let list = []
-      if (Array.isArray(res.data)) {
-        list = res.data
-      } else if (res.data && Array.isArray(res.data.list)) {
-        list = res.data.list
-      }
-      drugList.value = list
+      drugList.value = Array.isArray(res.data) ? res.data : (res.data?.list || [])
       finished.value = true
     } else {
       drugList.value = []
@@ -285,10 +164,9 @@ const loadData = async () => {
   }
 }
 
-// 搜索事件
 const onSearch = () => {
   if (!currentElderId.value) {
-    showToast('请先输入老人档案ID并确认')
+    showToast('请先选择老人')
     return
   }
   drugList.value = []
@@ -296,19 +174,17 @@ const onSearch = () => {
   loadData()
 }
 
-// 监听类型变化自动搜索
 watch(selectedType, () => {
-  if (currentElderId.value) {
-    onSearch()
-  }
+  if (currentElderId.value) onSearch()
 })
 
 // 打开添加弹窗
 const openAddDialog = () => {
   if (!currentElderId.value) {
-    showToast('请先输入老人档案ID并确认')
+    showToast('请先选择老人')
     return
   }
+  isEdit.value = false
   resetDrugForm()
   showDialog.value = true
 }
@@ -326,24 +202,17 @@ const openEditDialog = (item) => {
 const handleSubmit = async () => {
   try {
     if (isEdit.value) {
-      // 编辑
-      const submitData = {
-        medicineName: editForm.medicineName,
-        quantity: Number(editForm.quantity)
-      }
-      const res = await updateDrugApi(currentId.value, submitData)
+      const res = await updateDrugApi(currentId.value, { medicineName: editForm.medicineName, quantity: Number(editForm.quantity) })
       if (res.success === 200) {
         showToast('修改成功')
         showDialog.value = false
-        // 刷新列表
         loadData()
       } else {
         showToast(res.errorMsg || '修改失败')
       }
     } else {
-      // 添加
-      if (!drugForm.elderId) {
-        showToast('请输入老人档案ID')
+      if (!drugForm.medicineName || !drugForm.quantity) {
+        showToast('请填写药品名称和数量')
         return
       }
       const submitData = {
@@ -358,12 +227,7 @@ const handleSubmit = async () => {
       if (res.success === 200) {
         showToast('添加成功')
         showDialog.value = false
-        // 如果添加的档案ID与当前搜索的ID一致，刷新列表；否则提示用户
-        if (drugForm.elderId === currentElderId.value) {
-          loadData()
-        } else {
-          showToast('药品已添加，请切换档案ID查看')
-        }
+        loadData()
       } else {
         showToast(res.errorMsg || '添加失败')
       }
@@ -371,12 +235,6 @@ const handleSubmit = async () => {
   } catch (err) {
     console.error('操作失败', err)
     showToast('操作失败，请稍后重试')
-  } finally {
-    // 重置编辑状态
-    isEdit.value = false
-    currentId.value = null
-    editForm.medicineName = ''
-    editForm.quantity = ''
   }
 }
 
@@ -384,9 +242,7 @@ const handleSubmit = async () => {
 const handleDelete = (item) => {
   showConfirmDialog({
     title: '确认删除',
-    message: `确定要删除药品"${item.medicineName}"吗？`,
-    confirmButtonText: '确定',
-    cancelButtonText: '取消'
+    message: `确定要删除药品"${item.medicineName}"吗？`
   }).then(async () => {
     try {
       const res = await deleteDrugApi(item.id)
@@ -397,14 +253,21 @@ const handleDelete = (item) => {
         showToast(res.errorMsg || '删除失败')
       }
     } catch (err) {
-      console.error('删除失败', err)
-      showToast('删除失败，请稍后重试')
+      showToast('删除失败')
     }
   }).catch(() => {})
 }
+
+onMounted(() => {
+  if (props.elderInfoId) {
+    currentElderId.value = props.elderInfoId
+    loadData()
+  }
+})
 </script>
 
 <style scoped>
+/* 样式保持不变 */
 .family-drug-page {
   padding: 16px;
   background: var(--bg-color);
@@ -437,9 +300,7 @@ const handleDelete = (item) => {
   padding: 0;
 }
 .type-filter {
-  height: inherit;
   width: 100px;
-  background-color: #f7f8fa;
 }
 .van-cell {
   font-size: 18px;
@@ -467,8 +328,5 @@ const handleDelete = (item) => {
 }
 .dialog-buttons .van-button {
   flex: 1;
-}
-.rounded-field .van-field__control {
-  border-radius: 30px;
 }
 </style>

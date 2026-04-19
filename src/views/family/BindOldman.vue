@@ -33,7 +33,7 @@
         </van-field>
       </van-cell-group>
       <div style="margin: 20px 0;">
-        <van-button type="primary" block native-type="submit" :loading="loading" size="large">
+        <van-button type="primary" block native-type="submit" :loading="searching" size="large">
           搜索
         </van-button>
       </div>
@@ -85,11 +85,12 @@
       </div>
     </div>
 
-    <!-- 空状态 -->
-    <div v-if="elderList.length === 0 && searchForm.username && !loading" class="empty-state">
-      <van-icon name="search" size="48" color="#ccc" />
-      <p>未找到匹配的老人账号</p>
-      <p class="empty-hint">请检查用户名是否正确</p>
+    <!-- 未找到老人 -->
+    <div v-if="notFound && searchForm.username && !searching" class="not-found">
+      <van-icon name="warning-o" size="48" color="#F4A261" />
+      <p>未找到该老人账号</p>
+      <p class="hint">是否直接为该老人创建档案？（无需老人账号）</p>
+      <van-button type="primary" round @click="goToCreateProfile">创建档案</van-button>
     </div>
   </div>
 </template>
@@ -104,12 +105,15 @@ import {
   bindElderAccountApi,
   getBoundEldersApi
 } from '@/api/family'
+import { useUserStore } from '@/store/user'
 
 const router = useRouter()
+const userStore = useUserStore()
 const searchForm = reactive({ username: '' })
 const elderList = ref([])
-const loading = ref(false)
-const boundElders = ref([])  // 已绑定的老人姓名列表
+const searching = ref(false)
+const notFound = ref(false)
+const boundElders = ref([])
 
 // 加载已绑定老人列表
 const loadBoundElders = async () => {
@@ -117,27 +121,16 @@ const loadBoundElders = async () => {
     const res = await getBoundEldersApi()
     if (res.success === 200) {
       let names = res.data || []
-      // 如果返回的是字符串数组，直接去重
       if (Array.isArray(names) && names.length > 0 && typeof names[0] === 'string') {
         boundElders.value = [...new Set(names)]
-      } 
-      // 如果返回的是对象数组（例如 [{ name: '真真', userId: 6 }]），根据 userId 去重
-      else if (Array.isArray(names) && names.length > 0 && typeof names[0] === 'object') {
-        const uniqueMap = new Map()
-        names.forEach(item => {
-          if (item.userId && !uniqueMap.has(item.userId)) {
-            uniqueMap.set(item.userId, item.name || item.username)
-          }
-        })
-        boundElders.value = Array.from(uniqueMap.values())
+      } else if (Array.isArray(names) && names.length > 0 && typeof names[0] === 'object') {
+        boundElders.value = names.map(item => item.name || item.username)
       } else {
         boundElders.value = names
       }
-    } else {
-      console.warn('获取绑定列表失败', res.errorMsg)
     }
   } catch (err) {
-    console.error('加载绑定列表失败', err)
+    console.error(err)
   }
 }
 
@@ -147,51 +140,79 @@ const onSearch = async () => {
     showToast('请输入老人用户名')
     return
   }
-
+  notFound.value = false
+  searching.value = true
   try {
-    loading.value = true
     const res = await searchElderByUsernameApi({ username: searchForm.username })
-    if (res.success === 200) {
-      const data = res.data
-      const users = Array.isArray(data) ? data : (data ? [data] : [])
+    if (res.success === 200 && res.data && (Array.isArray(res.data) ? res.data.length > 0 : true)) {
+      const users = Array.isArray(res.data) ? res.data : [res.data]
+      const boundRes = await getBoundEldersApi()
+      const boundNames = boundRes.success === 200 ? (boundRes.data || []) : []
+      const boundSet = new Set(boundNames)
       const elderItems = []
-      // 将已绑定姓名转为 Set 便于快速判断
-      const boundSet = new Set(boundElders.value)
       for (const user of users) {
         if (!user || !user.id) continue
-        // 判断是否已绑定（通过用户名匹配）
         const isBound = boundSet.has(user.username)
-        // 查询档案是否存在
         let elderInfoId = null
         try {
           const profileRes = await getElderProfileByUserIdApi(user.id)
-          // 注意：返回的 data 是数组，取第一个元素的 id
           if (profileRes.success === 200 && profileRes.data && profileRes.data.length > 0) {
             elderInfoId = profileRes.data[0].id
           }
-        } catch (err) {
-          console.error('查询档案失败', err)
-        }
+        } catch (err) {}
         elderItems.push({
           ...user,
           elderuserId: user.id,
-          elderInfoId: elderInfoId,
-          isBound: isBound
+          elderInfoId,
+          isBound
         })
       }
       elderList.value = elderItems
+      if (elderItems.length === 0) notFound.value = true
     } else {
-      showToast(res.errorMsg || '搜索失败')
+      elderList.value = []
+      notFound.value = true
     }
   } catch (err) {
     showToast('网络异常，请重试')
-    console.error(err)
+    elderList.value = []
+    notFound.value = true
   } finally {
-    loading.value = false
+    searching.value = false
   }
 }
 
-// 跳转到老人档案管理页面，携带 userId 用于新增档案后自动绑定
+// 绑定已有档案的老人
+const onBind = async (elderItem) => {
+  try {
+    const res = await bindElderAccountApi({
+      elderInfoId: elderItem.elderInfoId,
+      elderuserId: elderItem.elderuserId
+    })
+    if (res.success === 200) {
+      showToast('绑定成功')
+      // 存储到 localStorage
+      const elderInfo = {
+        name: elderItem.username,
+        username: elderItem.username,
+        userId: elderItem.elderuserId,
+        elderInfoId: elderItem.elderInfoId
+      }
+      let localElders = JSON.parse(localStorage.getItem('localElders') || '[]')
+      if (!localElders.some(e => e.userId === elderInfo.userId)) {
+        localElders.push(elderInfo)
+        localStorage.setItem('localElders', JSON.stringify(localElders))
+      }
+      router.push('/family')
+    } else {
+      showToast(res.errorMsg || '绑定失败')
+    }
+  } catch (err) {
+    showToast('网络异常')
+  }
+}
+
+// 跳转到档案页面（已有账号的老人）
 const goToAddProfile = (item) => {
   router.push({
     path: '/family/oldman-profile',
@@ -199,29 +220,17 @@ const goToAddProfile = (item) => {
   })
 }
 
-// 绑定已有档案的老人
-const onBind = async (elderItem) => {
-  try {
-    loading.value = true
-    const res = await bindElderAccountApi({
-      elderInfoId: elderItem.elderInfoId,
-      elderuserId: elderItem.elderuserId
-    })
-    if (res.success === 200) {
-      showToast('绑定成功')
-      // 重新加载绑定列表，并清空搜索结果（可选）
-      await loadBoundElders()
-      elderList.value = []
-      searchForm.username = ''
-    } else {
-      showToast(res.errorMsg || '绑定失败')
-    }
-  } catch (err) {
-    showToast('网络异常，请重试')
-    console.error(err)
-  } finally {
-    loading.value = false
+// 未找到老人时，直接创建档案（使用家属的 userId）
+const goToCreateProfile = () => {
+  const familyUserId = userStore.userInfo?.id
+  if (!familyUserId) {
+    showToast('无法获取当前用户信息，请重新登录')
+    return
   }
+  router.push({
+    path: '/family/oldman-profile',
+    query: { userId: familyUserId, isFamilyBinding: true, username: searchForm.username }
+  })
 }
 
 onMounted(() => {
@@ -229,7 +238,24 @@ onMounted(() => {
 })
 </script>
 
+
 <style scoped>
+
+.bound-section {
+  margin-bottom: 20px;
+  background: var(--card-bg);
+  border-radius: var(--border-radius-lg);
+  padding: 16px;
+}
+.bound-card {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-color);
+  border-radius: 30px;
+  padding: 6px 12px;
+  margin: 0 8px 8px 0;
+  font-size: 14px;
+}
 .bind-page {
   background: var(--bg-color);
 }
@@ -243,39 +269,6 @@ onMounted(() => {
   text-align: center;
   margin: 0;
 }
-.bound-section {
-  margin-bottom: 30px;
-  background: var(--card-bg);
-  border-radius: var(--border-radius-lg);
-  padding: 16px;
-}
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-.section-header h3 {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0;
-}
-.result-count {
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-.bound-card {
-  display: inline-flex;
-  align-items: center;
-  background: var(--bg-color);
-  border-radius: 30px;
-  padding: 6px 12px;
-  margin: 0 8px 8px 0;
-  font-size: 14px;
-}
-.bound-card .van-icon {
-  margin-right: 4px;
-}
 .search-form {
   margin-bottom: 30px;
 }
@@ -287,6 +280,25 @@ onMounted(() => {
   height: 52px;
   font-size: 16px;
   border-radius: var(--border-radius-lg);
+}
+.result-list {
+  margin-top: 20px;
+}
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 0 8px;
+}
+.section-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+.result-count {
+  font-size: 14px;
+  color: var(--text-secondary);
 }
 .elder-list {
   display: flex;
@@ -318,27 +330,26 @@ onMounted(() => {
 .elder-username {
   font-size: 18px;
   font-weight: 600;
-  color: var(--text-primary);
   margin-bottom: 4px;
 }
 .elder-phone {
   font-size: 14px;
   color: var(--text-secondary);
 }
-.empty-state {
+.not-found {
   text-align: center;
-  padding: 60px 20px;
+  padding: 40px 20px;
   background: var(--card-bg);
   border-radius: var(--border-radius-lg);
-  color: var(--text-secondary);
   margin-top: 30px;
 }
-.empty-state p {
-  margin: 8px 0;
+.not-found p {
+  margin: 12px 0;
   font-size: 16px;
+  color: var(--text-secondary);
 }
-.empty-hint {
-  font-size: 14px !important;
-  opacity: 0.8;
+.not-found .hint {
+  font-size: 14px;
+  color: #F4A261;
 }
 </style>
