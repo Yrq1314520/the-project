@@ -81,7 +81,7 @@ const warningSection = ref(null)
 
 // 预警数据（模拟数据，可替换为真实接口）
 const warningList = ref([
-  { id: 1, title: '血压异常', content: '收缩压160mmHg，超过正常范围', time: '2026-04-19 08:30', type: 'alert' },
+  { id: 1, title: '异常提醒', content: '老人貌似身体有不舒服症状', time: '2026-04-19 08:30', type: 'alert' },
   { id: 2, title: '用药提醒', content: '阿司匹林需在早餐后服用', time: '2026-04-19 07:00', type: 'email' }
 ])
 

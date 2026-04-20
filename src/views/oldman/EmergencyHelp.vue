@@ -61,8 +61,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { showToast, showConfirmDialog } from 'vant'
-import { sendEmergencyHelpApi, getEmergencyContactsApi, getHelpHistoryApi } from '@/api/family'
-
 const loading = ref(false)
 const finished = ref(false)
 const emergencyContacts = ref([])

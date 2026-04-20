@@ -108,11 +108,7 @@ const routes = [
     component: () => import('@/views/family/HealthAnalysis.vue'),
     meta: { requiresAuth: true }
   },
-  {
-    path: '/family/health-data',
-    component: () => import('@/views/family/HealthData.vue'),
-    meta: { requiresAuth: true }
-  },
+
   {
     path: '/family/elder-detail',
     name: 'ElderDetail',

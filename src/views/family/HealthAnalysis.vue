@@ -17,7 +17,8 @@
     <div v-else-if="statsData.length === 0" class="empty-tip">暂无问答记录，无法分析</div>
     <template v-else>
       <div class="chart-container">
-        <v-chart v-if="chartData" :option="chartOption" autoresize />
+        <!-- 修复：使用 statsData.length 作为显示条件，而不是未定义的 chartData -->
+        <v-chart :option="chartOption" autoresize />
       </div>
       <div class="suggestions-section">
         <h3>💊 用药建议</h3>
@@ -43,7 +44,7 @@ import VChart from 'vue-echarts'
 import { showToast } from 'vant'
 import { getAllQuestionsRecordsApi } from '@/api/family'
 
-//  ECharts
+// ECharts 注册
 use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, GridComponent, LegendComponent])
 
 const props = defineProps({
@@ -62,15 +63,16 @@ const loading = ref(false)
 const allRecords = ref([])       // 所有问答记录
 const statsData = ref([])        // 症状统计 [{ symptom, count }]
 
-// 疾病关键词库
+// 疾病关键词库（扩展）
 const diseaseKeywords = [
-  '高血压', '糖尿病', '冠心病', '心力衰竭', '动脉粥样硬化', '胃食管反流病', '消化性溃疡',
+  '高血压', '糖尿病', '冠心病', '心脏病', '心力衰竭', '动脉粥样硬化', '胃食管反流病', '消化性溃疡',
   '便秘', '腹泻', '尿路感染', '良性前列腺增生', '贫血', '血脂异常', '骨关节炎', '骨质疏松',
   '帕金森病', '阿尔茨海默病', '癫痫', '慢性支气管炎', '慢性阻塞性肺疾病', '肺炎', '支气管哮喘',
-  '急性上呼吸道感染', '肺癌', '肺结核', '肝硬化', '胆道疾病', '尿石症', '老年性白内障', '青光眼'
+  '急性上呼吸道感染', '肺癌', '肺结核', '肝硬化', '胆道疾病', '尿石症', '老年性白内障', '青光眼',
+  '摔倒', '摔伤', '扭伤', '头晕', '胸闷', '心痛', '心悸', '咳嗽', '发热'
 ]
 
-// 疾病然后推荐药品映射
+// 疾病 → 推荐药品映射
 const diseaseMedicineMap = {
   '急性上呼吸道感染': ['布洛芬', '对乙酰氨基酚', '氯雷他定'],
   '慢性支气管炎': ['沙丁胺醇气雾剂', '氨溴索口服溶液'],
@@ -81,6 +83,7 @@ const diseaseMedicineMap = {
   '高血压': ['氨氯地平', '厄贝沙坦', '美托洛尔'],
   '动脉粥样硬化': ['阿司匹林', '阿托伐他汀'],
   '冠心病': ['硝酸甘油', '阿司匹林'],
+  '心脏病': ['硝酸甘油', '阿司匹林'],
   '胃食管反流病': ['奥美拉唑', '多潘立酮'],
   '消化性溃疡': ['雷贝拉唑', '铝碳酸镁'],
   '便秘': ['乳果糖', '聚乙二醇4000'],
@@ -94,7 +97,19 @@ const diseaseMedicineMap = {
   '骨质疏松': ['碳酸钙D3', '阿仑膦酸钠'],
   '帕金森病': ['多巴丝肼'],
   '阿尔茨海默病': ['多奈哌齐'],
-  '癫痫': ['丙戊酸钠']
+  '癫痫': ['丙戊酸钠'],
+  '摔倒': ['碘伏', '创可贴', '云南白药气雾剂'],
+  '扭伤': ['云南白药气雾剂', '布洛芬'],
+  '头晕': ['茶苯海明', '眩晕停'],
+  '胸闷': ['硝酸甘油', '速效救心丸'],
+  '咳嗽': ['氨溴索口服液', '右美沙芬']
+}
+
+// 解析 askTime 数组为 Date 对象
+const parseAskTime = (askTime) => {
+  if (!askTime || !Array.isArray(askTime) || askTime.length < 6) return new Date(0)
+  const [year, month, day, hour, minute, second = 0] = askTime
+  return new Date(year, month - 1, day, hour, minute, second)
 }
 
 // 加载所有问答记录
@@ -102,10 +117,15 @@ const loadRecords = async () => {
   if (!props.userId) return
   loading.value = true
   try {
-    // 不分页，获取全部记录
-    const res = await getAllQuestionsRecordsApi({ page: 1, size: 100, userId: props.userId })
-    if (res.code === 200) {
-      allRecords.value = res.data?.list || []
+    const res = await getAllQuestionsRecordsApi({ page: 1, size: 200, userId: props.userId })
+    if (res.code === 200 || res.success === 200) {
+      let records = []
+      if (Array.isArray(res.data)) {
+        records = res.data
+      } else if (res.data && Array.isArray(res.data.list)) {
+        records = res.data.list
+      }
+      allRecords.value = records
       computeStats()
     } else {
       showToast(res.msg || '加载问答记录失败')
@@ -118,23 +138,20 @@ const loadRecords = async () => {
   }
 }
 
-// 根据时间范围过滤记录并统计症状
+// 根据时间范围过滤并统计症状
 const computeStats = () => {
   const now = new Date()
-  let startDate = new Date()
   const days = timeOptions.find(t => t.value === selectedTime.value)?.days || 30
-  startDate.setDate(now.getDate() - days)
+  const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
 
   const filtered = allRecords.value.filter(record => {
-    const recordTime = new Date(record.time)
-    return recordTime >= startDate
+    const recordTime = parseAskTime(record.askTime)
+    return recordTime >= startDate && recordTime <= now
   })
 
-  // 统计症状频次
   const symptomCount = {}
   filtered.forEach(record => {
     const question = record.question || ''
-    // 对每条提问，检查是否包含疾病关键词
     diseaseKeywords.forEach(disease => {
       if (question.includes(disease)) {
         symptomCount[disease] = (symptomCount[disease] || 0) + 1
@@ -142,13 +159,12 @@ const computeStats = () => {
     })
   })
 
-  // 转换为数组并按次数降序排序
   const stats = Object.entries(symptomCount).map(([symptom, count]) => ({ symptom, count }))
   stats.sort((a, b) => b.count - a.count)
-  statsData.value = stats.slice(0, 6)  // 取前6个
+  statsData.value = stats.slice(0, 6)
 }
 
-// 用药建议（取前3个高频症状）
+// 用药建议
 const drugSuggestions = computed(() => {
   const topSymptoms = statsData.value.slice(0, 3)
   return topSymptoms.map(item => ({
@@ -177,7 +193,6 @@ const chartOption = computed(() => ({
   }]
 }))
 
-// 监听时间范围变化，重新统计
 watch(selectedTime, () => {
   computeStats()
   showToast(`已切换到${timeOptions.find(t => t.value === selectedTime.value)?.label}`)
