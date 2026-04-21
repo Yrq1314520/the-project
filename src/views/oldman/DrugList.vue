@@ -1,6 +1,7 @@
 <template>
   <div class="old-drug-page">
     <div class="page-header">
+      <van-button icon="arrow-left" type="default" @click="goBack">返回</van-button>
       <h2 class="page-title">药品信息管理</h2>
       <van-button type="primary" @click="openAddDialog">
         添加药品
@@ -27,21 +28,34 @@
       finished-text="没有更多药品"
       @load="loadData"
     >
-      <van-cell
-        v-for="item in drugList"
-        :key="item.id"
-        :title="item.medicineName"
-        :desc="`类型：${item.type || '暂无'} | 数量：${item.quantity || '暂无'}`"
-      >
-        <template #right-icon>
-          <van-button type="primary" size="small" @click="openEditDialog(item)">
-            编辑
-          </van-button>
-          <van-button type="danger" size="small" @click="handleDelete(item)">
-            删除
-          </van-button>
-        </template>
-      </van-cell>
+      <!-- 自定义药品卡片，显示详细信息 -->
+      <div v-for="item in drugList" :key="item.id" class="drug-card">
+        <div class="drug-card-header">
+          <div class="drug-name">{{ item.medicineName }}</div>
+          <div class="card-actions">
+            <van-button type="primary" size="small" @click="openEditDialog(item)">编辑</van-button>
+            <van-button type="danger" size="small" @click="handleDelete(item)">删除</van-button>
+          </div>
+        </div>
+        <div class="drug-detail-list">
+          <div class="detail-row">
+            <span class="label">类型：</span>
+            <span class="value">{{ item.type || '暂无' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">数量：</span>
+            <span class="value">{{ item.quantity || '暂无' }}</span>
+          </div>
+          <div class="detail-row" v-if="item.expiryDate">
+            <span class="label">有效期：</span>
+            <span class="value">{{ item.expiryDate }}</span>
+          </div>
+          <div class="detail-row" v-if="item.remark">
+            <span class="label">备注：</span>
+            <span class="value">{{ item.remark }}</span>
+          </div>
+        </div>
+      </div>
     </van-list>
 
     <van-empty v-if="!loading && drugList.length === 0" description="暂无药品信息" />
@@ -51,14 +65,14 @@
       <div class="dialog-content">
         <h3 class="dialog-title">{{ isEdit ? '修改药品' : '添加药品' }}</h3>
         <van-form @submit="handleSubmit">
-          <!-- 药品名称编辑和添加 -->
+          <!-- 药品名称 -->
           <van-field
             v-model="form.medicineName"
             label="药品名称"
             placeholder="请输入药品名称"
             required
           />
-          <!-- 数量编辑和添加 -->
+          <!-- 数量 -->
           <van-field
             v-model="form.quantity"
             label="数量"
@@ -66,31 +80,29 @@
             placeholder="请输入数量"
             required
           />
-          <!-- 添加时显示 -->
-          <template v-if="!isEdit">
-            <van-field
-              v-model="form.expiryDate"
-              label="有效期"
-              placeholder="请选择有效期"
-              readonly
-              required
-              @click="showDatePicker = true"
-            />
-            <van-field
-              v-model="form.type"
-              label="类型"
-              placeholder="请选择药品类型"
-              readonly
-              required
-              @click="showTypePicker = true"
-            />
-            <van-field
-              v-model="form.remark"
-              label="备注"
-              type="textarea"
-              placeholder="请输入备注"
-            />
-          </template>
+          <!-- 有效期（添加和编辑都显示） -->
+          <van-field
+            v-model="form.expiryDate"
+            label="有效期"
+            placeholder="请选择有效期"
+            readonly
+            @click="showDatePicker = true"
+          />
+          <!-- 类型 -->
+          <van-field
+            v-model="form.type"
+            label="类型"
+            placeholder="请选择药品类型"
+            readonly
+            @click="showTypePicker = true"
+          />
+          <!-- 备注 -->
+          <van-field
+            v-model="form.remark"
+            label="备注"
+            type="textarea"
+            placeholder="请输入备注"
+          />
 
           <div class="dialog-buttons">
             <van-button type="default" @click="showDialog = false">取消</van-button>
@@ -124,7 +136,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { showToast, showConfirmDialog } from 'vant'
 import { getMyDrugListApi, addDrugApi, updateDrugApi, deleteDrugApi, fuzzySearchDrugApi } from '@/api/medicine'
 
@@ -142,6 +155,11 @@ const showDialog = ref(false)
 const isEdit = ref(false)
 const currentId = ref(null)
 
+//返回按钮
+const router = useRouter()
+const goBack = () => {
+  router.back()
+}
 // 表单数据
 const form = reactive({
   medicineName: '',
@@ -163,7 +181,7 @@ const onDateConfirm = (value) => {
   showDatePicker.value = false
 }
 
-// 药品类型选项（添加时选择）
+// 药品类型选项
 const typeOptions = ref([
   { text: '感冒发烧', value: '感冒发烧' },
   { text: '肠胃消化', value: '肠胃消化' },
@@ -201,7 +219,6 @@ const loadData = async () => {
   loading.value = true
   try {
     const res = await getMyDrugListApi()
-    console.log('药品列表返回:', res)
     if (res.success === 200) {
       let list = []
       if (Array.isArray(res.data)) {
@@ -226,7 +243,7 @@ const loadData = async () => {
   }
 }
 
-// 模糊搜索（支持药品名称和类型）
+// 模糊搜索
 const fuzzySearch = async () => {
   const keyword = searchKey.value.trim()
   const type = selectedType.value
@@ -261,7 +278,6 @@ const fuzzySearch = async () => {
   }
 }
 
-// 搜索事件
 const onSearch = () => {
   fuzzySearch()
 }
@@ -279,10 +295,9 @@ const openEditDialog = (item) => {
   currentId.value = item.id
   form.medicineName = item.medicineName || ''
   form.quantity = item.quantity || ''
-  // 编辑时清空添加时才需要的字段
-  form.expiryDate = ''
-  form.type = ''
-  form.remark = ''
+  form.expiryDate = item.expiryDate || ''
+  form.type = item.type || ''
+  form.remark = item.remark || ''
   showDialog.value = true
 }
 
@@ -290,25 +305,22 @@ const handleSubmit = async () => {
   try {
     const baseData = {
       medicineName: form.medicineName,
-      quantity: Number(form.quantity)
+      quantity: Number(form.quantity),
+      expiryDate: form.expiryDate,
+      type: form.type,
+      remark: form.remark
     }
     let res
     if (isEdit.value) {
       res = await updateDrugApi(currentId.value, baseData)
     } else {
-      res = await addDrugApi({
-        ...baseData,
-        expiryDate: form.expiryDate,
-        type: form.type,
-        remark: form.remark
-      })
+      res = await addDrugApi(baseData)
     }
     if (res.success === 200) {
       showToast(isEdit.value ? '修改成功' : '添加成功')
       showDialog.value = false
       resetForm()
-      // 刷新列表（保持当前搜索条件）
-      fuzzySearch()
+      fuzzySearch() // 刷新列表
     } else {
       showToast(res.errorMsg || (isEdit.value ? '修改失败' : '添加失败'))
     }
@@ -342,9 +354,6 @@ const handleDelete = (item) => {
     .catch(() => {})
 }
 
-// 监听类型变化（需要从 vue 导入 watch）
-import { watch } from 'vue'
-
 onMounted(() => {
   loadData()
 })
@@ -353,7 +362,7 @@ onMounted(() => {
 <style scoped>
 .old-drug-page {
   padding: 16px;
-  background: var(--bg-color);
+  background: #F7F9FC;
   min-height: 100vh;
 }
 .page-header {
@@ -362,15 +371,22 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 20px;
 }
+.page-header .van-button:first-child {
+  margin-right: auto;
+  background-color: #fff;
+}
 .page-title {
+  flex: 1;
+  text-align: center;
   font-size: 22px;
   font-weight: 600;
   margin: 0;
 }
 .page-header .van-button {
-  background: var(--primary-color);
+  background: #5F9DB5;
   border-radius: 30px;
   padding: 8px 20px;
+  font-size: 16px;
 }
 .search-wrapper {
   display: flex;
@@ -385,20 +401,65 @@ onMounted(() => {
 .type-filter {
   width: 100px;
 }
-.van-cell {
-  font-size: 18px;
+
+/* 药品卡片样式 */
+.drug-card {
+  background: white;
+  border-radius: 20px;
+  margin-bottom: 16px;
   padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
-.van-cell__title {
+.drug-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #EDF2F7;
+}
+.drug-name {
+  font-size: 20px;
   font-weight: 600;
+  color: #1E2A32;
 }
+.card-actions {
+  display: flex;
+  gap: 12px;
+}
+.card-actions .van-button {
+  font-size: 14px;
+  padding: 4px 12px;
+}
+.drug-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.detail-row {
+  display: flex;
+  font-size: 16px;
+  line-height: 1.4;
+}
+.detail-row .label {
+  width: 70px;
+  color: #6C7A89;
+  font-weight: 500;
+}
+.detail-row .value {
+  flex: 1;
+  color: #1E2A32;
+  font-weight: 500;
+  word-break: break-word;
+}
+
 .dialog-content {
   padding: 20px;
   max-height: 80vh;
   overflow-y: auto;
 }
 .dialog-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   margin-bottom: 20px;
   text-align: center;
@@ -411,5 +472,6 @@ onMounted(() => {
 }
 .dialog-buttons .van-button {
   flex: 1;
+  font-size: 16px;
 }
 </style>

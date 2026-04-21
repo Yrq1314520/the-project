@@ -24,13 +24,13 @@
       </div>
     </div>
 
-    <!-- 用药安全提示卡片（图片 + 文字） -->
+    <!-- 用药安全提示卡片 -->
     <div class="safety-tip-card" :style="{ backgroundImage: `url(${img4})` }">
       <div class="tip-overlay"></div>
-        <div class="tip-text">
+      <div class="tip-text">
         <p>老年人身体机能减弱，肝肾功能代谢慢，用药一定要格外谨慎。首先要严格遵从医嘱，不要自行加药、减药或停药，避免多种药物混用带来风险。平时帮老人整理好药品，做好服药提醒，防止漏服、重复服用。用药期间多观察老人反应，若出现头晕、乏力、肠胃不适等情况，要及时停药并就医。同时不要轻信偏方保健品，确保用药安全、简单、有效，守护好老人健康。</p>
       </div>
-</div>
+    </div>
 
     <!-- 预警通知模块 -->
     <div class="warning-section" ref="warningSection">
@@ -79,7 +79,6 @@ const elderOptions = ref([])
 const selectedElderValue = ref('')
 const warningSection = ref(null)
 
-// 预警数据（模拟数据，可替换为真实接口）
 const warningList = ref([
   { id: 1, title: '异常提醒', content: '老人貌似身体有不舒服症状', time: '2026-04-19 08:30', type: 'alert' },
   { id: 2, title: '用药提醒', content: '阿司匹林需在早餐后服用', time: '2026-04-19 07:00', type: 'email' }
@@ -90,35 +89,23 @@ const loadBoundElders = async () => {
   try {
     const res = await getBoundEldersApi()
     if (res.success === 200 && res.data && res.data.length > 0) {
-      let elders = res.data
-      let options = []
-      if (typeof elders[0] === 'object') {
-        const uniqueMap = new Map()
-        elders.forEach(item => {
-          const uid = item.userId || item.id
-          if (uid && !uniqueMap.has(uid)) {
-            uniqueMap.set(uid, {
-              text: item.username || item.name,
-              value: uid,
-              userId: uid,
-              username: item.username || item.name
-            })
-          }
-        })
-        options = Array.from(uniqueMap.values())
-      } else if (typeof elders[0] === 'string') {
-        console.warn('后端未返回 userId，无法直接获取档案信息')
-        options = elders.map(name => ({ text: name, value: name, userId: null }))
-      }
+      // 后端返回格式: [{ elderInfoId, userId, username }, ...]
+      const elders = res.data
+      const options = elders.map(item => ({
+        text: item.username,
+        value: item.elderInfoId,
+        elderInfoId: item.elderInfoId,
+        userId: item.userId
+      }))
       elderOptions.value = options
     } else {
       const localElders = JSON.parse(localStorage.getItem('localElders') || '[]')
       if (localElders.length > 0) {
         elderOptions.value = localElders.map(e => ({
           text: e.name,
-          value: e.userId,
-          userId: e.userId,
-          username: e.name
+          value: e.elderInfoId || e.id,
+          elderInfoId: e.elderInfoId || e.id,
+          userId: e.userId
         }))
         showToast({ message: '当前显示本地暂存老人', type: 'warning', duration: 2000 })
       } else {
@@ -131,9 +118,9 @@ const loadBoundElders = async () => {
     if (localElders.length > 0) {
       elderOptions.value = localElders.map(e => ({
         text: e.name,
-        value: e.userId,
-        userId: e.userId,
-        username: e.name
+        value: e.elderInfoId || e.id,
+        elderInfoId: e.elderInfoId || e.id,
+        userId: e.userId
       }))
       showToast({ message: '网络异常，显示本地暂存老人', type: 'warning', duration: 2000 })
     } else {
@@ -146,10 +133,11 @@ const onElderChange = (event) => {
   const selectedValue = event.target.value
   if (!selectedValue) return
   const selected = elderOptions.value.find(opt => opt.value == selectedValue)
-  if (selected && selected.userId) {
-    router.push(`/family/elder-detail?userId=${selected.userId}`)
+  if (selected && selected.elderInfoId && selected.userId) {
+    // 同时传递 elderId 和 userId
+    router.push(`/family/elder-detail?elderId=${selected.elderInfoId}&userId=${selected.userId}`)
   } else {
-    showToast('无法获取该老人的ID，请重新绑定')
+    showToast('无法获取该老人的档案ID或用户ID，请重新绑定')
   }
 }
 
@@ -186,6 +174,7 @@ onMounted(() => {
   loadBoundElders()
 })
 </script>
+
 
 <style scoped>
 .family-home {
@@ -334,6 +323,7 @@ onMounted(() => {
   font-weight: 600;
   margin: 0;
 }
+
 .more-link {
   font-size: 14px;
   color: #2A7F6E;

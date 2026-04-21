@@ -102,3 +102,44 @@ export const updateDrugStatusApi = (id, status) => {
   })
 }
 
+// 查看该用户的所有药品提醒（老人/家属都可以）
+export function getAllRemindsApi() {
+  return request({
+    url: `/v1/medicine-remind/my-list`,
+    method: 'get'
+  })
+}
+
+//添加药品提醒
+export function addMedicineRemindsApi(data) {
+  return request({
+    url: `/v1/medicine-remind`,
+    method: 'post',
+    data
+  })
+}
+
+//修改药品提醒
+export function updataMedicineRemindsApi(id, data) {
+  return request({
+    url: `/v1/medicine-remind/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+//删除药品提醒
+export function deleteMedicineRemindsApi(id) {
+  return request({
+    url: `/v1/medicine-remind/${id}`,
+    method: 'delete'
+  })
+}
+
+//根据老人ID查询提醒
+export function searchMedicineRemindsApi(elderId) {
+  return request({
+    url: `/v1/medicine-remind/elder/${elderId}`,
+    method: 'get'
+  })
+}

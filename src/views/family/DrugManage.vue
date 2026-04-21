@@ -15,19 +15,35 @@
       </div>
     </div>
 
-    <!-- 药品列表 -->
-    <van-list v-model:loading="loading" :finished="finished" finished-text="没有更多药品" @load="loadData">
-      <van-cell v-for="item in drugList" :key="item.id" :title="item.medicineName"
-        :desc="`类型：${item.type || '暂无'} | 数量：${item.quantity || '暂无'}`">
-        <template #right-icon>
-          <van-button type="primary" size="small" @click="openEditDialog(item)">编辑</van-button>
-          <van-button type="danger" size="small" @click="handleDelete(item)">删除</van-button>
-        </template>
-      </van-cell>
-    </van-list>
-
+    <!-- 自定义药品卡片，显示详细信息 -->
+      <div v-for="item in drugList" :key="item.id" class="drug-card">
+        <div class="drug-card-header">
+          <div class="drug-name">{{ item.medicineName }}</div>
+          <div class="card-actions">
+            <van-button type="primary" size="small" @click="openEditDialog(item)">编辑</van-button>
+            <van-button type="danger" size="small" @click="handleDelete(item)">删除</van-button>
+          </div>
+        </div>
+        <div class="drug-detail-list">
+          <div class="detail-row">
+            <span class="label">类型：</span>
+            <span class="value">{{ item.type || '暂无' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">数量：</span>
+            <span class="value">{{ item.quantity || '暂无' }}</span>
+          </div>
+          <div class="detail-row" v-if="item.expiryDate">
+            <span class="label">有效期：</span>
+            <span class="value">{{ item.expiryDate }}</span>
+          </div>
+          <div class="detail-row" v-if="item.remark">
+            <span class="label">备注：</span>
+            <span class="value">{{ item.remark }}</span>
+          </div>
+        </div>
+      </div>
     <van-empty v-if="!loading && drugList.length === 0" description="暂无药品信息" />
-
     <!-- 添加药品对话框 -->
     <van-popup v-model:show="showDialog" position="bottom" round>
       <div class="dialog-content">
@@ -302,20 +318,63 @@ onMounted(() => {
 .type-filter {
   width: 100px;
 }
-.van-cell {
-  font-size: 18px;
+.drug-card {
+  background: white;
+  border-radius: 20px;
+  margin-bottom: 16px;
   padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
-.van-cell__title {
+.drug-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #EDF2F7;
+}
+.drug-name {
+  font-size: 20px;
   font-weight: 600;
+  color: #1E2A32;
 }
+.card-actions {
+  display: flex;
+  gap: 12px;
+}
+.card-actions .van-button {
+  font-size: 14px;
+  padding: 4px 12px;
+}
+.drug-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.detail-row {
+  display: flex;
+  font-size: 16px;
+  line-height: 1.4;
+}
+.detail-row .label {
+  width: 70px;
+  color: #6C7A89;
+  font-weight: 500;
+}
+.detail-row .value {
+  flex: 1;
+  color: #1E2A32;
+  font-weight: 500;
+  word-break: break-word;
+}
+
 .dialog-content {
   padding: 20px;
   max-height: 80vh;
   overflow-y: auto;
 }
 .dialog-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   margin-bottom: 20px;
   text-align: center;
@@ -328,5 +387,6 @@ onMounted(() => {
 }
 .dialog-buttons .van-button {
   flex: 1;
+  font-size: 16px;
 }
 </style>

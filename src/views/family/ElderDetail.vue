@@ -10,30 +10,17 @@
       <van-tab title="老人档案">
         <div v-if="profileData" class="resume-card">
           <div class="resume-header">
-            <div class="avatar">
-              <van-icon name="user-o" size="48" />
-            </div>
+            <div class="avatar"><van-icon name="user-o" size="48" /></div>
             <div class="basic-info">
               <h2>{{ profileData.name || profileData.username || '未命名' }}</h2>
               <p>档案ID: {{ profileData.id || '无' }} | 用户ID: {{ profileData.userId || profileData.id }}</p>
             </div>
           </div>
-
           <div class="emergency-info">
-            <div class="emergency-item">
-              <span class="label">紧急联系人</span>
-              <span class="value">{{ profileData.emergencyContact || '未设置' }}</span>
-            </div>
-            <div class="emergency-item">
-              <span class="label">紧急联系电话</span>
-              <span class="value">{{ profileData.emergencyPhone || '未设置' }}</span>
-            </div>
-            <div class="emergency-item">
-              <span class="label">关系</span>
-              <span class="value">{{ profileData.relation || '未设置' }}</span>
-            </div>
+            <div class="emergency-item"><span class="label">紧急联系人</span><span class="value">{{ profileData.emergencyContact || '未设置' }}</span></div>
+            <div class="emergency-item"><span class="label">紧急联系电话</span><span class="value">{{ profileData.emergencyPhone || '未设置' }}</span></div>
+            <div class="emergency-item"><span class="label">关系</span><span class="value">{{ profileData.relation || '未设置' }}</span></div>
           </div>
-
           <div class="resume-details">
             <div class="detail-item"><span class="label">姓名</span><span class="value">{{ profileData.name || '未填写' }}</span></div>
             <div class="detail-item"><span class="label">年龄</span><span class="value">{{ profileData.age }}岁</span></div>
@@ -43,7 +30,6 @@
             <div class="detail-item"><span class="label">过敏史</span><span class="value">{{ profileData.allergy || '无' }}</span></div>
             <div class="detail-item"><span class="label">居住地址</span><span class="value">{{ profileData.address || '未填写' }}</span></div>
           </div>
-
           <div class="action-buttons">
             <van-button type="primary" size="small" round @click="openEditDialog">修改档案</van-button>
             <van-button type="danger" size="small" round @click="handleDelete">删除档案</van-button>
@@ -52,14 +38,18 @@
         <div v-else-if="loading" class="loading-tip">加载中...</div>
         <div v-else-if="error" class="empty-tip">{{ error }}</div>
       </van-tab>
+
       <van-tab title="药品管理">
-        <DrugManage :elderInfoId="elderInfoId" />
+        <DrugManage :elderInfoId="elderId" />
       </van-tab>
       <van-tab title="问答记录">
-        <QuestionsRecords :userId="userId" />
+        <QuestionsRecords v-if="elderId" :elder-id="elderId" />
       </van-tab>
       <van-tab title="健康分析">
-        <HealthAnalysis :userId="userId" />
+        <HealthAnalysis v-if="elderId" :elder-id="elderId" />
+      </van-tab>
+      <van-tab title="用药提醒">
+        <MedicineReminder v-if="elderId" :elder-id="elderId" />
       </van-tab>
     </van-tabs>
 
@@ -105,16 +95,16 @@ import { getElderProfileByUserIdApi, updateOldmanProfileApi, deleteOldmanProfile
 import DrugManage from './DrugManage.vue'
 import QuestionsRecords from './QuestionsRecords.vue'
 import HealthAnalysis from './HealthAnalysis.vue'
+import MedicineReminder from './MedicineReminder.vue'
 
 const route = useRoute()
 const router = useRouter()
 const userId = ref('')
-const elderInfoId = ref('')
+const elderId = ref('')
 const profileData = ref(null)
 const loading = ref(false)
 const error = ref('')
 const currentTab = ref(0)
-
 const showEditDialog = ref(false)
 const editLoading = ref(false)
 const editForm = ref({
@@ -138,41 +128,32 @@ const showGenderPicker = ref(false)
 
 const goBack = () => router.back()
 
-// 直接通过 userId 加载档案信息
-const loadProfileByUserId = async () => {
-  if (!userId.value) return
+// 根据 userId 获取该家庭成员绑定的所有老人档案，然后根据 elderId 匹配当前老人
+const loadProfile = async () => {
+  if (!userId.value || !elderId.value) {
+    error.value = '缺少必要参数'
+    return
+  }
   loading.value = true
   error.value = ''
   try {
-    const profileRes = await getElderProfileByUserIdApi(userId.value)
-    if (profileRes.success === 200 && profileRes.data && profileRes.data.length > 0) {
-      let profile = profileRes.data[0]
-      const archiveId = profile.id || profile.elderInfoId
-      profileData.value = {
-        ...profile,
-        id: archiveId,
-        userId: userId.value,
-        username: profile.username || profile.name
+    const res = await getElderProfileByUserIdApi(userId.value)
+    if (res.success === 200 && res.data && res.data.length > 0) {
+      // 找到 elderInfoId 匹配的档案
+      const matched = res.data.find(item => (item.id || item.elderInfoId) == elderId.value)
+      if (matched) {
+        const archiveId = matched.id || matched.elderInfoId
+        profileData.value = {
+          ...matched,
+          id: archiveId,
+          userId: userId.value,
+          username: matched.username || matched.name
+        }
+      } else {
+        error.value = '未找到该老人的档案'
       }
-      elderInfoId.value = archiveId
     } else {
-      // 档案不存在，显示基本信息并提示
-      profileData.value = {
-        userId: userId.value,
-        name: '未填写',
-        age: '未填写',
-        gender: 0,
-        phone: '',
-        medicalHistory: '无',
-        allergy: '无',
-        address: '未填写',
-        emergencyContact: '未设置',
-        emergencyPhone: '未设置',
-        relation: '未设置',
-        id: null
-      }
-      elderInfoId.value = null
-      showToast('该老人尚未完善档案，请先创建档案')
+      error.value = '未找到老人档案'
     }
   } catch (err) {
     console.error(err)
@@ -182,7 +163,6 @@ const loadProfileByUserId = async () => {
   }
 }
 
-// 打开编辑弹窗
 const openEditDialog = () => {
   if (!profileData.value) return
   const data = profileData.value
@@ -245,7 +225,7 @@ const onEditSubmit = async () => {
     if (res.success === 200) {
       showToast('修改成功')
       showEditDialog.value = false
-      await loadProfileByUserId()
+      await loadProfile()
     } else {
       showToast(res.errorMsg || '修改失败')
     }
@@ -285,11 +265,13 @@ const handleDelete = () => {
 
 onMounted(() => {
   const rawUserId = route.query.userId
-  if (rawUserId) {
+  const rawElderId = route.query.elderId
+  if (rawUserId && rawElderId) {
     userId.value = rawUserId
-    loadProfileByUserId()
+    elderId.value = rawElderId
+    loadProfile()
   } else {
-    error.value = '缺少用户ID参数'
+    error.value = '缺少用户ID或老人档案ID参数'
   }
 })
 </script>

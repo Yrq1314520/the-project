@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import { id } from 'element-plus/es/locale/index.mjs'
 // import { url } from 'node:inspector'
 
 // 添加老人档案
@@ -95,3 +96,4 @@ export function getBoundEldersApi() {
     method: 'get'
   })
 }
+

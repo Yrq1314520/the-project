@@ -17,7 +17,6 @@
     <div v-else-if="statsData.length === 0" class="empty-tip">暂无问答记录，无法分析</div>
     <template v-else>
       <div class="chart-container">
-        <!-- 修复：使用 statsData.length 作为显示条件，而不是未定义的 chartData -->
         <v-chart :option="chartOption" autoresize />
       </div>
       <div class="suggestions-section">
@@ -44,14 +43,12 @@ import VChart from 'vue-echarts'
 import { showToast } from 'vant'
 import { getAllQuestionsRecordsApi } from '@/api/family'
 
-// ECharts 注册
 use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, GridComponent, LegendComponent])
 
 const props = defineProps({
-  userId: { type: [String, Number], default: '' }
+  elderId: { type: [String, Number], default: '' }
 })
 
-// 时间选项
 const timeOptions = [
   { label: '一天', value: 'day', days: 1 },
   { label: '一个月', value: 'month', days: 30 },
@@ -60,10 +57,10 @@ const timeOptions = [
 const selectedTime = ref('month')
 
 const loading = ref(false)
-const allRecords = ref([])       // 所有问答记录
-const statsData = ref([])        // 症状统计 [{ symptom, count }]
+const allRecords = ref([])
+const statsData = ref([])
 
-// 疾病关键词库（扩展）
+// 疾病关键词库
 const diseaseKeywords = [
   '高血压', '糖尿病', '冠心病', '心脏病', '心力衰竭', '动脉粥样硬化', '胃食管反流病', '消化性溃疡',
   '便秘', '腹泻', '尿路感染', '良性前列腺增生', '贫血', '血脂异常', '骨关节炎', '骨质疏松',
@@ -112,12 +109,13 @@ const parseAskTime = (askTime) => {
   return new Date(year, month - 1, day, hour, minute, second)
 }
 
-// 加载所有问答记录
+// 加载所有问答记录（前端过滤当前老人）
 const loadRecords = async () => {
-  if (!props.userId) return
+  if (!props.elderId) return
   loading.value = true
   try {
-    const res = await getAllQuestionsRecordsApi({ page: 1, size: 200, userId: props.userId })
+    // 先在前端根据 elderId 过滤
+    const res = await getAllQuestionsRecordsApi({ page: 1, size: 200, elderId: props.elderId })
     if (res.code === 200 || res.success === 200) {
       let records = []
       if (Array.isArray(res.data)) {
@@ -125,7 +123,9 @@ const loadRecords = async () => {
       } else if (res.data && Array.isArray(res.data.list)) {
         records = res.data.list
       }
-      allRecords.value = records
+      // 先保留当前老人的记录，等接口改好
+      const filteredByElder = records.filter(record => record.elderId == props.elderId)
+      allRecords.value = filteredByElder
       computeStats()
     } else {
       showToast(res.msg || '加载问答记录失败')
@@ -198,8 +198,14 @@ watch(selectedTime, () => {
   showToast(`已切换到${timeOptions.find(t => t.value === selectedTime.value)?.label}`)
 })
 
+watch(() => props.elderId, (newVal, oldVal) => {
+  if (newVal && newVal !== oldVal) {
+    loadRecords()
+  }
+})
+
 onMounted(() => {
-  loadRecords()
+  if (props.elderId) loadRecords()
 })
 </script>
 
