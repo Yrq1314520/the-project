@@ -13,7 +13,10 @@
             <span>剂量：{{ item.dosage || '—' }}</span>
             <span>用法：{{ item.usage || '—' }}</span>
           </div>
-          <div class="remind-time"><van-icon name="clock-o" />{{ item.remindTime }}</div>
+          <div class="remind-time">
+            <van-icon name="clock-o" />
+            {{ formatRemindTime(item.remindTime) }}
+          </div>
           <div class="remind-days">
             <span>重复：</span>
             <span class="days-badge" v-for="day in parseRemindDays(item.remindDays)" :key="day">{{ day }}</span>
@@ -74,21 +77,34 @@ const props = defineProps({
   elderId: { type: [Number, String], required: true }
 })
 
-
-
 const allReminders = ref([])
 const loading = ref(false)
+
+// 格式化提醒时间
+const formatRemindTime = (time) => {
+  if (time == null || time === '') return ''
+  let timeStr = String(time)
+  if (/^\d{2}:\d{2}$/.test(timeStr)) return timeStr
+  if (/^\d{2},\d{2}$/.test(timeStr)) return timeStr.replace(',', ':')
+  if (Array.isArray(time) && time.length >= 2) {
+    const hour = String(time[0]).padStart(2, '0')
+    const minute = String(time[1]).padStart(2, '0')
+    return `${hour}:${minute}`
+  }
+  // 尝试提取数字
+  const match = timeStr.match(/(\d{1,2})[^\d](\d{1,2})/)
+  if (match) {
+    const hour = match[1].padStart(2, '0')
+    const minute = match[2].padStart(2, '0')
+    return `${hour}:${minute}`
+  }
+  return timeStr
+}
 
 // 过滤当前老人的提醒
 const filteredReminderList = computed(() => {
   if (!props.elderId) return []
-  const filtered = allReminders.value.filter(item => {
-    const match = item.elderId == props.elderId
-    if (!match) {
-    }
-    return match
-  })
-  return filtered
+  return allReminders.value.filter(item => item.elderId == props.elderId)
 })
 
 // 弹窗相关
@@ -157,7 +173,17 @@ const openEditReminder = (item) => {
   form.medicineName = item.medicineName
   form.dosage = item.dosage
   form.usage = item.usage
-  form.remindTime = item.remindTime
+  let remindTime = item.remindTime
+  if (remindTime) {
+    const formatted = formatRemindTime(remindTime)
+    if (formatted && formatted.includes(':')) {
+      form.remindTime = formatted
+    } else {
+      form.remindTime = remindTime
+    }
+  } else {
+    form.remindTime = ''
+  }
   form.remindDays = item.remindDays || ''
   updateDisplayRemindDays()
   showDialog.value = true
@@ -181,12 +207,16 @@ const onSubmit = async () => {
   }
   submitting.value = true
   try {
+    let remindTime = form.remindTime
+    if (remindTime && !remindTime.includes(':')) {
+      remindTime = remindTime.replace(',', ':')
+    }
     const data = {
-      elderId: Number(props.elderId),   // 确保数字类型
+      elderId: Number(props.elderId),
       medicineName: form.medicineName,
       dosage: form.dosage,
       usage: form.usage,
-      remindTime: form.remindTime,
+      remindTime: remindTime,
       remindDays: form.remindDays
     }
     let res
@@ -198,7 +228,7 @@ const onSubmit = async () => {
     if (res.success === 200) {
       showToast(isEdit.value ? '修改成功' : '添加成功')
       showDialog.value = false
-      await loadReminders()  // 刷新列表
+      await loadReminders()
     } else {
       showToast(res.errorMsg || '操作失败')
     }
@@ -249,7 +279,6 @@ onMounted(() => {
   if (props.elderId) loadReminders()
 })
 </script>
-
 
 <style scoped>
 .medicine-reminder {

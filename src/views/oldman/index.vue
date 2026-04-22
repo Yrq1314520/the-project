@@ -40,45 +40,45 @@
 
       <!-- 右侧用药提醒列表 + 管理按钮 -->
       <div class="reminder-area">
-  <div class="section-title-small">
-    <van-icon name="clock-o" size="20" />
-    <span>今日用药提醒</span>
-    <van-button size="normal"  type="success" plain round @click="openReminderManage">管理</van-button>
-  </div>
-  <div class="reminder-list">
-    <div
-      v-for="reminder in reminderList"
-      :key="reminder.id"
-      class="reminder-item"
-    >
-      <div class="reminder-info">
-        <div class="drug-name">{{ reminder.medicineName }}</div>
-        <div class="drug-detail-row">
-          <span class="detail-label">剂量：</span>{{ reminder.dosage }}
-          <span class="detail-label">用法：</span>{{ reminder.usage }}
+        <div class="section-title-small">
+          <van-icon name="clock-o" size="20" />
+          <span>今日用药提醒</span>
+          <van-button size="normal" type="success" plain round @click="openReminderManage">管理</van-button>
         </div>
-        <div class="drug-time-row">
-          <van-icon name="clock-o" size="14" />
-          <span>{{ reminder.remindTime }}</span>
-          <span class="detail-label">周期：</span>
-          <span>{{ formatRemindDays(reminder.remindDays) }}</span>
+        <div class="reminder-list">
+          <div
+            v-for="reminder in reminderList"
+            :key="reminder.id"
+            class="reminder-item"
+          >
+            <div class="reminder-info">
+              <div class="drug-name">{{ reminder.medicineName }}</div>
+              <div class="drug-detail-row">
+                <span class="detail-label">剂量：</span>{{ reminder.dosage }}
+                <span class="detail-label">用法：</span>{{ reminder.usage }}
+              </div>
+              <div class="drug-time-row">
+                <van-icon name="clock-o" size="14" />
+                <span>{{ formatRemindTime(reminder.remindTime) }}</span>
+                <span class="detail-label">周期：</span>
+                <span>{{ formatRemindDays(reminder.remindDays) }}</span>
+              </div>
+            </div>
+            <van-tag
+              :type="reminder.taken ? 'success' : 'warning'"
+              plain
+              size="medium"
+              @click.stop="markReminderTaken(reminder.id)"
+            >
+              {{ reminder.taken ? '已服用' : '未服用' }}
+            </van-tag>
+          </div>
+          <div v-if="reminderList.length === 0 && !reminderLoading" class="empty-tip">
+            暂无用药提醒
+          </div>
+          <div v-if="reminderLoading" class="loading-tip">加载提醒中...</div>
         </div>
       </div>
-      <van-tag
-        :type="reminder.taken ? 'success' : 'warning'"
-        plain
-        size="medium"
-        @click.stop="markReminderTaken(reminder.id)"
-      >
-        {{ reminder.taken ? '已服用' : '未服用' }}
-      </van-tag>
-    </div>
-    <div v-if="reminderList.length === 0 && !reminderLoading" class="empty-tip">
-      暂无用药提醒
-    </div>
-    <div v-if="reminderLoading" class="loading-tip">加载提醒中...</div>
-  </div>
-</div>
     </div>
 
     <!-- 药品信息区域 -->
@@ -114,7 +114,7 @@
     <div class="emergency-section" ref="emergencySectionRef">
       <div class="section-header">
         <h2 class="section-title">📞 紧急联系人</h2>
-        <van-button size="normal" color="#ff9800"  round plain @click="goToSetEmergency">设置/修改</van-button>
+        <van-button size="normal" color="#ff9800" round plain @click="goToSetEmergency">设置/修改</van-button>
       </div>
       <div class="emergency-card" v-if="emergencyContact.name">
         <van-icon name="contact" size="32" color="#E86A6A" />
@@ -146,7 +146,7 @@
               <div class="reminder-detail">
                 <span>剂量：{{ item.dosage || '—' }}</span>
                 <span>用法：{{ item.usage || '—' }}</span>
-                <span>时间：{{ item.remindTime }}</span>
+                <span>时间：{{ formatRemindTime(item.remindTime) }}</span>
                 <span>周期：{{ formatRemindDays(item.remindDays) }}</span>
               </div>
             </div>
@@ -169,7 +169,7 @@
           <van-field v-model="reminderForm.dosage" label="剂量" placeholder="如：1片" required />
           <van-field v-model="reminderForm.usage" label="用法" placeholder="如：口服" required />
           <van-field v-model="reminderForm.remindTime" label="提醒时间" type="time" required />
-          <van-field label="提醒周期" readonly :value="remindDaysText" @click="showWeekPicker = true" required />
+          <van-field label="提醒周期" readonly :value="remindDaysText" @click="openWeekPicker" required />
           <div class="dialog-buttons">
             <van-button type="default" @click="showFormDialog = false">取消</van-button>
             <van-button type="primary" native-type="submit" :loading="submitting">确定</van-button>
@@ -219,6 +219,19 @@ const userName = computed(() => userStore.userInfo?.name || userStore.userInfo?.
 // 轮播图
 const bannerList = ref([img5, img6])
 
+const formatRemindTime = (time) => {
+  if (!time) return ''
+  if (typeof time !== 'string') time = String(time)
+  if (/^\d{2}:\d{2}$/.test(time)) return time
+  if (/^\d{2},\d{2}$/.test(time)) return time.replace(',', ':')
+  const match = time.match(/(\d{1,2})[^\d](\d{1,2})/)
+  if (match) {
+    const hour = match[1].padStart(2, '0')
+    const minute = match[2].padStart(2, '0')
+    return `${hour}:${minute}`
+  }
+  return time
+}
 
 const reminderList = ref([])        
 const allReminders = ref([])        
@@ -396,11 +409,15 @@ const openAddReminder = () => {
 const openEditReminder = (item) => {
   isEdit.value = true
   currentId.value = item.id
+  let remindTime = item.remindTime
+  if (remindTime && typeof remindTime === 'string') {
+    remindTime = formatRemindTime(remindTime)
+  }
   reminderForm.value = {
     medicineName: item.medicineName,
     dosage: item.dosage,
     usage: item.usage,
-    remindTime: item.remindTime,
+    remindTime: remindTime,
     remindDays: item.remindDays || ''
   }
   showFormDialog.value = true
@@ -421,11 +438,12 @@ const confirmWeekSelect = () => {
 }
 
 const onSubmitReminder = async () => {
-  const { medicineName, dosage, usage, remindTime, remindDays } = reminderForm.value
+  let { medicineName, dosage, usage, remindTime, remindDays } = reminderForm.value
   if (!medicineName || !dosage || !usage || !remindTime || !remindDays) {
     showToast('请填写完整信息')
     return
   }
+  remindTime = formatRemindTime(remindTime)
   submitting.value = true
   try {
     const data = {
@@ -504,6 +522,7 @@ onMounted(() => {
 })
 </script>
 
+
 <style scoped>
 .elder-home {
   min-height: 100vh;
@@ -540,7 +559,6 @@ onMounted(() => {
   color: #2C5F7A;
 }
 
-/* 导航栏 */
 .nav-bar {
   display: flex;
   justify-content: space-around;
@@ -938,7 +956,7 @@ onMounted(() => {
   margin-bottom: 6px;
 }
 .drug-detail-row {
-  font-size: 14px;
+  font-size: 15px;
   color: #6C7A89;
   margin-bottom: 4px;
 }
@@ -946,7 +964,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 15px;
   color: #2A7F6E;
   flex-wrap: wrap;
 }

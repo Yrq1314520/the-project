@@ -46,7 +46,7 @@ export function resetPasswordApi(data) {
   })
 }
 
-//文字提问，语音回答
+//文字提问
 export function voiceChatApi(data) {
   return request({
     url: '/v1/voice/chat/text',

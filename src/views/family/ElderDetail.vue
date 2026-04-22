@@ -25,7 +25,6 @@
             <div class="detail-item"><span class="label">姓名</span><span class="value">{{ profileData.name || '未填写' }}</span></div>
             <div class="detail-item"><span class="label">年龄</span><span class="value">{{ profileData.age }}岁</span></div>
             <div class="detail-item"><span class="label">性别</span><span class="value">{{ profileData.gender === 1 ? '男' : profileData.gender === 2 ? '女' : '未填写' }}</span></div>
-            <div class="detail-item"><span class="label">手机号</span><span class="value">{{ profileData.phone || '未填写' }}</span></div>
             <div class="detail-item"><span class="label">基础病史</span><span class="value">{{ profileData.medicalHistory || '无' }}</span></div>
             <div class="detail-item"><span class="label">过敏史</span><span class="value">{{ profileData.allergy || '无' }}</span></div>
             <div class="detail-item"><span class="label">居住地址</span><span class="value">{{ profileData.address || '未填写' }}</span></div>
@@ -62,7 +61,6 @@
             <van-field v-model="editForm.name" label="姓名" required />
             <van-field v-model="editForm.age" label="年龄" type="number" required />
             <van-field v-model="editForm.genderText" label="性别" readonly required @click="showGenderPicker = true" />
-            <van-field v-model="editForm.phone" label="手机号" required />
             <van-field v-model="editForm.height" label="身高(cm)" type="number" />
             <van-field v-model="editForm.weight" label="体重(kg)" type="number" />
             <van-field v-model="editForm.medicalHistory" label="基础病史" type="textarea" rows="2" />
@@ -128,7 +126,7 @@ const showGenderPicker = ref(false)
 
 const goBack = () => router.back()
 
-// 根据 userId 获取该家庭成员绑定的所有老人档案，然后根据 elderId 匹配当前老人
+// 根据userId获取该家庭成员绑定的所有老人档案，然后根据elderId匹配当前老人
 const loadProfile = async () => {
   if (!userId.value || !elderId.value) {
     error.value = '缺少必要参数'
@@ -178,7 +176,6 @@ const openEditDialog = () => {
     age: data.age || '',
     genderText: data.gender === 1 ? '男' : data.gender === 2 ? '女' : '',
     gender: data.gender || '',
-    phone: data.phone || '',
     height: data.height || '',
     weight: data.weight || '',
     medicalHistory: data.medicalHistory || '',
@@ -211,7 +208,6 @@ const onEditSubmit = async () => {
       name: editForm.value.name,
       age: Number(editForm.value.age),
       gender: editForm.value.gender,
-      phone: editForm.value.phone,
       height: editForm.value.height ? Number(editForm.value.height) : null,
       weight: editForm.value.weight ? Number(editForm.value.weight) : null,
       medicalHistory: editForm.value.medicalHistory || '',

@@ -1,6 +1,6 @@
 <template>
   <div class="warning-page">
-    <!-- 顶部标题 -->
+    <van-button icon="arrow-left" type="default" @click="goBack">返回</van-button>
     <div class="header">
       <h2>预警通知中心</h2>
       <p class="tip">包含异常提醒与邮箱通知记录</p>
@@ -54,7 +54,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router' 
 
+const router = useRouter()  
+const goBack = () => router.back()
 // 预警列表数据
 const warningList = ref([])
 const loading = ref(false)
@@ -71,9 +74,8 @@ const goDetail = (item) => {
   showDetail.value = true
 }
 
-// 页面加载时初始化
+
 onMounted(() => {
-  // 这里可以添加初始化逻辑
 })
 </script>
 

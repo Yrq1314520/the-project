@@ -1,7 +1,7 @@
 <template>
   <div class="user-menu">
     <div class="user-info" @click="showMenu = true">
-      <span>{{ userInfo.nickname || userInfo.username || '用户' }}</span>
+      <span>{{ displayName }}</span>
       <van-icon name="arrow-down" size="14" />
     </div>
     <van-action-sheet
@@ -17,15 +17,15 @@
       <div class="info-popup">
         <h3>个人信息</h3>
         <div v-if="userDetail" class="info-list">
-          <div class="info-item"><span class="label">用户ID：</span><span>{{ userDetail.id }}</span></div>
-          <div class="info-item"><span class="label">用户名：</span><span>{{ userDetail.username }}</span></div>
+          <div class="info-item"><span class="label">用户ID：</span><span>{{ userDetail.id || '—' }}</span></div>
+          <div class="info-item"><span class="label">用户名：</span><span>{{ userDetail.username || '—' }}</span></div>
           <div class="info-item"><span class="label">昵称：</span><span>{{ userDetail.nickname || '未设置' }}</span></div>
           <div class="info-item"><span class="label">手机号：</span><span>{{ userDetail.phone || '未绑定' }}</span></div>
           <div class="info-item"><span class="label">邮箱：</span><span>{{ userDetail.email || '未绑定' }}</span></div>
           <div class="info-item"><span class="label">角色：</span><span>{{ userDetail.role || '用户' }}</span></div>
         </div>
         <div v-else class="loading-tip">加载中...</div>
-        <van-button block round @click="showInfoPopup = false">关闭</van-button>
+        <van-button round block type="primary" @click="showInfoPopup = false" class="close-btn">关闭</van-button>
       </div>
     </van-popup>
 
@@ -34,30 +34,12 @@
       <div class="edit-popup">
         <h3>修改个人信息</h3>
         <van-form @submit="onSubmitEdit">
-          <van-field
-            v-model="editForm.nickname"
-            label="昵称"
-            placeholder="请输入昵称"
-          />
-          <van-field
-            v-model="editForm.phone"
-            label="手机号"
-            placeholder="请输入手机号"
-            type="tel"
-          />
-          <van-field
-            v-model="editForm.email"
-            label="邮箱"
-            placeholder="请输入邮箱"
-            type="email"
-          />
+          <van-field v-model="editForm.nickname" label="昵称" placeholder="请输入昵称" />
+          <van-field v-model="editForm.phone" label="手机号" placeholder="请输入手机号" type="tel" />
+          <van-field v-model="editForm.email" label="邮箱" placeholder="请输入邮箱" type="email" />
           <div style="margin: 16px;">
-            <van-button round block type="primary" native-type="submit" :loading="editLoading">
-              保存修改
-            </van-button>
-            <van-button round block plain style="margin-top: 12px;" @click="showEditPopup = false">
-              取消
-            </van-button>
+            <van-button round block type="primary" native-type="submit" :loading="editLoading">保存修改</van-button>
+            <van-button round block plain style="margin-top: 12px;" @click="showEditPopup = false">取消</van-button>
           </div>
         </van-form>
       </div>
@@ -78,18 +60,15 @@ const showMenu = ref(false)
 
 const userInfo = computed(() => userStore.userInfo)
 
-// 查看个人信息
+const displayName = computed(() => {
+  return userInfo.value?.nickname || userInfo.value?.username || '用户'
+})
+
 const showInfoPopup = ref(false)
 const userDetail = ref(null)
-
-// 修改个人信息
 const showEditPopup = ref(false)
 const editLoading = ref(false)
-const editForm = ref({
-  nickname: '',
-  phone: '',
-  email: ''
-})
+const editForm = ref({ nickname: '', phone: '', email: '' })
 
 const actions = [
   { name: '查看个人信息', key: 'viewInfo' },
@@ -98,21 +77,27 @@ const actions = [
   { name: '注销账号', key: 'cancelAccount', color: '#ee0a24' }
 ]
 
-// 获取最新用户信息
+// 获取用户信息
 const fetchUserInfo = async () => {
   const userId = userStore.userInfo?.id
-  if (!userId) return
+  if (!userId) {
+    showToast('无法获取用户ID')
+    return
+  }
   try {
     const res = await getUserInfoApi(userId)
-    if (res.code === 200) {
+    if (res.code === 200 && res.data) {
       userDetail.value = res.data
-      // 可选：同步到 store
-      userStore.setUserInfo(res.data)
+      try {
+        userStore.userInfo = { ...userStore.userInfo, ...res.data }
+      } catch (e) {
+        console.warn('更新 store 失败', e)
+      }
     } else {
       showToast(res.msg || '获取信息失败')
     }
   } catch (err) {
-    console.error(err)
+    console.error('获取用户信息失败', err)
     showToast('网络异常')
   }
 }
@@ -125,7 +110,6 @@ const onSelect = async (action) => {
       showInfoPopup.value = true
       break
     case 'editInfo':
-      // 预填当前信息
       editForm.value = {
         nickname: userInfo.value?.nickname || '',
         phone: userInfo.value?.phone || '',
@@ -152,15 +136,13 @@ const onSelect = async (action) => {
           showToast(res.msg || res.errorMsg || '注销失败')
         }
       } catch (err) {
-        if (err !== 'cancel') {
-          showToast('操作失败')
-        }
+        if (err !== 'cancel') showToast('操作失败')
       }
       break
   }
 }
 
-// 提交修改个人信息
+// 修改个人信息（POST /v1/users/info）
 const onSubmitEdit = async () => {
   editLoading.value = true
   try {
@@ -178,8 +160,12 @@ const onSubmitEdit = async () => {
       showToast(res.msg || res.errorMsg || '修改失败')
     }
   } catch (err) {
-    console.error(err)
-    showToast('网络异常')
+    console.error('修改个人信息失败', err)
+    if (err.response?.status === 500) {
+      showToast('服务器错误，请稍后重试')
+    } else {
+      showToast('网络异常')
+    }
   } finally {
     editLoading.value = false
   }
@@ -235,5 +221,13 @@ const onSubmitEdit = async () => {
   text-align: center;
   padding: 40px;
   color: #999;
+}
+.close-btn {
+  padding: 12px 20px; 
+  height: 50px; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
 }
 </style>

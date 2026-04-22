@@ -18,7 +18,13 @@
       <van-picker :columns="dateOptions" title="选择日期" @confirm="onDateConfirm" @cancel="showPicker = false" />
     </van-popup>
 
-    <van-list v-model:loading="loading" :finished="finished" finished-text="没有更多记录了" @load="loadMore" :immediate-check="false">
+    <van-list
+      v-model:loading="loading"
+      :finished="finished"
+      finished-text="没有更多记录了"
+      @load="loadMore"
+      :immediate-check="false"
+    >
       <div v-for="(group, dateStr) in groupedList" :key="dateStr">
         <div class="date-group-title">{{ dateStr }}</div>
         <div v-for="record in group" :key="record.id" class="record-card">
@@ -162,24 +168,21 @@ const loadMore = async () => {
 
     const res = await getAllQuestionsRecordsApi(params)
     if (res.code === 200 || res.success === 200) {
-      let allData = []
+      let newList = []
+
       if (Array.isArray(res.data)) {
-        allData = res.data
+        newList = res.data
         finished.value = true
       } else if (res.data && Array.isArray(res.data.list)) {
-        allData = res.data.list
-        if (allData.length < pageSize) finished.value = true
+        newList = res.data.list
+        if (newList.length < pageSize) finished.value = true
         else page.value++
       } else {
-        allData = []
+        newList = []
         finished.value = true
       }
-      // 这边先过滤
-      const filteredData = allData.filter(record => record.elderId == props.elderId)
-      list.value.push(...filteredData)
-      if (list.value.length === 0 && filteredData.length === 0) {
-        finished.value = true
-      }
+      list.value.push(...newList)
+      if (list.value.length === 0) finished.value = true
     } else {
       showToast(res.msg || '加载失败')
       finished.value = true

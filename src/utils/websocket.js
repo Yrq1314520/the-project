@@ -1,5 +1,5 @@
-// WebSocket 连接工具
-//连接 WebSocket 服务器，处理消息接收和发送
+
+//连接 WebSocket 服务器用于处理消息接收和发送
 export const useWebSocket = (url, onMessageCallback) => {
   let socket = null
   let isConnected = false
@@ -16,7 +16,7 @@ export const useWebSocket = (url, onMessageCallback) => {
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data)
-      onMessageCallback(data) //收到消息时调用外部回调
+      onMessageCallback(data)
     }
 
     socket.onerror = (err) => {
@@ -26,7 +26,7 @@ export const useWebSocket = (url, onMessageCallback) => {
     socket.onclose = () => {
       console.log('WebSocket 连接关闭')
       isConnected = false
-      setTimeout(connect, reconnectInterval) //自动重连
+      setTimeout(connect, reconnectInterval)
     }
   }
 

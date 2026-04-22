@@ -102,19 +102,17 @@ const diseaseMedicineMap = {
   '咳嗽': ['氨溴索口服液', '右美沙芬']
 }
 
-// 解析 askTime 数组为 Date 对象
 const parseAskTime = (askTime) => {
   if (!askTime || !Array.isArray(askTime) || askTime.length < 6) return new Date(0)
   const [year, month, day, hour, minute, second = 0] = askTime
   return new Date(year, month - 1, day, hour, minute, second)
 }
 
-// 加载所有问答记录（前端过滤当前老人）
+// 加载问答记录（后端已按 elderId 过滤）
 const loadRecords = async () => {
   if (!props.elderId) return
   loading.value = true
   try {
-    // 先在前端根据 elderId 过滤
     const res = await getAllQuestionsRecordsApi({ page: 1, size: 200, elderId: props.elderId })
     if (res.code === 200 || res.success === 200) {
       let records = []
@@ -123,9 +121,7 @@ const loadRecords = async () => {
       } else if (res.data && Array.isArray(res.data.list)) {
         records = res.data.list
       }
-      // 先保留当前老人的记录，等接口改好
-      const filteredByElder = records.filter(record => record.elderId == props.elderId)
-      allRecords.value = filteredByElder
+      allRecords.value = records
       computeStats()
     } else {
       showToast(res.msg || '加载问答记录失败')
@@ -138,7 +134,6 @@ const loadRecords = async () => {
   }
 }
 
-// 根据时间范围过滤并统计症状
 const computeStats = () => {
   const now = new Date()
   const days = timeOptions.find(t => t.value === selectedTime.value)?.days || 30
@@ -199,15 +194,14 @@ watch(selectedTime, () => {
 })
 
 watch(() => props.elderId, (newVal, oldVal) => {
-  if (newVal && newVal !== oldVal) {
-    loadRecords()
-  }
+  if (newVal && newVal !== oldVal) loadRecords()
 })
 
 onMounted(() => {
   if (props.elderId) loadRecords()
 })
 </script>
+
 
 <style scoped>
 .health-analysis {

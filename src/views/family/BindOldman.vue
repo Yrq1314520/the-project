@@ -1,5 +1,6 @@
 <template>
   <div class="bind-page page-container">
+     <van-button icon="arrow-left" type="default" @click="goBack">返回</van-button>
     <div class="header">
       <h2>绑定老人账号</h2>
     </div>
@@ -61,16 +62,16 @@
             round
             disabled
           >
-            已绑定
+            绑定
           </van-button>
           <van-button
             v-else-if="item.elderInfoId"
             size="small"
-            type="success"
+            type="default"
             round
             @click="onBind(item)"
           >
-            绑定
+            已绑定
           </van-button>
           <van-button
             v-else
@@ -114,7 +115,7 @@ const elderList = ref([])
 const searching = ref(false)
 const notFound = ref(false)
 const boundElders = ref([])
-
+const goBack = () => router.back()
 // 加载已绑定老人列表
 const loadBoundElders = async () => {
   try {
@@ -174,7 +175,6 @@ const onSearch = async () => {
       notFound.value = true
     }
   } catch (err) {
-    showToast('网络异常，请重试')
     elderList.value = []
     notFound.value = true
   } finally {
@@ -191,7 +191,6 @@ const onBind = async (elderItem) => {
     })
     if (res.success === 200) {
       showToast('绑定成功')
-      // 存储到 localStorage
       const elderInfo = {
         name: elderItem.username,
         username: elderItem.username,

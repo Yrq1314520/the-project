@@ -184,7 +184,6 @@ onMounted(() => {
   min-height: 100vh;
 }
 
-/* 导航栏样式保持不变 */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -241,13 +240,13 @@ onMounted(() => {
   background: #E8ECF0;
 }
 
-/* 用药安全提示卡片：16:9比例，无圆角，整图半透明罩层 */
+
 .safety-tip-card {
   position: relative;
   width: 100%;
   height: 0;
-  padding-bottom: 56.25%; /* 16:9 比例 */
-  margin: 0; /* 紧贴导航栏 */
+  padding-bottom: 56.25%; 
+  margin: 0; 
   background-image: v-bind('`url(${img4})`');
   background-size: cover;
   background-position: right center;
@@ -256,7 +255,6 @@ onMounted(() => {
   overflow: hidden;
 }
 
-/* 新增：全屏半透明罩层，用于压暗图片以凸显文字 */
 .safety-tip-card::before {
   content: "";
   position: absolute;
@@ -264,16 +262,15 @@ onMounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5); /* 半透明黑色，可根据需要调整透明度 */
+  background: rgba(0, 0, 0, 0.5); 
   z-index: 1;
 }
 
-/* 文字层：位于罩层之上，无背景，仅白色文字与阴影 */
 .tip-text {
   position: absolute;
   top: 0;
   left: 0;
-  width: 55%;        /* 文字区域宽度，可自行调整 */
+  width: 55%;        
   height: 100%;
   display: flex;
   align-items: center;
@@ -290,10 +287,9 @@ onMounted(() => {
   font-weight: 500;
 }
 
-/* 移动端适配 */
 @media (max-width: 768px) {
   .safety-tip-card {
-    padding-bottom: 75%; /* 移动端可适当调整比例 */
+    padding-bottom: 75%; 
   }
   .tip-text {
     width: 70%;
@@ -304,7 +300,6 @@ onMounted(() => {
   }
 }
 
-/* 预警通知模块样式，无圆角 */
 .warning-section {
   background: white;
   border-radius: 0;
@@ -341,6 +336,7 @@ onMounted(() => {
   padding: 12px;
   background: #F8F9FC;
   border-radius: 0;
+  cursor: pointer;
 }
 .warning-icon {
   width: 40px;
@@ -387,5 +383,8 @@ onMounted(() => {
 }
 .logout-wrapper .van-button {
   width: 100%;
+}
+.nav-warning{
+  cursor: pointer;
 }
 </style>

@@ -80,10 +80,10 @@ export function sendEmergencyHelpApi() {
   })
 }
 
-// 家属获取所有绑定老人的提问记录，可分页
+// 通过老人档案id获取提问记录
 export function getAllQuestionsRecordsApi(params) {
   return request({
-    url: `/v1/health-qa/family/questions`,
+    url: `/v1/health-qa/family/questions/by-elderid`,
     method: 'post',
     data: params
   })
