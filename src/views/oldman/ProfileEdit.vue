@@ -71,7 +71,6 @@
           type="number"
           placeholder="请输入体重"
         />
-        <!-- 紧急联系人字段（后端要求） -->
         <van-field
           v-model="form.emergencyContact"
           label="紧急联系人"

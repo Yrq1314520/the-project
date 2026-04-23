@@ -1,23 +1,23 @@
 <template>
-  <div class="change-password-page">
+  <div class="change-pwd-page">
     <div class="header">
       <h2>修改密码</h2>
     </div>
     
-    <van-form @submit="onChangeSubmit" ref="formRef" class="password-form">
+    <van-form @submit="onChangePwd" ref="formRef" class="pwd-form">
       <van-cell-group inset>
         <van-field
-          v-model="form.oldPassword"
+          v-model="form.oldPwd"
           label="原密码"
-          :type="showOldPassword ? 'text' : 'password'"
+          :type="showOld ? 'text' : 'password'"
           placeholder="请输入原密码"
           :rules="[{ required: true, message: '请输入原密码' }]"
         >
           <template #right-icon>
             <van-icon 
-              :name="showOldPassword ? 'eye' : 'eye-o'" 
-              class="password-toggle-icon" 
-              @click="showOldPassword = !showOldPassword"
+              :name="showOld ? 'eye' : 'eye-o'" 
+              class="pwd-toggle-icon" 
+              @click="showOld = !showOld"
             />
           </template>
         </van-field>
@@ -43,17 +43,17 @@
             <van-button 
               size="small" 
               :disabled="counting" 
-              @click="sendVerifyCode"
+              @click="sendCode"
             >
-              {{ counting ? `${countdown}s后重新获取` : '获取验证码' }}
+              {{ counting ? `${countDown}s后重新获取` : '获取验证码' }}
             </van-button>
           </template>
         </van-field>
         
         <van-field
-          v-model="form.newPassword"
+          v-model="form.newPwd"
           label="新密码"
-          :type="showNewPassword ? 'text' : 'password'"
+          :type="showNew ? 'text' : 'password'"
           placeholder="请输入新密码"
           :rules="[
             { required: true, message: '请输入新密码' },
@@ -62,28 +62,28 @@
         >
           <template #right-icon>
             <van-icon 
-              :name="showNewPassword ? 'eye' : 'eye-o'" 
-              class="password-toggle-icon" 
-              @click="showNewPassword = !showNewPassword"
+              :name="showNew ? 'eye' : 'eye-o'" 
+              class="pwd-toggle-icon" 
+              @click="showNew = !showNew"
             />
           </template>
         </van-field>
         
         <van-field
-          v-model="form.confirmPassword"
+          v-model="form.confirmPwd"
           label="确认密码"
-          :type="showConfirmPassword ? 'text' : 'password'"
+          :type="showConfirm ? 'text' : 'password'"
           placeholder="请再次输入新密码"
           :rules="[
             { required: true, message: '请确认新密码' },
-            { validator: validateConfirmPassword, message: '两次输入的密码不一致' }
+            { validator: checkConfirmPwd, message: '两次输入的密码不一致' }
           ]"
         >
           <template #right-icon>
             <van-icon 
-              :name="showConfirmPassword ? 'eye' : 'eye-o'" 
-              class="password-toggle-icon" 
-              @click="showConfirmPassword = !showConfirmPassword"
+              :name="showConfirm ? 'eye' : 'eye-o'" 
+              class="pwd-toggle-icon" 
+              @click="showConfirm = !showConfirm"
             />
           </template>
         </van-field>
@@ -103,40 +103,39 @@ import { ref, reactive, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { changePasswordApi, sendEmailCodeApi } from '@/api/user'
-import { useUserStore } from '@/store/user'   
+import { useUserStore } from '@/store/user'
+
 const router = useRouter()
-const userStore = useUserStore()   
+const userStore = useUserStore()
 const formRef = ref(null)
 const loading = ref(false)
-const store = useUserStore()
-console.log('当前登录用户邮箱:', store.userInfo?.email)
 
 // 密码可见
-const showOldPassword = ref(false)
-const showNewPassword = ref(false)
-const showConfirmPassword = ref(false)
+const showOld = ref(false)
+const showNew = ref(false)
+const showConfirm = ref(false)
 
 // 验证码相关
 const counting = ref(false)
-const countdown = ref(60)
-let countdownTimer = null
+const countDown = ref(60)
+let countDownTimer = null
 
 // 表单数据
 const form = reactive({
-  oldPassword: '',
+  oldPwd: '',
   email: '',
   verifyCode: '',
-  newPassword: '',
-  confirmPassword: ''
+  newPwd: '',
+  confirmPwd: ''
 })
 
-// 验证确认密码
-const validateConfirmPassword = (value) => {
-  return value === form.newPassword
+// 确认密码校验
+const checkConfirmPwd = (val) => {
+  return val === form.newPwd
 }
 
-// 发送验证码
-const sendVerifyCode = async () => {
+// 发送验证码 (type=3 表示修改密码)
+const sendCode = async () => {
   if (!form.email) {
     showToast('请输入邮箱')
     return
@@ -150,7 +149,7 @@ const sendVerifyCode = async () => {
     
     if (res.code === 200) {   
       showToast('验证码发送成功')
-      startCountdown()
+      startCountDown()
     } else {
       showToast(res.msg || res.errorMsg || '验证码发送失败')
     }
@@ -160,24 +159,24 @@ const sendVerifyCode = async () => {
   }
 }
 
-// 开始倒计时
-const startCountdown = () => {
+// 倒计时开始
+const startCountDown = () => {
   counting.value = true
-  countdown.value = 60
+  countDown.value = 60
   
-  if (countdownTimer) clearInterval(countdownTimer)
+  if (countDownTimer) clearInterval(countDownTimer)
   
-  countdownTimer = setInterval(() => {
-    countdown.value--
-    if (countdown.value <= 0) {
-      clearInterval(countdownTimer)
+  countDownTimer = setInterval(() => {
+    countDown.value--
+    if (countDown.value <= 0) {
+      clearInterval(countDownTimer)
       counting.value = false
     }
   }, 1000)
 }
 
 // 修改密码提交
-const onChangeSubmit = async () => {
+const onChangePwd = async () => {
   try {
     await formRef.value?.validate()
     loading.value = true
@@ -196,8 +195,8 @@ const onChangeSubmit = async () => {
 
     const res = await changePasswordApi(userId, {
       email: userEmail,
-      oldPassword: form.oldPassword,
-      newPassword: form.newPassword,
+      oldPassword: form.oldPwd,
+      newPassword: form.newPwd,
       verifyCode: form.verifyCode
     })
 
@@ -215,14 +214,14 @@ const onChangeSubmit = async () => {
   }
 }
 
+// 清理掉定时器
 onUnmounted(() => {
-  if (countdownTimer) clearInterval(countdownTimer)
+  if (countDownTimer) clearInterval(countDownTimer)
 })
 </script>
 
 <style scoped>
-/* 样式保持不变 */
-.change-password-page {
+.change-pwd-page {
   padding: 20px;
   background-color: #f8f9fa;
   min-height: 100vh;
@@ -237,19 +236,19 @@ onUnmounted(() => {
   color: #333;
   margin-bottom: 20px;
 }
-.password-form {
+.pwd-form {
   background-color: #fff;
   border-radius: 8px;
   padding: 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-.password-toggle-icon {
+.pwd-toggle-icon {
   font-size: 20px;
   color: #999;
   cursor: pointer;
   padding: 0 10px;
 }
-.password-toggle-icon:hover {
+.pwd-toggle-icon:hover {
   color: #1976d2;
 }
 </style>

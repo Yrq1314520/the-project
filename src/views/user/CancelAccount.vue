@@ -1,18 +1,18 @@
 <template>
-  <div class="cancel-account-page">
+  <div class="cancel-page">
     <div class="header">
       <h2>注销账号</h2>
     </div>
     
-    <div class="warning-content">
+    <div class="warning-box">
       <van-icon name="warning-o" size="48" color="#ee0a24" />
       <h3>注销后将无法恢复</h3>
       <p>您的所有个人数据将被永久删除，且无法找回。</p>
       <p>确定要继续吗？</p>
     </div>
     
-    <div class="action-buttons">
-      <van-button type="danger" block @click="handleCancelAccount" :loading="loading">
+    <div class="action-btns">
+      <van-button type="danger" block @click="handleCancel" :loading="loading">
         确认注销
       </van-button>
       <van-button type="default" block @click="goBack">
@@ -33,7 +33,8 @@ const router = useRouter()
 const userStore = useUserStore()
 const loading = ref(false)
 
-const handleCancelAccount = async () => {
+// 注销逻辑
+const handleCancel = async () => {
   try {
     // 二次确认
     await showConfirmDialog({
@@ -60,13 +61,14 @@ const handleCancelAccount = async () => {
   }
 }
 
+// 返回到上一页
 const goBack = () => {
   router.back()
 }
 </script>
 
 <style scoped>
-.cancel-account-page {
+.cancel-page {
   padding: 20px;
   background-color: #f8f9fa;
   min-height: 100vh;
@@ -85,7 +87,7 @@ const goBack = () => {
   color: #333;
 }
 
-.warning-content {
+.warning-box {
   text-align: center;
   background-color: #fff;
   border-radius: 12px;
@@ -94,19 +96,19 @@ const goBack = () => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.warning-content h3 {
+.warning-box h3 {
   margin: 16px 0 12px;
   font-size: 20px;
   color: #ee0a24;
 }
 
-.warning-content p {
+.warning-box p {
   margin: 8px 0;
   font-size: 14px;
   color: #666;
 }
 
-.action-buttons {
+.action-btns {
   display: flex;
   flex-direction: column;
   gap: 12px;

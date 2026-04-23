@@ -28,7 +28,7 @@
       </div>
     </div>
 
-    <!-- 轮播图 + 用药提醒区域-->
+    <!-- 轮播图-->
     <div class="info-row">
       <div class="swipe-area">
         <van-swipe class="my-swipe" :autoplay="3000" indicator-color="#5F9DB5">
@@ -38,7 +38,7 @@
         </van-swipe>
       </div>
 
-      <!-- 右侧用药提醒列表 + 管理按钮 -->
+      <!-- 右侧用药提醒列表 -->
       <div class="reminder-area">
         <div class="section-title-small">
           <van-icon name="clock-o" size="20" />
@@ -81,7 +81,7 @@
       </div>
     </div>
 
-    <!-- 药品信息区域 -->
+    <!-- 药品信息 -->
     <div class="drug-section" ref="drugSectionRef">
       <div class="section-header">
         <h2 class="section-title">💊 我的药品</h2>
@@ -265,7 +265,7 @@ const loadReminders = async () => {
   }
 }
 
-// 标记已服用,目前前实现
+// 标记已服用,目前前端实现，等待接口中
 const markReminderTaken = (id) => {
   const item = reminderList.value.find(r => r.id === id)
   if (item && !item.taken) {

@@ -6,21 +6,14 @@
       <p class="tip">包含异常提醒与邮箱通知记录</p>
     </div>
 
-    <!-- 预警列表 -->
     <van-list
       v-model:loading="loading"
       :finished="finished"
       finished-text="没有更多了"
-      @load="loadWarningList"
-      class="list-group"
+      @load="loadMore"
     >
-      <van-cell-group inset v-for="item in warningList" :key="item.id">
-        <van-cell
-          :title="item.title"
-          :desc="item.content"
-          is-link
-          @click="goDetail(item)"
-        >
+      <van-cell-group inset v-for="item in displayList" :key="item.id">
+        <van-cell :title="item.title" :desc="item.content" is-link @click="goDetail(item)">
           <template #right-icon>
             <span :class="['tag', item.type === 'email' ? 'email-tag' : 'alert-tag']">
               {{ item.type === 'email' ? '邮箱通知' : '系统预警' }}
@@ -30,10 +23,8 @@
       </van-cell-group>
     </van-list>
 
-    <!-- 状态为空 -->
-    <van-empty v-if="warningList.length === 0" description="暂无预警通知" />
+    <van-empty v-if="warningStore.warningList.length === 0" description="暂无预警通知" />
 
-    <!-- 详情弹窗 -->
     <van-popup v-model:show="showDetail" position="bottom" style="height: 80%">
       <div class="detail-content">
         <h3>通知详情</h3>
@@ -43,7 +34,6 @@
           <van-cell label="内容" :value="currentDetail.content" />
           <van-cell label="时间" :value="currentDetail.time" />
         </van-cell-group>
-
         <div style="padding: 20px">
           <van-button block @click="showDetail = false">关闭</van-button>
         </div>
@@ -53,30 +43,43 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router' 
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useWarningStore } from '@/store/warning'
 
-const router = useRouter()  
+const router = useRouter()
+const warningStore = useWarningStore()
 const goBack = () => router.back()
-// 预警列表数据
-const warningList = ref([])
+
+const pageSize = 10
+const currentPage = ref(1)
 const loading = ref(false)
 const finished = ref(false)
-const page = ref(1)
 
-// 弹窗状态
+const displayList = computed(() => {
+  return warningStore.warningList.slice(0, currentPage.value * pageSize)
+})
+
+const loadMore = () => {
+  loading.value = true
+  setTimeout(() => {
+    if (displayList.value.length >= warningStore.warningList.length) {
+      finished.value = true
+    } else {
+      currentPage.value++
+    }
+    loading.value = false
+  }, 500)
+}
+
 const showDetail = ref(false)
 const currentDetail = ref(null)
 
-// 查看详情
 const goDetail = (item) => {
   currentDetail.value = item
   showDetail.value = true
+  warningStore.markAsRead(item.id)
 }
-
-
-onMounted(() => {
-})
 </script>
 
 <style scoped>

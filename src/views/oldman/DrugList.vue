@@ -320,7 +320,7 @@ const handleSubmit = async () => {
       showToast(isEdit.value ? '修改成功' : '添加成功')
       showDialog.value = false
       resetForm()
-      fuzzySearch() // 刷新列表
+      fuzzySearch() // 刷新
     } else {
       showToast(res.errorMsg || (isEdit.value ? '修改失败' : '添加失败'))
     }
@@ -402,7 +402,7 @@ onMounted(() => {
   width: 100px;
 }
 
-/* 药品卡片样式 */
+/* 药品卡片 */
 .drug-card {
   background: white;
   border-radius: 20px;

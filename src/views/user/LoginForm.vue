@@ -1,5 +1,5 @@
 <template>
-  <van-form @submit="onLogin" ref="formRef" class="form">
+  <van-form @submit="onLoginClick" ref="formRef" class="form">
     <van-cell-group inset>
       <van-field
         v-model="loginForm.phone"
@@ -9,17 +9,17 @@
       />
 
       <van-field
-        v-model="loginForm.password"
+        v-model="loginForm.pwd"
         label="密码"
-        :type="showPassword ? 'text' : 'password'"
+        :type="showPwd ? 'text' : 'password'"
         placeholder="请输入密码"
-        :rules="rules.password"
+        :rules="rules.pwd"
       >
         <template #right-icon>
           <van-icon 
-            :name="showPassword ? 'eye' : 'eye-o'" 
-            class="password-toggle-icon" 
-            @click="togglePassword"
+            :name="showPwd ? 'eye' : 'eye-o'" 
+            class="pwd-toggle-icon" 
+            @click="togglePwd"
           />
         </template>
       </van-field>
@@ -52,38 +52,42 @@ const formRef = ref(null)
 
 const loginForm = reactive({
   phone: '',
-  password: ''
+  pwd: ''
 })
 
 const loading = ref(false)
-const showPassword = ref(false)
+const showPwd = ref(false)
 
 const rules = {
   phone: [
     { required: true, message: '请输入手机号' },
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号' }
   ],
-  password: [
+  pwd: [
     { required: true, message: '请输入密码' },
     { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,20}$/, message: '密码必须包含大小写字母和数字，8-20位' }
   ]
 }
 
-const togglePassword = () => {
-  showPassword.value = !showPassword.value
+// 密码可见切换
+const togglePwd = () => {
+  showPwd.value = !showPwd.value
 }
 
-// API 调用
-const onLogin = async () => {
+// 登录请求
+const onLoginClick = async () => {
   try {
     await formRef.value?.validate()
     loading.value = true
-    const res = await loginApi(loginForm)
+    const res = await loginApi({
+      phone: loginForm.phone,
+      password: loginForm.pwd
+    })
     if (res.success === 200) {
       userStore.setLoginInfo(res.data.token, res.data)
       showToast('登录成功')
 
-      // 根据角色跳转不同的页面
+      // 根据角色跳转
       if (res.data.role === 1) {
         router.push('/oldman')
       } else if (res.data.role === 2) {
@@ -113,7 +117,7 @@ const onLogin = async () => {
   --van-button-height: 50px;
   font-size: 18px;
 }
-.password-toggle-icon {
+.pwd-toggle-icon {
   font-size: 20px;
   color: #999;
   cursor: pointer;

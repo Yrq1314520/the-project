@@ -3,7 +3,7 @@
     <div class="header">
       <h2>老人档案管理</h2>
     </div>
-
+    <!-- 不需要这个文件了 -->
     <!-- 手动输入用户ID -->
     <van-cell-group inset>
       <van-field
@@ -254,8 +254,6 @@ const onSubmit = async () => {
       if (res.success === 200) {
         showToast('添加成功')
         showDialog.value = false
-        
-        // 保存档案ID到 localStorage（临时方案）
         const newId = res.data?.id
         if (newId) {
           let localElders = JSON.parse(localStorage.getItem('localElders') || '[]')
@@ -273,7 +271,7 @@ const onSubmit = async () => {
           localStorage.setItem('localElders', JSON.stringify(localElders))
         }
         
-        // 如果是通过绑定页面跳转过来的（isFamilyBinding），则自动绑定
+        // 如果是通过绑定页面跳转过来的就自动绑定
         if (route.query.isFamilyBinding === 'true') {
           const elderInfoId = res.data?.id
           if (elderInfoId) {
@@ -293,7 +291,6 @@ const onSubmit = async () => {
             router.push('/family')
           }
         } else {
-          // 普通新增，刷新当前查询结果
           loadProfile(currentUserId.value)
         }
       } else {
@@ -343,10 +340,6 @@ onMounted(() => {
   }
 })
 </script>
-
-<style scoped>
-/* 样式与您原有代码一致，此处省略 */
-</style>
 
 <style scoped>
 .profile-page {

@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+// import { url } from 'node:inspector'
 // import { quantity } from 'echarts/types/src/util/number.js'
 
 // 家属查询所有绑定老人的药品
@@ -140,6 +141,14 @@ export function deleteMedicineRemindsApi(id) {
 export function searchMedicineRemindsApi(elderId) {
   return request({
     url: `/v1/medicine-remind/elder/${elderId}`,
+    method: 'get'
+  })
+}
+
+//查询老人服药记录
+export function getMedicineRecordsAPi(elderId) {
+  return request({
+    url: `/v1/medicine-remind/elders/${elderId}/records`,
     method: 'get'
   })
 }

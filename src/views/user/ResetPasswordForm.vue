@@ -1,5 +1,5 @@
 <template>
-  <van-form @submit="onResetPassword" ref="formRef" class="form">
+  <van-form @submit="onResetPwd" ref="formRef" class="form">
     <van-cell-group inset>
       <van-field
         v-model="form.email"
@@ -18,11 +18,11 @@
           <van-button
             size="small"
             type="primary"
-            :loading="loadingCode"
-            :disabled="countdown > 0"
+            :loading="codeLoading"
+            :disabled="countDown > 0"
             @click="sendVerifyCode"
           >
-            {{ countdown > 0 ? `${countdown}s` : '发送' }}
+            {{ countDown > 0 ? `${countDown}s` : '发送' }}
           </van-button>
         </template>
       </van-field>
@@ -30,15 +30,15 @@
       <van-field
         v-model="form.newPassword"
         label="新密码"
-        :type="showPassword ? 'text' : 'password'"
+        :type="showNewPwd ? 'text' : 'password'"
         placeholder="请设置新密码"
         :rules="rules.newPassword"
       >
         <template #right-icon>
           <van-icon 
-            :name="showPassword ? 'eye' : 'eye-o'" 
-            class="password-toggle-icon" 
-            @click="togglePassword"
+            :name="showNewPwd ? 'eye' : 'eye-o'" 
+            class="pwd-toggle-icon" 
+            @click="toggleNewPwd"
           />
         </template>
       </van-field>
@@ -49,7 +49,7 @@
         type="primary"
         block
         native-type="submit"
-        :loading="loading"
+        :loading="submitLoading"
         class="action-btn"
       >
         重置密码
@@ -65,24 +65,20 @@ import { resetPasswordApi, sendEmailCodeApi } from '@/api/user'
 
 const formRef = ref(null)
 
-// 重置密码表单
+// 表单数据
 const form = reactive({
   email: '',
   verifyCode: '',
   newPassword: ''
 })
 
-const loading = ref(false)
+const submitLoading = ref(false)
+const showNewPwd = ref(false)     // 是否显示新密码
+const codeLoading = ref(false)
+const countDown = ref(0)
+let countDownTimer = null
 
-// 密码可见性
-const showPassword = ref(false)
-
-// 验证码相关
-const loadingCode = ref(false)
-const countdown = ref(0)
-let countdownTimer = null
-
-// 表单验证
+// 验证规则
 const rules = {
   email: [
     { required: true, message: '请输入邮箱' },
@@ -98,12 +94,12 @@ const rules = {
   ]
 }
 
-// 切换密码可见性
-const togglePassword = () => {
-  showPassword.value = !showPassword.value
+// 切换密码可见
+const toggleNewPwd = () => {
+  showNewPwd.value = !showNewPwd.value
 }
 
-// 发送验证码
+// 发送验证码（忘记密码 type=2）
 const sendVerifyCode = async () => {
   if (!form.email) {
     showToast('请输入邮箱')
@@ -111,43 +107,42 @@ const sendVerifyCode = async () => {
   }
 
   try {
-    loadingCode.value = true
-    // 忘记密码使用type=2
+    codeLoading.value = true
     const res = await sendEmailCodeApi({
       email: form.email,
       type: 2
     })
     if (res.success === 200) {
       showToast('验证码已发送')
-      startCountdown()
+      startCountDown()
     } else {
       showToast(res.errorMsg || '发送失败')
     }
   } catch (err) {
     showToast('网络异常，请重试')
   } finally {
-    loadingCode.value = false
+    codeLoading.value = false
   }
 }
 
-// 开始倒计时
-const startCountdown = () => {
-  countdown.value = 60
-  clearInterval(countdownTimer)
-  countdownTimer = setInterval(() => {
-    if (countdown.value > 0) {
-      countdown.value--
+// 倒计时
+const startCountDown = () => {
+  countDown.value = 60
+  clearInterval(countDownTimer)
+  countDownTimer = setInterval(() => {
+    if (countDown.value > 0) {
+      countDown.value--
     } else {
-      clearInterval(countdownTimer)
+      clearInterval(countDownTimer)
     }
   }, 1000)
 }
 
-// 重置密码
-const onResetPassword = async () => {
+// 重置密码提交
+const onResetPwd = async () => {
   try {
     await formRef.value?.validate()
-    loading.value = true
+    submitLoading.value = true
 
     const res = await resetPasswordApi({
       email: form.email,
@@ -156,11 +151,11 @@ const onResetPassword = async () => {
     })
     if (res.success === 200) {
       showToast('密码重置成功')
-      // 清空
+      // clear form
       form.email = ''
       form.verifyCode = ''
       form.newPassword = ''
-      // 切换到登录选项卡
+      // 切换到登录tab
       emit('switchToLogin')
     } else {
       showToast(res.errorMsg || '重置失败')
@@ -168,10 +163,9 @@ const onResetPassword = async () => {
   } catch (err) {
     showToast('网络异常，请重试')
   } finally {
-    loading.value = false
+    submitLoading.value = false
   }
 }
-
 
 const emit = defineEmits(['switchToLogin'])
 </script>
@@ -185,15 +179,13 @@ const emit = defineEmits(['switchToLogin'])
   --van-button-height: 50px;
   font-size: 18px;
 }
-
-.password-toggle-icon {
+.pwd-toggle-icon {
   font-size: 20px;
   color: #999;
   cursor: pointer;
   padding: 0 10px;
 }
-
-.password-toggle-icon:hover {
+.pwd-toggle-icon:hover {
   color: #1976d2;
 }
 </style>

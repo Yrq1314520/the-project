@@ -14,8 +14,8 @@
         <p>{{ userInfo.username || userInfo.phone }}</p>
       </div>
       
-      <!-- 个人信息表单 -->
-      <van-form @submit="onSubmit" ref="formRef" class="info-form">
+      <!-- 信息表单 -->
+      <van-form @submit="onSave" ref="formRef" class="info-form">
         <van-cell-group inset>
           <van-field
             v-model="form.nickname"
@@ -41,15 +41,15 @@
         </div>
       </van-form>
       
-      <!-- 操作按钮 -->
+      <!-- 修改等操作 -->
       <div class="action-buttons">
-        <van-button type="warning" block @click="goToChangePassword">
+        <van-button type="warning" block @click="goToChangePwd">
           修改密码
         </van-button>
         <van-button type="danger" block @click="onLogout">
           退出登录
         </van-button>
-        <van-button type="default" block @click="goToCancelAccount">
+        <van-button type="default" block @click="goToCancel">
           注销账号
         </van-button>
       </div>
@@ -68,31 +68,25 @@ const router = useRouter()
 const userStore = useUserStore()
 const formRef = ref(null)
 const loading = ref(false)
-
-//默认头像
 const defaultAvatar = 'https://img.yzcdn.cn/vant/logo.png'
 
-//用户信息
 const userInfo = computed(() => userStore.userInfo)
 
-// 表单数据
+// 表单绑定数据
 const form = reactive({
   nickname: '',
   email: ''
 })
 
-// 获取用户 ID
 const userId = computed(() => userInfo.value?.id || userInfo.value?.userId)
 
-// 加载用户信息
+// 拉取最新用户信息
 const fetchUserInfo = async () => {
   if (!userId.value) return
   try {
     const res = await getUserInfoApi(userId.value)
     if (res.code === 200 && res.data) {
-      //更新store中的用户信息
       userStore.setLoginInfo(userStore.token, res.data)
-      // 同步到表单
       form.nickname = res.data.nickname || ''
       form.email = res.data.email || ''
     } else {
@@ -103,18 +97,17 @@ const fetchUserInfo = async () => {
   }
 }
 
-// 初始化表单数据
+// 初始化
 onMounted(() => {
   if (userInfo.value) {
     form.nickname = userInfo.value.nickname || ''
     form.email = userInfo.value.email || ''
   }
-  // 重新获取最新信息
   fetchUserInfo()
 })
 
-// 提交修改
-const onSubmit = async () => {
+// 保存修改
+const onSave = async () => {
   try {
     await formRef.value?.validate()
     loading.value = true
@@ -124,7 +117,6 @@ const onSubmit = async () => {
       email: form.email
     })
     if (res.code === 200) {
-      // 重新获取用户信息以确保同步
       await fetchUserInfo()
       showToast('修改成功')
     } else {
@@ -137,17 +129,17 @@ const onSubmit = async () => {
   }
 }
 
-// 跳转到修改密码页面
-const goToChangePassword = () => {
+// 跳转修改密码页
+const goToChangePwd = () => {
   router.push('/user/change-password')
 }
 
-// 跳转到注销账号页面
-const goToCancelAccount = () => {
+// 跳转注销账号页
+const goToCancel = () => {
   router.push('/user/cancel-account')
 }
 
-// 退出登录（调用 API）
+// 退出登录
 const onLogout = async () => {
   try {
     if (userStore.token) {

@@ -10,7 +10,7 @@
     <div class="profile-content">
       <!-- 简历卡片 -->
       <div v-if="hasProfile" class="resume-card">
-        <!-- 头像 + 基本信息 -->
+        <!-- 头像和基本信息 -->
         <div class="resume-header">
           <div class="avatar">
             <van-icon name="user-o" size="56" />
@@ -21,7 +21,7 @@
           </div>
         </div>
 
-        <!-- 紧急联系人专区（突出显示） -->
+        <!-- 紧急联系人 -->
         <div class="emergency-info">
           <div class="emergency-item">
             <span class="label">紧急联系人</span>
@@ -37,7 +37,7 @@
           </div>
         </div>
 
-        <!-- 两列简历详情（字体放大） -->
+        <!-- 简历详情大字体 -->
         <div class="resume-details">
           <div class="detail-item"><span class="label">姓名</span><span class="value">{{ profile.name || '未填写' }}</span></div>
           <div class="detail-item"><span class="label">性别</span><span class="value">{{ profile.genderText || '未填写' }}</span></div>
@@ -86,7 +86,7 @@ const profile = ref({})
 const loading = ref(false)
 const error = ref('')
 
-// 用户ID（从 store 获取）
+// userId（从 store 获取）
 const userId = computed(() => userStore.userInfo?.id || '')
 
 const hasProfile = computed(() => {
@@ -235,7 +235,6 @@ onMounted(() => {
   box-sizing: border-box;
 }
 
-/* 头部 */
 .resume-header {
   display: flex;
   align-items: center;
@@ -266,7 +265,7 @@ onMounted(() => {
   font-size: 16px;
 }
 
-/* 紧急联系人专区 */
+
 .emergency-info {
   background: #F8F9FC;
   border-radius: 20px;
@@ -292,7 +291,6 @@ onMounted(() => {
   font-size: 16px;
 }
 
-/* 两列简历详情 - 字体放大 */
 .resume-details {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -323,7 +321,7 @@ onMounted(() => {
   font-size: 16px;
 }
 
-/* 操作按钮 */
+
 .action-buttons {
   display: flex;
   justify-content: flex-end;
@@ -336,7 +334,6 @@ onMounted(() => {
   padding: 8px 20px;
 }
 
-/* 空状态 */
 .empty-profile {
   text-align: center;
   padding: 60px 20px;

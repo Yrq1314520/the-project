@@ -36,6 +36,7 @@ import ResetPasswordForm from './ResetPasswordForm.vue'
 import img7 from '@/assets/bgp.png'
 
 const activeTab = ref(0)
+// 切换到登录
 const switchToLogin = () => {
   activeTab.value = 0
 }
@@ -102,7 +103,6 @@ const switchToLogin = () => {
   border-radius: 3px;
 }
 
-
 .login-tabs {
   width: 100%;
   margin-bottom: 20px;
@@ -141,7 +141,6 @@ const switchToLogin = () => {
   color: #4A6F82;
   text-align: center;
 }
-
 
 @media (max-width: 768px) {
   .form-wrapper {

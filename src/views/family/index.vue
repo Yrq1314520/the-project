@@ -1,6 +1,6 @@
 <template>
   <div class="family-home">
-    <!-- 顶部导航栏 -->
+    <!-- 导航栏 -->
     <div class="navbar">
       <div class="logo">翼护银发</div>
       <div class="nav-actions">
@@ -24,7 +24,7 @@
       </div>
     </div>
 
-    <!-- 用药安全提示卡片 -->
+    <!-- 轮播 -->
     <div class="safety-tip-card" :style="{ backgroundImage: `url(${img4})` }">
       <div class="tip-overlay"></div>
       <div class="tip-text">
@@ -40,12 +40,15 @@
       </div>
       <div v-if="warningList.length === 0" class="empty-warning">暂无预警通知</div>
       <div v-else class="warning-list">
-        <div v-for="item in warningList" :key="item.id" class="warning-card">
+        <div v-for="item in warningList" :key="item.id" class="warning-card" @click="handleWarningClick(item)">
           <div class="warning-icon" :class="item.type === 'alert' ? 'alert' : 'email'">
             <van-icon :name="item.type === 'alert' ? 'warning' : 'envelop-o'" />
           </div>
           <div class="warning-info">
-            <div class="warning-title">{{ item.title }}</div>
+            <div class="warning-title">
+              {{ item.title }}
+              <span v-if="!item.isRead" class="unread-dot"></span>
+            </div>
             <div class="warning-desc">{{ item.content }}</div>
             <div class="warning-time">{{ item.time }}</div>
           </div>
@@ -65,6 +68,7 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showToast, showConfirmDialog } from 'vant'
 import { useUserStore } from '@/store/user'
+import { useWarningStore } from '@/store/warning'  
 import { logoutApi } from '@/api/user'
 import { getBoundEldersApi } from '@/api/family'
 import UserMenu from '@/components/UserMenu.vue'
@@ -73,23 +77,20 @@ import img4 from '@/assets/picture.jpg'
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
-const userInfo = computed(() => userStore.userInfo)
+const warningStore = useWarningStore() 
 
 const elderOptions = ref([])
 const selectedElderValue = ref('')
 const warningSection = ref(null)
 
-const warningList = ref([
-  { id: 1, title: '异常提醒', content: '老人貌似身体有不舒服症状', time: '2026-04-19 08:30', type: 'alert' },
-  { id: 2, title: '用药提醒', content: '阿司匹林需在早餐后服用', time: '2026-04-19 07:00', type: 'email' }
-])
+// 预警列表
+const warningList = computed(() => warningStore.warningList)
 
-// 加载已绑定老人列表
+// 加载已绑定老人
 const loadBoundElders = async () => {
   try {
     const res = await getBoundEldersApi()
     if (res.success === 200 && res.data && res.data.length > 0) {
-      // 后端返回格式: [{ elderInfoId, userId, username }, ...]
       const elders = res.data
       const options = elders.map(item => ({
         text: item.username,
@@ -134,7 +135,6 @@ const onElderChange = (event) => {
   if (!selectedValue) return
   const selected = elderOptions.value.find(opt => opt.value == selectedValue)
   if (selected && selected.elderInfoId && selected.userId) {
-    // 同时传递 elderId 和 userId
     router.push(`/family/elder-detail?elderId=${selected.elderInfoId}&userId=${selected.userId}`)
   } else {
     showToast('无法获取该老人的档案ID或用户ID，请重新绑定')
@@ -148,6 +148,14 @@ const scrollToWarning = () => {
   }
 }
 const goToWarningDetail = () => router.push('/family/warning')
+
+// 点击可跳转
+const handleWarningClick = (item) => {
+  if (!item.isRead) {
+    warningStore.markAsRead(item.id)
+  }
+  router.push('/family/warning')
+}
 
 const handleLogout = async () => {
   await showConfirmDialog({
@@ -174,7 +182,6 @@ onMounted(() => {
   loadBoundElders()
 })
 </script>
-
 
 <style scoped>
 .family-home {
@@ -239,7 +246,19 @@ onMounted(() => {
 .nav-btn:hover {
   background: #E8ECF0;
 }
-
+.nav-warning {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  height: 40px;
+  background: #F8F9FC;
+  border-radius: 40px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #2A7F6E;
+}
 
 .safety-tip-card {
   position: relative;
@@ -337,6 +356,10 @@ onMounted(() => {
   background: #F8F9FC;
   border-radius: 0;
   cursor: pointer;
+  transition: background 0.2s;
+}
+.warning-card:hover {
+  background: #E8ECF0;
 }
 .warning-icon {
   width: 40px;
@@ -360,6 +383,16 @@ onMounted(() => {
 .warning-title {
   font-weight: 600;
   font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.unread-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: #E76F51;
+  border-radius: 50%;
 }
 .warning-desc {
   font-size: 14px;
@@ -383,8 +416,5 @@ onMounted(() => {
 }
 .logout-wrapper .van-button {
   width: 100%;
-}
-.nav-warning{
-  cursor: pointer;
 }
 </style>

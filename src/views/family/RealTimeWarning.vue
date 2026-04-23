@@ -3,12 +3,12 @@
     <div class="header">
       <h2>实时预警接收</h2>
       <p class="tip">设备异常 → 实时推送到家属端</p>
-      <div class="status-tag" :class="wsConnected ? 'online' : 'offline'">
-        {{ wsConnected ? '已连接 · 实时接收中' : '断开连接 · 重连中' }}
+      <div class="status-tag" :class="wsManager.isConnected.value ? 'online' : 'offline'">
+        {{ wsManager.isConnected.value ? '已连接 · 实时接收中' : '断开连接 · 重连中' }}
       </div>
     </div>
 
-    <van-cell-group inset v-for="item in warningList" :key="item.id">
+    <van-cell-group inset v-for="item in warningStore.warningList" :key="item.id">
       <van-cell :title="item.title" :desc="item.content" is-link @click="openDetail(item)">
         <template #right-icon>
           <span class="real-tag">实时预警</span>
@@ -16,7 +16,7 @@
       </van-cell>
     </van-cell-group>
 
-    <van-empty v-if="warningList.length === 0" description="暂无实时预警" />
+    <van-empty v-if="warningStore.warningList.length === 0" description="暂无实时预警" />
 
     <van-popup v-model:show="showDetail" position="bottom" style="height: 70%">
       <div class="detail">
@@ -33,40 +33,21 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { showToast } from 'vant'
-import { useWebSocket } from '@/utils/websocket'
+import { ref } from 'vue'
+import { wsManager } from '@/utils/websocketManager'
+import { useWarningStore } from '@/store/warning'
 
-const warningList = ref([])
-const wsConnected = ref(false)
+const warningStore = useWarningStore()
 const showDetail = ref(false)
 const currentDetail = ref(null)
-let ws = null
-
-const onMessage = (data) => {
-  wsConnected.value = true
-  warningList.value.unshift({
-    id: Date.now(),
-    title: data.title,
-    content: data.content,
-    time: new Date().toLocaleString()
-  })
-  showToast(`实时预警：${data.title}`)
-}
-
-onMounted(() => {
-  ws = useWebSocket('ws://localhost:8080/warning', onMessage)
-})
-
-onUnmounted(() => {
-  ws?.close()
-})
 
 const openDetail = (item) => {
   currentDetail.value = item
   showDetail.value = true
+  warningStore.markAsRead(item.id)
 }
 </script>
+
 
 <style scoped>
 .real-warning-page {

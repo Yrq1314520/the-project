@@ -5,7 +5,7 @@
       <van-button type="primary" @click="openAddDialog">添加药品</van-button>
     </div>
 
-    <!-- 搜索栏：药品名称 + 类型筛选 -->
+    <!-- 搜索栏药品名称和类型筛选 -->
     <div class="search-wrapper">
       <van-search v-model="searchKey" placeholder="输入药品名称搜索" @search="onSearch" />
       <div class="type-filter">
@@ -15,7 +15,7 @@
       </div>
     </div>
 
-    <!-- 自定义药品卡片，显示详细信息 -->
+    <!-- 药品卡片显示详细信息 -->
       <div v-for="item in drugList" :key="item.id" class="drug-card">
         <div class="drug-card-header">
           <div class="drug-name">{{ item.medicineName }}</div>
@@ -70,7 +70,7 @@
       <van-date-picker v-model="datePickerValue" title="选择日期" @confirm="onDateConfirm" @cancel="showDatePicker = false" />
     </van-popup>
 
-    <!-- 类型选择器（修复：使用对象数组） -->
+    <!-- 类型选择器 -->
     <van-popup v-model:show="showTypePicker" position="bottom">
       <van-picker :columns="typeOptionsObj" @confirm="onTypeConfirm" @cancel="showTypePicker = false" />
     </van-popup>
@@ -111,16 +111,15 @@ const onDateConfirm = (value) => {
   showDatePicker.value = false
 }
 
-// 类型选项（字符串数组，用于下拉筛选）
+// 类型选项
 const typeOptions = ref(['感冒发烧', '肠胃消化', '咳嗽咽痛', '皮肤骨科', '慢病用药', '儿童用药', '未分类'])
 const typeFilterOptions = ref([{ text: '全部', value: '' }, ...typeOptions.value.map(t => ({ text: t, value: t }))])
 
-// 类型选择器（对象数组，用于 van-picker）
+// 类型选择器
 const typeOptionsObj = ref(typeOptions.value.map(t => ({ text: t, value: t })))
 
 const showTypePicker = ref(false)
 const onTypeConfirm = (value) => {
-  // 兼容 Vant 4 的返回格式
   let selected = ''
   if (value && value.selectedValues && value.selectedValues.length > 0) {
     selected = value.selectedValues[0]
@@ -283,7 +282,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 样式保持不变 */
 .family-drug-page {
   padding: 16px;
   background: var(--bg-color);
