@@ -15,7 +15,7 @@ class WebSocketManager {
     this.heartbeatTimer = null
   }
 
-  //初始化连接
+  // 初始化连接，传入 token
   init(url, token) {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       console.warn('WebSocket already connected')
@@ -26,13 +26,23 @@ class WebSocketManager {
     this.connect()
   }
 
+  // 建立 WebSocket 连接
   connect() {
-    if (!this.url || !this.token) {
-      console.error('WebSocket url or token missing')
+    if (!this.url) {
+      console.error('WebSocket url missing')
       return
     }
-    const wsUrl = `${this.url}?token=${this.token}`
-    this.socket = new WebSocket(wsUrl)
+
+    // 将 token 作为子协议传递
+    let protocols = undefined
+    if (this.token) {
+      protocols = [this.token]   // token 放在子协议数组
+      console.log('Connecting WebSocket with token as subprotocol')
+    } else {
+      console.log('Connecting WebSocket without token')
+    }
+
+    this.socket = new WebSocket(this.url, protocols)
 
     this.socket.onopen = () => {
       console.log('WebSocket 连接成功')
@@ -45,17 +55,23 @@ class WebSocketManager {
       let data
       try {
         data = JSON.parse(event.data)
+        console.log('收到消息:', data)
       } catch (e) {
+        console.warn('解析失败:', event.data)
         data = { raw: event.data }
       }
       this.messageHandlers.forEach(handler => handler(data))
-      if (data.type === 'warning' || data.isEmergency) {
+
+      // 紧急预警全局通知
+      const isEmergency = data.type && (data.type.includes('emergency') || data.type === 'warning')
+      if (isEmergency) {
+        const elderName = data.elderName || '老人'
+        const content = data.content || '紧急预警'
         Notify({
           type: 'warning',
-          message: data.title || '紧急预警',
+          message: `【${elderName}】${content}`,
           duration: 5000,
           onClick: () => {
-            //跳转到预警中心
             window.location.href = '/family/warning'
           }
         })
@@ -64,6 +80,7 @@ class WebSocketManager {
 
     this.socket.onerror = (err) => {
       console.error('WebSocket 错误', err)
+      if (this.socket) console.log('readyState:', this.socket.readyState)
     }
 
     this.socket.onclose = (event) => {
@@ -71,11 +88,12 @@ class WebSocketManager {
       this.isConnected.value = false
       this.stopHeartbeat()
       this.socket = null
-      this.scheduleReconnect()
+      if (event.code !== 1000) {
+        this.scheduleReconnect()
+      }
     }
   }
 
-  // 发送消息
   send(data) {
     if (this.isConnected.value && this.socket?.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify(data))
@@ -84,31 +102,30 @@ class WebSocketManager {
     }
   }
 
-  // 订阅消息
   subscribe(handler) {
     this.messageHandlers.add(handler)
     return () => this.messageHandlers.delete(handler)
   }
 
-  // 关闭
   close() {
     this.stopHeartbeat()
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer)
-      this.reconnectTimer = null
-    }
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer)
     if (this.socket) {
-      this.socket.close()
+      this.socket.close(1000, '主动关闭')
       this.socket = null
     }
     this.isConnected.value = false
     this.reconnectAttempts = 0
   }
 
-  // 重连
   scheduleReconnect() {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('WebSocket 重连次数已达上限')
+      console.error('WebSocket 重连次数已达上限，停止重连')
+      Notify({
+        type: 'danger',
+        message: '预警服务连接失败，请刷新页面重试',
+        duration: 3000
+      })
       return
     }
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer)
@@ -119,12 +136,12 @@ class WebSocketManager {
     }, this.reconnectInterval)
   }
 
-  // 防止连接被断开
   startHeartbeat() {
     this.stopHeartbeat()
     this.heartbeatTimer = setInterval(() => {
       if (this.isConnected.value && this.socket?.readyState === WebSocket.OPEN) {
         this.socket.send(JSON.stringify({ type: 'ping' }))
+        console.log('发送心跳 ping')
       }
     }, 30000)
   }

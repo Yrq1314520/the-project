@@ -64,13 +64,13 @@ export function getElderProfileByUserIdApi(userId) {
     data: { userId }
   })
 }
-export function getElderIdApi() {
-  return request({
-    url: `/v1/elderInfo/my-elders`,
-    method: 'get',
-    data
-  })
-}
+// export function getElderIdApi() {
+//   return request({
+//     url: `/v1/elderInfo/my-elders`,
+//     method: 'get',
+//     data
+//   })
+// }
 
 // 紧急求助
 export function sendEmergencyHelpApi() {

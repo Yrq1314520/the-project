@@ -25,14 +25,18 @@
     </div>
 
     <!-- 轮播 -->
-    <div class="safety-tip-card" :style="{ backgroundImage: `url(${img4})` }">
-      <div class="tip-overlay"></div>
-      <div class="tip-text">
-        <p>老年人身体机能减弱，肝肾功能代谢慢，用药一定要格外谨慎。首先要严格遵从医嘱，不要自行加药、减药或停药，避免多种药物混用带来风险。平时帮老人整理好药品，做好服药提醒，防止漏服、重复服用。用药期间多观察老人反应，若出现头晕、乏力、肠胃不适等情况，要及时停药并就医。同时不要轻信偏方保健品，确保用药安全、简单、有效，守护好老人健康。</p>
-      </div>
-    </div>
+    <van-swipe class="my-swipe" :autoplay="2500" indicator-color="white" loop>
+      <van-swipe-item v-for="(item, index) in swipeList" :key="index">
+        <div class="swipe-bg" :style="{ backgroundImage: `url(${item.img})` }">
+          <div class="tip-overlay"></div>
+          <div class="tip-text" :class="{ 'tip-right': item.textPosition === 'right' }">
+            <p>{{ item.text }}</p>
+          </div>
+        </div>
+      </van-swipe-item>
+    </van-swipe>
 
-    <!-- 预警通知模块 -->
+    <!-- 预警通知模块（数据来自 store） -->
     <div class="warning-section" ref="warningSection">
       <div class="section-header">
         <h3>⚠️ 预警通知</h3>
@@ -73,6 +77,7 @@ import { logoutApi } from '@/api/user'
 import { getBoundEldersApi } from '@/api/family'
 import UserMenu from '@/components/UserMenu.vue'
 import img4 from '@/assets/picture.jpg'
+import img8 from '@/assets/garden.png'
 
 const router = useRouter()
 const route = useRoute()
@@ -83,7 +88,7 @@ const elderOptions = ref([])
 const selectedElderValue = ref('')
 const warningSection = ref(null)
 
-// 预警列表
+// 预警列表（从 store 获取真实数据）
 const warningList = computed(() => warningStore.warningList)
 
 // 加载已绑定老人
@@ -149,7 +154,21 @@ const scrollToWarning = () => {
 }
 const goToWarningDetail = () => router.push('/family/warning')
 
-// 点击可跳转
+// 轮播数据
+const swipeList = ref([
+  {
+    img: img4,
+    text: '老年人身体机能减弱，肝肾功能代谢慢，用药一定要格外谨慎。首先要严格遵从医嘱，不要自行加药、减药或停药，避免多种药物混用带来风险。平时帮老人整理好药品，做好服药提醒，防止漏服、重复服用。用药期间多观察老人反应，若出现头晕、乏力、肠胃不适等情况，要及时停药并就医。同时不要轻信偏方保健品，确保用药安全、简单、有效，守护好老人健康。',
+    textPosition: 'left'
+  },
+  {
+    img: img8,
+    text: '老年人需要陪伴，作为子女多陪伴家中老人，耐心倾听、温柔相伴，能缓解孤独焦虑，舒缓身心压力，愉悦心情，有效增进身心健康，让老人晚年温暖又安心。日常多用心陪伴家中老人，耐心倾听他们的心声，温柔耐心相伴左右。用心关怀、暖心陪伴，既能化解老人的孤独与焦虑，舒缓身心疲惫，滋养情绪，更能守护身心健康。',
+    textPosition: 'right'
+  }
+])
+
+// 点击预警卡片：标记已读并跳转详情页
 const handleWarningClick = (item) => {
   if (!item.isRead) {
     warningStore.markAsRead(item.id)
@@ -260,28 +279,29 @@ onMounted(() => {
   color: #2A7F6E;
 }
 
-.safety-tip-card {
+.my-swipe {
+  width: 100%;
+  margin: 0;
+  aspect-ratio: 16 / 9;
+  background-color: #e9ecef;
+}
+
+.swipe-bg {
   position: relative;
   width: 100%;
-  height: 0;
-  padding-bottom: 56.25%; 
-  margin: 0; 
-  background-image: v-bind('`url(${img4})`');
+  height: 100%;
   background-size: cover;
   background-position: right center;
   background-repeat: no-repeat;
-  border-radius: 0;
-  overflow: hidden;
 }
 
-.safety-tip-card::before {
-  content: "";
+.tip-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5); 
+  background: rgba(0, 0, 0, 0.5);
   z-index: 1;
 }
 
@@ -289,27 +309,28 @@ onMounted(() => {
   position: absolute;
   top: 0;
   left: 0;
-  width: 55%;        
+  width: 55%;
   height: 100%;
   display: flex;
+  color: #fff;
   align-items: center;
   padding: 0 40px;
   box-sizing: border-box;
   z-index: 2;
 }
-.tip-text p {
-  color: white;
-  font-size: 18px;
-  line-height: 1.6;
-  margin: 0;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
-  font-weight: 500;
+
+.tip-text.tip-right {
+  left: auto;
+  right: 0;
+  text-align: right;
+  justify-content: flex-end;
+}
+
+.tip-text.tip-right p {
+  text-align: right;
 }
 
 @media (max-width: 768px) {
-  .safety-tip-card {
-    padding-bottom: 75%; 
-  }
   .tip-text {
     width: 70%;
     padding: 0 20px;

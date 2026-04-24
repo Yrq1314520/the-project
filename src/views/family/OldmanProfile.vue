@@ -1,10 +1,9 @@
 <template>
   <div class="profile-page page-container">
+    <van-button icon="arrow-left" type="default" @click="goBack">返回</van-button>
     <div class="header">
       <h2>老人档案管理</h2>
     </div>
-    <!-- 不需要这个文件了 -->
-    <!-- 手动输入用户ID -->
     <van-cell-group inset>
       <van-field
         v-model="manualUserId"
@@ -52,13 +51,13 @@
       <van-button size="small" type="primary" round @click="openAddDialog">新增档案</van-button>
     </div>
 
-    <!-- 初始状态（未查询） -->
+    <!-- 初始状态 -->
     <div v-else-if="!searched" class="empty-state">
       <van-icon name="search" size="48" color="#ccc" />
       <p>请输入老人用户ID查询</p>
     </div>
 
-    <!-- 新增/编辑弹窗（内容与原一致） -->
+    <!-- 新增/编辑弹窗 -->
     <van-popup v-model:show="showDialog" position="bottom" style="height: 85%">
       <div class="dialog-content">
         <h3>{{ isEdit ? '编辑老人档案' : '新增老人档案' }}</h3>
@@ -87,10 +86,65 @@
       </div>
     </van-popup>
 
-    <!-- 详情弹窗（略） -->
-    <van-popup v-model:show="showViewDialog" position="bottom" style="height: 80%">
-      <!-- 内容与原一致，可省略 -->
-    </van-popup>
+    <!-- 查看档案弹窗 -->
+<van-popup v-model:show="showViewDialog" position="bottom" round style="height: 85%">
+  <div class="dialog-content">
+    <h3>档案详情</h3>
+    <div class="profile-detail-content" v-if="currentProfile">
+      <div class="detail-item">
+        <span class="detail-label">用户ID</span>
+        <span class="detail-value">{{ currentProfile.userId || currentProfile.elderuserId || '-' }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">姓名</span>
+        <span class="detail-value">{{ currentProfile.name || '-' }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">年龄</span>
+        <span class="detail-value">{{ currentProfile.age || '-' }}岁</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">性别</span>
+        <span class="detail-value">{{ currentProfile.gender === 1 ? '男' : currentProfile.gender === 2 ? '女' : '-' }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">身高</span>
+        <span class="detail-value">{{ currentProfile.height ? currentProfile.height + 'cm' : '-' }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">体重</span>
+        <span class="detail-value">{{ currentProfile.weight ? currentProfile.weight + 'kg' : '-' }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">居住地址</span>
+        <span class="detail-value">{{ currentProfile.address || '-' }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">基础病史</span>
+        <span class="detail-value">{{ currentProfile.medicalHistory || '无' }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">过敏史</span>
+        <span class="detail-value">{{ currentProfile.allergy || '无' }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">紧急联系人</span>
+        <span class="detail-value">{{ currentProfile.emergencyContact || '-' }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">紧急联系电话</span>
+        <span class="detail-value">{{ currentProfile.emergencyPhone || '-' }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">关系</span>
+        <span class="detail-value">{{ currentProfile.relation || '-' }}</span>
+      </div>
+    </div>
+    <div style="margin: 20px 0;">
+      <van-button block @click="showViewDialog = false">关闭</van-button>
+    </div>
+  </div>
+</van-popup>
 
     <!-- 性别选择器 -->
     <van-popup v-model:show="showGenderPicker" position="bottom">
@@ -130,6 +184,8 @@ const submitLoading = ref(false)
 const currentProfile = ref(null)
 const currentId = ref('')
 const showGenderPicker = ref(false)
+
+const goBack = () => router.back()
 
 const form = reactive({
   id: '',
@@ -311,7 +367,6 @@ const onDelete = async (id) => {
     const res = await deleteOldmanProfileApi(id)
     if (res.success === 200) {
       showToast('删除成功')
-      // 同时从 localStorage 中移除
       let localElders = JSON.parse(localStorage.getItem('localElders') || '[]')
       localElders = localElders.filter(e => e.elderInfoId != id)
       localStorage.setItem('localElders', JSON.stringify(localElders))

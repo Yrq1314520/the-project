@@ -36,11 +36,6 @@
           required
         />
         <van-field
-          v-model="form.idCard"
-          label="身份证号"
-          placeholder="请输入身份证号"
-        />
-        <van-field
           v-model="form.address"
           label="居住地址"
           placeholder="请输入居住地址"
@@ -136,7 +131,6 @@ const form = reactive({
   genderText: '',     
   age: '',
   phone: '',
-  idCard: '',
   address: '',
   medicalHistory: '',
   allergy: '',
@@ -181,7 +175,6 @@ const loadProfile = async () => {
         form.genderText = genderText
         form.age = data.age || ''
         form.phone = data.phone || ''
-        form.idCard = data.idCard || ''
         form.address = data.address || ''
         form.medicalHistory = data.medicalHistory || data.illness || ''
         form.allergy = data.allergy || ''
@@ -217,15 +210,9 @@ const onGenderConfirm = ({ selectedOptions }) => {
 const onSubmit = async () => {
   try {
     await formRef.value?.validate()
-    if (!elderInfoId.value) {
-      showToast('档案不存在，请先创建档案')
-      return
-    }
     submitLoading.value = true
-
     const submitData = {
-      id: elderInfoId.value,
-      eldername: form.name,                   
+      name: form.name,           
       age: Number(form.age),
       gender: form.genderText === '男' ? 1 : 2,
       height: form.height ? Number(form.height) : null,
@@ -238,10 +225,16 @@ const onSubmit = async () => {
       relation: form.relation || ''
     }
 
-    console.log('更新档案提交数据:', submitData)
-    const res = await updateElderInfo(submitData)
+    let res
+    if (isEdit.value && elderInfoId.value) {
+      submitData.id = elderInfoId.value
+      res = await updateElderInfo(submitData)
+    } else {
+      res = await addElderInfo(submitData)
+    }
+
     if (res.code === 200) {
-      showToast('修改成功')
+      showToast(isEdit.value ? '修改成功' : '创建成功')
       router.push('/oldman/profile')
     } else {
       showToast(res.msg || res.errorMsg || '保存失败')
@@ -253,7 +246,6 @@ const onSubmit = async () => {
     submitLoading.value = false
   }
 }
-
 const goBack = () => {
   router.back()
 }

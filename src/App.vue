@@ -5,6 +5,7 @@
     </transition>
   </div>
 </template>
+
 <script setup>
 import { onMounted, onUnmounted } from 'vue'
 import { useUserStore } from '@/store/user'
@@ -13,28 +14,27 @@ import { useWarningStore } from '@/store/warning'
 
 const userStore = useUserStore()
 const warningStore = useWarningStore()
-
 let unsubscribe = null
 
 onMounted(() => {
-  const token = userStore.token  
+  const token = userStore.token   // 获取 token
+  const wsUrl = 'ws://118.195.215.81/yiguardsilverfa/api/ws/warning'
+
   if (token) {
-    wsManager.init('ws://118.195.215.81/yiguardsilverfa/ws/warning', token)
-    // 消息存入store
-    unsubscribe = wsManager.subscribe((message) => {
-      if (message.type === 'warning' || message.isEmergency) {
-        warningStore.addWarning({
-          title: message.title || '紧急预警',
-          content: message.content || '请及时查看',
-          type: 'alert'
-        })
-      }
-    })
+    // 将 token 作为子协议传入
+    wsManager.init(wsUrl, token)
+  } else {
+    console.warn('未获取到 token，WebSocket 可能无法认证')
+    // 仍然尝试连接但不传 token
+    wsManager.init(wsUrl, null)
   }
+
+  unsubscribe = wsManager.subscribe((message) => {
+    warningStore.addWarning(message)
+  })
 })
 
 onUnmounted(() => {
-  //页面注销关闭
   if (unsubscribe) unsubscribe()
 })
 </script>

@@ -52,7 +52,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { showConfirmDialog, showToast } from 'vant'
 import { useUserStore } from '@/store/user'
-import { changePasswordApi, cancelAccountApi, getUserInfoApi, updateProfileApi } from '@/api/user'
+import { changePasswordApi, cancelAccountApi, getUserInfoApi, updateProfileApi, logoutApi } from '@/api/user'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -74,6 +74,7 @@ const actions = [
   { name: '查看个人信息', key: 'viewInfo' },
   { name: '修改个人信息', key: 'editInfo' },
   { name: '修改密码', key: 'changePassword' },
+  { name: '退出登录', key: 'logout' },       
   { name: '注销账号', key: 'cancelAccount', color: '#ee0a24' }
 ]
 
@@ -120,6 +121,26 @@ const onSelect = async (action) => {
     case 'changePassword':
       router.push('/user/change-password')
       break
+    case 'logout':  
+      try {
+        await showConfirmDialog({
+          title: '退出登录',
+          message: '确定要退出登录吗？',
+          confirmButtonText: '确定',
+          cancelButtonText: '取消'
+        })
+        const res = await logoutApi()
+        if (res.code === 200) {
+          showToast('已退出登录')
+          userStore.logout()
+          router.replace('/login')
+        } else {
+          showToast(res.msg || res.errorMsg || '退出失败')
+        }
+      } catch (err) {
+        if (err !== 'cancel') showToast('操作失败')
+      }
+      break
     case 'cancelAccount':
       try {
         await showConfirmDialog({
@@ -142,7 +163,7 @@ const onSelect = async (action) => {
   }
 }
 
-// 修改个人信息（POST /v1/users/info）
+// 修改个人信息
 const onSubmitEdit = async () => {
   editLoading.value = true
   try {
@@ -154,7 +175,7 @@ const onSubmitEdit = async () => {
     const res = await updateProfileApi(data)
     if (res.code === 200) {
       showToast('修改成功')
-      await fetchUserInfo() 
+      await fetchUserInfo()
       showEditPopup.value = false
     } else {
       showToast(res.msg || res.errorMsg || '修改失败')

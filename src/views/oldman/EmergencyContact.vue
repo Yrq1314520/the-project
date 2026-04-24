@@ -1,5 +1,6 @@
 <template>
   <div class="emergency-setup">
+    <van-button icon="arrow-left" type="default" @click="goBack">返回</van-button>
     <h2>设置紧急联系人</h2>
     
     <van-form @submit="onSubmit" ref="formRef">
@@ -38,7 +39,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { useUserStore } from '@/store/user'
 import { getElderInfoByUserId, updateElderInfo } from '@/api/elderInfo'
@@ -47,6 +48,10 @@ const router = useRouter()
 const userStore = useUserStore()
 const formRef = ref(null)
 const submitting = ref(false)
+
+const goBack = () => {
+  router.back()
+}
 
 // 档案主键
 const elderInfoId = ref(null)
