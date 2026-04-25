@@ -216,7 +216,7 @@ const confirmDeleteReminder = async () => {
   }
 }
 
-// 格式化显示周期
+
 const formatDays = (daysStr) => {
   if (!daysStr) return '不重复'
   const map = { '1': '一', '2': '二', '3': '三', '4': '四', '5': '五', '6': '六', '7': '日' }
@@ -252,7 +252,6 @@ const closeModal = () => {
   showModal.value = false
 }
 
-// 提交表单
 const submitForm = async () => {
   const { medicineName, dosage, usage, remindTime, remindDaysList } = formData
   if (!medicineName || !dosage || !usage || !remindTime || remindDaysList.length === 0) {

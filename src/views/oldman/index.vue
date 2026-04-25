@@ -64,7 +64,7 @@
               :type="item.status === 1 ? 'success' : 'warning'"
               plain
               size="medium"
-              @click.stop="handleTakeMedicine(item)"
+              @click.stop="openTakeModal(item)"
             >
               {{ item.status === 1 ? '已服用' : '未服用' }}
             </van-tag>
@@ -186,7 +186,7 @@
       </div>
     </van-popup>
 
-    
+    <!-- 删除确认弹窗 -->
     <div v-if="showDeleteModal" class="modal-mask" @click.self="closeDeleteModal">
       <div class="modal-box">
         <div class="modal-title">确认删除提醒</div>
@@ -201,6 +201,20 @@
         </div>
       </div>
     </div>
+    <div v-if="showTakeModal" class="modal-mask" @click.self="closeTakeModal">
+      <div class="modal-box">
+        <div class="modal-title">确认服药</div>
+        <div class="modal-content">
+          请确认已服用“{{ takeTargetName }}”吗？
+        </div>
+        <div class="modal-footer">
+          <button class="footer-btn cancel" @click="closeTakeModal">取消</button>
+          <button class="footer-btn confirm" @click="confirmTake" :disabled="takeLoading">
+            {{ takeLoading ? '提交中...' : '确认已服' }}
+          </button>
+        </div>
+      </div>
+    </div>
 
     <div class="bottom-placeholder"></div>
   </div>
@@ -209,7 +223,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { showToast,showConfirmDialog } from 'vant'
+import { showToast } from 'vant'   
 import { useUserStore } from '@/store/user'
 import { getMyDrugListApi } from '@/api/medicine'
 import { getElderInfoByUserId } from '@/api/elderInfo'
@@ -245,17 +259,30 @@ const loadTodayReminders = async () => {
   if (!elderId.value) return
   remindersLoading.value = true
   try {
+    if (remindersList.value.length === 0) {
+      await loadRemindersList()
+    }
     const res = await getPendingMedicineApi(elderId.value)
     if (res.success === 200 && Array.isArray(res.data)) {
-      todayReminders.value = res.data.map(item => ({
-        id: item.remindId,          
-        medicineName: item.medicineName,
-        dosage: item.dosage,
-        usage: item.usage,
-        remindTime: item.remindTime,
-        remindDays: item.remindDays,
-        status: item.status          
-      }))
+      todayReminders.value = res.data.map(item => {
+        const remind = remindersList.value.find(r => r.id === item.remindId)
+        let time = ''
+        if (item.planTime && item.planTime.length >= 3) {
+          const hour = String(item.planTime[3]).padStart(2, '0')
+          const minute = String(item.planTime[4]).padStart(2, '0')
+          time = `${hour}:${minute}`
+        }
+        return {
+          id: item.id,                    
+          remindId: item.remindId,
+          status: item.status,
+          medicineName: remind ? remind.medicineName : '药品已删除',
+          dosage: remind ? remind.dosage : '—',
+          usage: remind ? remind.usage : '—',
+          remindTime: time,               
+          remindDays: remind ? remind.remindDays : ''
+        }
+      })
     } else {
       todayReminders.value = []
     }
@@ -266,30 +293,49 @@ const loadTodayReminders = async () => {
     remindersLoading.value = false
   }
 }
-const handleTakeMedicine = async (item) => {
+
+const showTakeModal = ref(false)
+const takeLoading = ref(false)
+const takeTargetId = ref(null)
+const takeTargetName = ref('')
+
+const openTakeModal = (item) => {
   if (item.status === 1) {
     showToast('今日已服用过')
     return
   }
+  takeTargetId.value = item.id      
+  takeTargetName.value = item.medicineName
+  showTakeModal.value = true
+}
+
+const closeTakeModal = () => {
+  showTakeModal.value = false
+  takeTargetId.value = null
+  takeTargetName.value = ''
+  takeLoading.value = false
+}
+
+const confirmTake = async () => {
+  if (!takeTargetId.value) return
+  takeLoading.value = true
   try {
-    await showConfirmDialog({
-      title: '确认服药',
-      message: `请确认已服用“${item.medicineName}”吗？`,
-      confirmButtonText: '已服用',
-      cancelButtonText: '取消'
-    })
     const res = await takingMedicineApi(
       { type: 'take' },
-      { remindId: item.id }
+      { remindId: takeTargetId.value }
     )
     if (res.success === 200) {
       showToast('服药记录成功')
-      await loadTodayReminders()
+      await loadTodayReminders()   // 刷新列表
     } else {
       showToast(res.errorMsg || '操作失败，请稍后再试')
     }
   } catch (err) {
+    console.error(err)
     showToast('网络异常，请重试')
+  } finally {
+    takeLoading.value = false
+    closeTakeModal()
   }
 }
 
@@ -444,27 +490,24 @@ const onSubmitReminder = async () => {
   }
 }
 
-// 
+// 删除提醒弹窗相关
 const showDeleteModal = ref(false)
 const deleteLoading = ref(false)
 const deleteTargetId = ref(null)
 const deleteTargetName = ref('')
 
-// 打开删除弹窗
 const openDeleteReminderModal = (item) => {
   deleteTargetId.value = item.id
   deleteTargetName.value = item.medicineName
   showDeleteModal.value = true
 }
 
-// 关闭删除弹窗
 const closeDeleteModal = () => {
   showDeleteModal.value = false
   deleteTargetId.value = null
   deleteTargetName.value = ''
 }
 
-// 确认删除
 const confirmDeleteReminder = async () => {
   if (!deleteTargetId.value) return
   deleteLoading.value = true
@@ -597,8 +640,8 @@ const handleNavClick = (type) => {
 onMounted(async () => {
   await fetchElderId()
   if (elderId.value) {
-    loadTodayReminders()
-    loadRemindersList()
+    await loadRemindersList()      
+    await loadTodayReminders()    
   }
   loadDrugList()
   if (!emergencyContact.value.name) {

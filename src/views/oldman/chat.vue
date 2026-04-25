@@ -87,9 +87,9 @@ const scrollToBottom = async () => {
   }
 }
 
-// 获取当前老人的档案ID（优先从 store，其次从 localStorage）
+// 获取当前老人的档案id
 const getElderId = () => {
-  // 尝试多种来源
+
   const id = userStore.userInfo?.elderInfoId || 
              userStore.userInfo?.elderId ||
              userStore.elderInfoId ||
@@ -158,7 +158,6 @@ const sendMessage = async () => {
 }
 
 onMounted(() => {
-  // 检查是否已获取到 elderId，如果没有，给出提示
   if (!getElderId()) {
     console.warn('未获取到老人档案ID，预警功能将无法关联')
     showToast({ message: '请重新登录以关联健康档案', type: 'warning', duration: 3000 })

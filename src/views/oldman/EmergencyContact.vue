@@ -119,7 +119,7 @@ const onSubmit = async () => {
 
     if (res.code === 200) {
       showToast('设置成功')
-      // 清空
+      // 清空掉信息
       form.name = ''
       form.phone = ''
       form.relation = ''

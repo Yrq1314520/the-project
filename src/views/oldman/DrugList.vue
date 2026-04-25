@@ -8,7 +8,7 @@
       </van-button>
     </div>
 
-    <!-- 搜索栏：药品名称 + 类型筛选 -->
+    <!-- 搜索栏：药品名称还有类型筛选 -->
     <div class="search-wrapper">
       <van-search
         v-model="searchKey"
@@ -342,14 +342,14 @@ const deleteLoading = ref(false)
 const deleteTargetId = ref(null)
 const deleteTargetName = ref('')
 
-// 打开删除弹窗
+// 打开删除
 const openDeleteModal = (item) => {
   deleteTargetId.value = item.id
   deleteTargetName.value = item.medicineName
   showDeleteModal.value = true
 }
 
-// 关闭删除弹窗
+// 关闭删除
 const closeDeleteModal = () => {
   showDeleteModal.value = false
   deleteTargetId.value = null

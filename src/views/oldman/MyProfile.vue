@@ -89,7 +89,7 @@ const loading = ref(false)
 const error = ref('')
 const userId = computed(() => userStore.userInfo?.id || '')
 
-// 删除弹窗控制
+// 删除弹窗
 const showDeleteModal = ref(false)
 const deleteLoading = ref(false)
 
@@ -154,7 +154,7 @@ const loadProfile = async () => {
   }
 }
 
-// 跳转编辑
+// 跳转到编辑页面
 const goEdit = () => {
   router.push('/oldman/profile-edit')
 }

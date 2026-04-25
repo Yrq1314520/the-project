@@ -72,7 +72,7 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showToast, showConfirmDialog } from 'vant'
 import { useUserStore } from '@/store/user'
-import { useWarningStore } from '@/store/warning'   // 引入预警store
+import { useWarningStore } from '@/store/warning'  
 import { logoutApi } from '@/api/user'
 import { getBoundEldersApi } from '@/api/family'
 import UserMenu from '@/components/UserMenu.vue'
@@ -82,7 +82,7 @@ import img8 from '@/assets/garden.png'
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
-const warningStore = useWarningStore()   // 使用预警store
+const warningStore = useWarningStore()   
 
 const elderOptions = ref([])
 const selectedElderValue = ref('')
@@ -154,7 +154,7 @@ const scrollToWarning = () => {
 }
 const goToWarningDetail = () => router.push('/family/warning')
 
-// 轮播数据
+
 const swipeList = ref([
   {
     img: img4,
@@ -168,7 +168,7 @@ const swipeList = ref([
   }
 ])
 
-// 点击预警卡片：标记已读并跳转详情页
+// 点击预警卡片的话就会标记已读并跳转详情页
 const handleWarningClick = (item) => {
   if (!item.isRead) {
     warningStore.markAsRead(item.id)
@@ -203,7 +203,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 原有样式保持不变，此处仅补充缺失的导航预警按钮样式 */
 .family-home {
   width: 100%;
   margin: 0 auto;

@@ -185,3 +185,11 @@ export function getPendingMedicineApi(elderId) {
     method: 'get'
   })
 }
+
+//创建服药记录
+export function setMedicineRecordsApi() {
+  return request({
+    url: `/v1/medicine-remind/trigger`,
+    method: 'post'
+  })
+}

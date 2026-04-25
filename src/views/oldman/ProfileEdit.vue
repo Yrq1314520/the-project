@@ -110,9 +110,9 @@ const formRef = ref(null)
 const submitLoading = ref(false)
 const isEdit = ref(false)
 const showGenderPicker = ref(false)
-const elderInfoId = ref(null)   // 档案主键
+const elderInfoId = ref(null)   
 
-// 性别选择器（显示用中文）
+// 性别选择器
 const genderColumns = [
   { text: '男', value: '男' },
   { text: '女', value: '女' }

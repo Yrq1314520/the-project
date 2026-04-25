@@ -219,7 +219,7 @@ const goToAddProfile = (item) => {
   })
 }
 
-// 未找到老人时，直接创建档案（使用家属的 userId）
+// 未找到老人时就直接创建档案（使用家属的 userId）
 const goToCreateProfile = () => {
   const familyUserId = userStore.userInfo?.id
   if (!familyUserId) {

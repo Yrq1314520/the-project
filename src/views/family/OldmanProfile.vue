@@ -44,20 +44,19 @@
       </div>
     </div>
 
-    <!-- 无档案时显示新增按钮 -->
+    <!-- 无档案时就显示新增按钮 -->
     <div v-else-if="searched && noProfile" class="empty-state">
       <van-icon name="profile" size="48" color="#ccc" />
       <p>未找到该老人的档案</p>
       <van-button size="small" type="primary" round @click="openAddDialog">新增档案</van-button>
     </div>
 
-    <!-- 初始状态 -->
     <div v-else-if="!searched" class="empty-state">
       <van-icon name="search" size="48" color="#ccc" />
       <p>请输入老人用户ID查询</p>
     </div>
 
-    <!-- 新增/编辑弹窗 -->
+  
     <van-popup v-model:show="showDialog" position="bottom" style="height: 85%">
       <div class="dialog-content">
         <h3>{{ isEdit ? '编辑老人档案' : '新增老人档案' }}</h3>
@@ -86,7 +85,7 @@
       </div>
     </van-popup>
 
-    <!-- 查看档案弹窗 -->
+    <!-- 查看档案 -->
 <van-popup v-model:show="showViewDialog" position="bottom" round style="height: 85%">
   <div class="dialog-content">
     <h3>档案详情</h3>
@@ -146,7 +145,7 @@
   </div>
 </van-popup>
 
-    <!-- 性别选择器 -->
+
     <van-popup v-model:show="showGenderPicker" position="bottom">
       <van-picker :columns="[{ text: '男', value: 1 }, { text: '女', value: 2 }]" @confirm="onGenderConfirm" @cancel="showGenderPicker = false" />
     </van-popup>
