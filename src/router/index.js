@@ -54,6 +54,13 @@ const routes = [
     }
   },
   {
+    path: '/family/realtime-warning',
+    component: () => import('@/views/family/RealTimeWarning.vue'),
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
     path: '/family/emergency-contact',
     component: () => import('@/views/family/EmergencyContact.vue'),
     meta: {

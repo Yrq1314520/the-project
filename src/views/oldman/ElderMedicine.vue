@@ -650,7 +650,6 @@ onMounted(() => {
   gap: 16px;
   justify-content: center;
 }
-/* 编辑按钮：#1989fa背景 + 白色文字 */
 :deep(.reminder-manage-actions .van-button--primary.plain) {
   background-color: #1989fa !important;
   border-color: #1989fa !important;

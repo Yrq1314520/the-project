@@ -209,7 +209,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { showToast } from 'vant'
+import { showToast,showConfirmDialog } from 'vant'
 import { useUserStore } from '@/store/user'
 import { getMyDrugListApi } from '@/api/medicine'
 import { getElderInfoByUserId } from '@/api/elderInfo'

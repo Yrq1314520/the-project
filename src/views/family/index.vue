@@ -16,12 +16,16 @@
           <van-icon name="add-o" size="20" />
           <span>绑定老人</span>
         </div>
+        <div class="nav-warning" @click="scrollToWarning">
+          <van-icon name="bell-o" size="20" />
+          <span>预警通知</span>
+        </div>
         <user-menu />
       </div>
     </div>
 
     <!-- 轮播 -->
-     <van-swipe class="my-swipe" :autoplay="2500" indicator-color="white" loop>
+    <van-swipe class="my-swipe" :autoplay="2500" indicator-color="white" loop>
       <van-swipe-item v-for="(item, index) in swipeList" :key="index">
         <div class="swipe-bg" :style="{ backgroundImage: `url(${item.img})` }">
           <div class="tip-overlay"></div>
@@ -31,6 +35,30 @@
         </div>
       </van-swipe-item>
     </van-swipe>
+
+    <!-- 预警通知模块（数据来自 store） -->
+    <div class="warning-section" ref="warningSection">
+      <div class="section-header">
+        <h3>⚠️ 预警通知</h3>
+        <span class="more-link" @click="goToWarningDetail">查看全部</span>
+      </div>
+      <div v-if="warningList.length === 0" class="empty-warning">暂无预警通知</div>
+      <div v-else class="warning-list">
+        <div v-for="item in warningList.slice(0, 3)" :key="item.id" class="warning-card" @click="handleWarningClick(item)">
+          <div class="warning-icon" :class="item.type === 'alert' ? 'alert' : 'email'">
+            <van-icon :name="item.type === 'alert' ? 'warning' : 'envelop-o'" />
+          </div>
+          <div class="warning-info">
+            <div class="warning-title">
+              {{ item.title }}
+              <span v-if="!item.isRead" class="unread-dot"></span>
+            </div>
+            <div class="warning-desc">{{ item.content }}</div>
+            <div class="warning-time">{{ item.time }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- 注销按钮 -->
     <div class="logout-wrapper">
@@ -44,6 +72,7 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showToast, showConfirmDialog } from 'vant'
 import { useUserStore } from '@/store/user'
+import { useWarningStore } from '@/store/warning'   // 引入预警store
 import { logoutApi } from '@/api/user'
 import { getBoundEldersApi } from '@/api/family'
 import UserMenu from '@/components/UserMenu.vue'
@@ -53,11 +82,14 @@ import img8 from '@/assets/garden.png'
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const warningStore = useWarningStore()   // 使用预警store
 
 const elderOptions = ref([])
 const selectedElderValue = ref('')
 const warningSection = ref(null)
 
+// 预警列表（从 store 获取真实数据）
+const warningList = computed(() => warningStore.warningList)
 
 // 加载已绑定老人
 const loadBoundElders = async () => {
@@ -122,7 +154,7 @@ const scrollToWarning = () => {
 }
 const goToWarningDetail = () => router.push('/family/warning')
 
-//轮播
+// 轮播数据
 const swipeList = ref([
   {
     img: img4,
@@ -136,7 +168,7 @@ const swipeList = ref([
   }
 ])
 
-// 点击可跳转
+// 点击预警卡片：标记已读并跳转详情页
 const handleWarningClick = (item) => {
   if (!item.isRead) {
     warningStore.markAsRead(item.id)
@@ -171,6 +203,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* 原有样式保持不变，此处仅补充缺失的导航预警按钮样式 */
 .family-home {
   width: 100%;
   margin: 0 auto;
@@ -246,14 +279,12 @@ onMounted(() => {
   font-weight: 500;
   color: #2A7F6E;
 }
-
 .my-swipe {
   width: 100%;
   margin: 0;
   aspect-ratio: 16 / 9;
   background-color: #e9ecef;
 }
-
 .swipe-bg {
   position: relative;
   width: 100%;
@@ -262,7 +293,6 @@ onMounted(() => {
   background-position: right center;
   background-repeat: no-repeat;
 }
-
 .tip-overlay {
   position: absolute;
   top: 0;
@@ -272,8 +302,6 @@ onMounted(() => {
   background: rgba(0, 0, 0, 0.5);
   z-index: 1;
 }
-
-
 .tip-text {
   position: absolute;
   top: 0;
@@ -287,21 +315,15 @@ onMounted(() => {
   box-sizing: border-box;
   z-index: 2;
 }
-
-
 .tip-text.tip-right {
   left: auto;
   right: 0;
   text-align: right;
   justify-content: flex-end;
 }
-
-
 .tip-text.tip-right p {
   text-align: right;
 }
-
-
 @media (max-width: 768px) {
   .tip-text {
     width: 70%;
@@ -311,8 +333,6 @@ onMounted(() => {
     font-size: 14px;
   }
 }
-
-
 .warning-section {
   background: white;
   border-radius: 0;
@@ -331,7 +351,6 @@ onMounted(() => {
   font-weight: 600;
   margin: 0;
 }
-
 .more-link {
   font-size: 14px;
   color: #2A7F6E;

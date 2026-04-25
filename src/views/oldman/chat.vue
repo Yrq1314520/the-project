@@ -58,13 +58,16 @@
   </div>
 </template>
 
+
 <script setup>
 import { ref, nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
+import { useUserStore } from '@/store/user'
 import request from '@/utils/request'   
 
 const router = useRouter()
+const userStore = useUserStore()
 const chatContentRef = ref(null)
 const inputText = ref('')
 const isLoading = ref(false)
@@ -84,6 +87,17 @@ const scrollToBottom = async () => {
   }
 }
 
+// 获取当前老人的档案ID（优先从 store，其次从 localStorage）
+const getElderId = () => {
+  // 尝试多种来源
+  const id = userStore.userInfo?.elderInfoId || 
+             userStore.userInfo?.elderId ||
+             userStore.elderInfoId ||
+             localStorage.getItem('elderInfoId') ||
+             localStorage.getItem('elderId')
+  return id ? Number(id) : null
+}
+
 const sendMessage = async () => {
   const text = inputText.value.trim()
   if (!text) return
@@ -96,12 +110,23 @@ const sendMessage = async () => {
   inputText.value = ''
   scrollToBottom()
 
+  // 获取老人档案ID
+  const elderId = getElderId()
+  if (!elderId) {
+    console.error('未获取到老人档案ID，无法关联预警')
+    showToast('请重新登录后再试')
+    return
+  }
+
   isLoading.value = true
   try {
     const res = await request({
       url: '/v1/voice/chat/text',
       method: 'post',
-      data: { question: text }
+      data: { 
+        question: text,
+        elderId: elderId   // 关键：携带 elderId
+      }
     })
     if (res.code === 200 && res.data) {
       const reply = res.data.answer || res.data.reply || res.data
@@ -133,6 +158,11 @@ const sendMessage = async () => {
 }
 
 onMounted(() => {
+  // 检查是否已获取到 elderId，如果没有，给出提示
+  if (!getElderId()) {
+    console.warn('未获取到老人档案ID，预警功能将无法关联')
+    showToast({ message: '请重新登录以关联健康档案', type: 'warning', duration: 3000 })
+  }
   if (messages.value.length === 0) {
     messages.value.push({
       role: 'assistant',
@@ -143,7 +173,6 @@ onMounted(() => {
   scrollToBottom()
 })
 </script>
-
 
 <style scoped>
 .chat-page {

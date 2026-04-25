@@ -30,7 +30,7 @@
           </div>
           <div class="action-buttons">
             <van-button class="custom-edit-btn" size="small" round @click="openEditDialog">修改档案</van-button>
-            <van-button type="danger" size="small" round @click="openDeleteModal">删除档案</van-button>
+            <van-button type="danger" size="small" round @click="openDeleteModal">解除绑定</van-button>
           </div>
         </div>
         <div v-else-if="loading" class="loading-tip">加载中...</div>
@@ -84,14 +84,14 @@
     </van-popup>
     <div v-if="showDeleteModal" class="modal-mask" @click.self="closeDeleteModal">
       <div class="modal-box">
-        <div class="modal-title">确认删除档案</div>
+        <div class="modal-title">确认解除绑定吗</div>
         <div class="modal-content">
-          删除后该老人档案将永久清除，无法恢复，确定要继续吗？
+          解绑后需重新绑定老人档案，请问还要继续吗
         </div>
         <div class="modal-footer">
           <button class="footer-btn cancel" @click="closeDeleteModal">取消</button>
           <button class="footer-btn confirm" @click="confirmDelete" :disabled="deleteLoading">
-            {{ deleteLoading ? '删除中...' : '确认删除' }}
+            {{ deleteLoading ? '解绑中...' : '确认解绑' }}
           </button>
         </div>
       </div>

@@ -85,6 +85,15 @@ const onLoginClick = async () => {
     })
     if (res.success === 200) {
       userStore.setLoginInfo(res.data.token, res.data)
+      if (res.data.role === 1) {
+        const elderId = res.data.elderInfoId || res.data.id
+        if (elderId) {
+          localStorage.setItem('elderInfoId', String(elderId))
+        } else {
+          console.warn('登录接口未返回老人档案ID，预警关联将失效')
+        }
+      }
+
       showToast('登录成功')
 
       // 根据角色跳转
