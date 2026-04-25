@@ -29,7 +29,7 @@
       </van-cell-group>
       
       <div style="margin: 16px">
-        <van-button type="primary" block native-type="submit" :loading="submitting">
+        <van-button class="custom-edit-btn" block native-type="submit" :loading="submitting">
           保存设置
         </van-button>
       </div>
@@ -151,5 +151,17 @@ h2 {
   margin-bottom: 20px;
   font-size: 22px;
   font-weight: 600;
+}
+.custom-edit-btn {
+  background-color: #1989fa !important;
+  border: 1px solid #1989fa !important;
+  color: #ffffff !important;
+}
+
+.custom-edit-btn:active,
+.custom-edit-btn:disabled {
+  background-color: #1989fa !important;
+  border-color: #1989fa !important;
+  opacity: 0.9;
 }
 </style>

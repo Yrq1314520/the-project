@@ -28,13 +28,13 @@
       finished-text="没有更多药品"
       @load="loadData"
     >
-      <!-- 自定义药品卡片，显示详细信息 -->
+      <!-- 药品详细信息 -->
       <div v-for="item in drugList" :key="item.id" class="drug-card">
         <div class="drug-card-header">
           <div class="drug-name">{{ item.medicineName }}</div>
           <div class="card-actions">
-            <van-button type="primary" size="small" @click="openEditDialog(item)">编辑</van-button>
-            <van-button type="danger" size="small" @click="handleDelete(item)">删除</van-button>
+            <van-button class="custom-edit-btn" size="small" @click="openEditDialog(item)">编辑</van-button>
+            <van-button type="danger" size="small" @click="openDeleteModal(item)">删除</van-button>
           </div>
         </div>
         <div class="drug-detail-list">
@@ -52,7 +52,7 @@
           </div>
           <div class="detail-row" v-if="item.remark">
             <span class="label">备注：</span>
-            <span class="value">{{ item.remark }}</span>
+            <span class="value">{{ item.remark || '暂无' }}</span>
           </div>
         </div>
       </div>
@@ -80,7 +80,7 @@
             placeholder="请输入数量"
             required
           />
-          <!-- 有效期（添加和编辑都显示） -->
+          <!-- 有效期 -->
           <van-field
             v-model="form.expiryDate"
             label="有效期"
@@ -103,10 +103,9 @@
             type="textarea"
             placeholder="请输入备注"
           />
-
           <div class="dialog-buttons">
             <van-button type="default" @click="showDialog = false">取消</van-button>
-            <van-button type="primary" native-type="submit">确定</van-button>
+            <van-button class="custom-edit-btn" native-type="submit">确定</van-button>
           </div>
         </van-form>
       </div>
@@ -132,35 +131,50 @@
         @cancel="showTypePicker = false"
       />
     </van-popup>
+    <div v-if="showDeleteModal" class="modal-mask" @click.self="closeDeleteModal">
+      <div class="modal-box">
+        <div class="modal-title">确认删除药品</div>
+        <div class="modal-content">
+          删除后将永久清除，无法恢复，确定要删除【{{ deleteTargetName }}】吗？
+        </div>
+        <div class="modal-footer">
+          <button class="footer-btn cancel" @click="closeDeleteModal">取消</button>
+          <button class="footer-btn confirm" @click="confirmDelete" :disabled="deleteLoading">
+            {{ deleteLoading ? '删除中...' : '确认删除' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { showToast, showConfirmDialog } from 'vant'
+import { showToast } from 'vant'
 import { getMyDrugListApi, addDrugApi, updateDrugApi, deleteDrugApi, fuzzySearchDrugApi } from '@/api/medicine'
 
-// 搜索关键词
+// 搜索
 const searchKey = ref('')
 const selectedType = ref('')
 
-// 药品列表数据
+// 列表
 const drugList = ref([])
 const loading = ref(false)
 const finished = ref(false)
 
-// 弹窗控制
+// 弹窗
 const showDialog = ref(false)
 const isEdit = ref(false)
 const currentId = ref(null)
 
-//返回按钮
+// 路由
 const router = useRouter()
 const goBack = () => {
   router.back()
 }
-// 表单数据
+
+// 表单
 const form = reactive({
   medicineName: '',
   expiryDate: '',
@@ -172,7 +186,6 @@ const form = reactive({
 // 日期选择器
 const showDatePicker = ref(false)
 const datePickerValue = ref(['2025', '01', '01'])
-
 const onDateConfirm = (value) => {
   const year = value.selectedValues[0]
   const month = value.selectedValues[1]
@@ -181,7 +194,7 @@ const onDateConfirm = (value) => {
   showDatePicker.value = false
 }
 
-// 药品类型选项
+// 类型
 const typeOptions = ref([
   { text: '感冒发烧', value: '感冒发烧' },
   { text: '肠胃消化', value: '肠胃消化' },
@@ -191,8 +204,6 @@ const typeOptions = ref([
   { text: '儿童用药', value: '儿童用药' },
   { text: '未分类', value: '未分类' }
 ])
-
-// 类型筛选下拉选项
 const typeFilterOptions = ref([
   { text: '全部', value: '' },
   ...typeOptions.value
@@ -214,7 +225,7 @@ const resetForm = () => {
   isEdit.value = false
 }
 
-// 加载全部药品列表
+// 加载数据
 const loadData = async () => {
   loading.value = true
   try {
@@ -227,23 +238,21 @@ const loadData = async () => {
         list = res.data.list
       }
       drugList.value = list
-      finished.value = true
     } else {
       drugList.value = []
-      finished.value = true
       showToast(res.errorMsg || '查询不到药品信息')
     }
   } catch (err) {
     console.error('加载药品失败', err)
     showToast('加载失败，请稍后重试')
     drugList.value = []
-    finished.value = true
   } finally {
     loading.value = false
+    finished.value = true
   }
 }
 
-// 模糊搜索
+// 搜索
 const fuzzySearch = async () => {
   const keyword = searchKey.value.trim()
   const type = selectedType.value
@@ -259,32 +268,30 @@ const fuzzySearch = async () => {
     })
     if (res.success === 200) {
       drugList.value = res.data || []
-      finished.value = true
-      if (drugList.value.length === 0) {
-        showToast('未找到相关药品')
-      }
+      if (drugList.value.length === 0) showToast('未找到相关药品')
     } else {
       drugList.value = []
-      finished.value = true
       showToast(res.errorMsg || '搜索失败')
     }
   } catch (err) {
     console.error('搜索失败', err)
     showToast('网络异常，请重试')
     drugList.value = []
-    finished.value = true
   } finally {
     loading.value = false
+    finished.value = true
   }
 }
 
 const onSearch = () => {
   fuzzySearch()
 }
+
 watch(selectedType, () => {
   fuzzySearch()
 })
 
+// 添加/编辑
 const openAddDialog = () => {
   resetForm()
   showDialog.value = true
@@ -320,7 +327,7 @@ const handleSubmit = async () => {
       showToast(isEdit.value ? '修改成功' : '添加成功')
       showDialog.value = false
       resetForm()
-      fuzzySearch() // 刷新
+      fuzzySearch()
     } else {
       showToast(res.errorMsg || (isEdit.value ? '修改失败' : '添加失败'))
     }
@@ -330,28 +337,44 @@ const handleSubmit = async () => {
   }
 }
 
-const handleDelete = (item) => {
-  showConfirmDialog({
-    title: '确认删除',
-    message: `确定要删除药品"${item.medicineName}"吗？`,
-    confirmButtonText: '确定',
-    cancelButtonText: '取消'
-  })
-    .then(async () => {
-      try {
-        const res = await deleteDrugApi(item.id)
-        if (res.success === 200) {
-          showToast('删除成功')
-          fuzzySearch()
-        } else {
-          showToast(res.errorMsg || '删除失败')
-        }
-      } catch (err) {
-        console.error('删除失败', err)
-        showToast('删除失败，请稍后重试')
-      }
-    })
-    .catch(() => {})
+const showDeleteModal = ref(false)
+const deleteLoading = ref(false)
+const deleteTargetId = ref(null)
+const deleteTargetName = ref('')
+
+// 打开删除弹窗
+const openDeleteModal = (item) => {
+  deleteTargetId.value = item.id
+  deleteTargetName.value = item.medicineName
+  showDeleteModal.value = true
+}
+
+// 关闭删除弹窗
+const closeDeleteModal = () => {
+  showDeleteModal.value = false
+  deleteTargetId.value = null
+  deleteTargetName.value = ''
+}
+
+// 确认删除
+const confirmDelete = async () => {
+  if (!deleteTargetId.value) return
+  deleteLoading.value = true
+  try {
+    const res = await deleteDrugApi(deleteTargetId.value)
+    if (res.success === 200) {
+      showToast('删除成功')
+      fuzzySearch()
+    } else {
+      showToast(res.errorMsg || '删除失败')
+    }
+  } catch (err) {
+    console.error('删除失败', err)
+    showToast('删除失败，请稍后重试')
+  } finally {
+    deleteLoading.value = false
+    closeDeleteModal()
+  }
 }
 
 onMounted(() => {
@@ -364,6 +387,7 @@ onMounted(() => {
   padding: 16px;
   background: #F7F9FC;
   min-height: 100vh;
+  position: relative;
 }
 .page-header {
   display: flex;
@@ -401,7 +425,6 @@ onMounted(() => {
 .type-filter {
   width: 100px;
 }
-
 /* 药品卡片 */
 .drug-card {
   background: white;
@@ -452,7 +475,6 @@ onMounted(() => {
   font-weight: 500;
   word-break: break-word;
 }
-
 .dialog-content {
   padding: 20px;
   max-height: 80vh;
@@ -473,5 +495,73 @@ onMounted(() => {
 .dialog-buttons .van-button {
   flex: 1;
   font-size: 16px;
+}
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.modal-box {
+  width: 280px;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.modal-title {
+  padding: 20px 15px 10px;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  color: #333;
+}
+.modal-content {
+  padding: 0 20px 20px;
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+  line-height: 1.5;
+}
+.modal-footer {
+  display: flex;
+  border-top: 1px solid #eee;
+  height: 48px;
+  line-height: 48px;
+}
+.footer-btn {
+  flex: 1;
+  font-size: 16px;
+  border: none;
+  background: #fff;
+  cursor: pointer;
+}
+.footer-btn.cancel {
+  color: #666;
+  border-right: 1px solid #eee;
+}
+.footer-btn.confirm {
+  color: #ee0a24;
+  font-weight: 500;
+}
+.footer-btn:disabled {
+  opacity: 0.6;
+}
+.custom-edit-btn {
+  background-color: #1989fa !important;
+  border: 1px solid #1989fa !important;
+  color: #ffffff !important;
+}
+
+.custom-edit-btn:active,
+.custom-edit-btn:disabled {
+  background-color: #1989fa !important;
+  border-color: #1989fa !important;
+  opacity: 0.9;
 }
 </style>

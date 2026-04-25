@@ -316,7 +316,7 @@ onMounted(() => {
   margin-right: 16px;
   width: 64px;
   height: 64px;
-  background: linear-gradient(135deg, #5F9DB5 0%, #3B7C9E 100%);
+  background: linear-gradient(135deg, #42c1f3 0%, #4bbefc 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;

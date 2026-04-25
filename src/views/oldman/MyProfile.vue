@@ -1,16 +1,13 @@
 <template>
   <div class="my-profile-page">
-    <!-- 自定义导航栏：返回按钮 、 标题 -->
     <div class="nav-bar">
       <van-button icon="arrow-left" type="default" @click="goBack">返回</van-button>
       <div class="nav-title">我的档案</div>
       <div style="width: 80px;"></div>
     </div>
-
     <div class="profile-content">
       <!-- 简历卡片 -->
       <div v-if="hasProfile" class="resume-card">
-        <!-- 头像和基本信息 -->
         <div class="resume-header">
           <div class="avatar">
             <van-icon name="user-o" size="56" />
@@ -20,7 +17,6 @@
             <p>用户ID: {{ userId }} | 档案ID: {{ profile.id || '无' }}</p>
           </div>
         </div>
-
         <!-- 紧急联系人 -->
         <div class="emergency-info">
           <div class="emergency-item">
@@ -36,38 +32,44 @@
             <span class="value">{{ profile.relation || '未设置' }}</span>
           </div>
         </div>
-
-        <!-- 简历详情大字体 -->
+        <!-- 简历 -->
         <div class="resume-details">
           <div class="detail-item"><span class="label">姓名</span><span class="value">{{ profile.name || '未填写' }}</span></div>
           <div class="detail-item"><span class="label">性别</span><span class="value">{{ profile.genderText || '未填写' }}</span></div>
           <div class="detail-item"><span class="label">年龄</span><span class="value">{{ profile.age ? profile.age + '岁' : '未填写' }}</span></div>
-          <!-- <div class="detail-item"><span class="label">联系电话</span><span class="value">{{ profile.phone || '未填写' }}</span></div> -->
           <div class="detail-item"><span class="label">身高</span><span class="value">{{ profile.height ? profile.height + 'cm' : '未填写' }}</span></div>
           <div class="detail-item"><span class="label">体重</span><span class="value">{{ profile.weight ? profile.weight + 'kg' : '未填写' }}</span></div>
           <div class="detail-item full-width"><span class="label">居住地址</span><span class="value">{{ profile.address || '未填写' }}</span></div>
           <div class="detail-item full-width"><span class="label">基础病史</span><span class="value">{{ profile.medicalHistory || '无' }}</span></div>
           <div class="detail-item full-width"><span class="label">过敏史</span><span class="value">{{ profile.allergy || '无' }}</span></div>
         </div>
-
-        <!-- 操作按钮组 -->
         <div class="action-buttons">
-          <van-button type="primary" size="medium" round @click="goEdit">修改档案</van-button>
-          <van-button type="danger" size="medium" round @click="handleDelete">删除档案</van-button>
+          <van-button class="edit-btn" size="medium" round @click="goEdit">修改档案</van-button>
+          <van-button type="danger" size="medium" round @click="openDeleteModal">删除档案</van-button>
         </div>
       </div>
-
-      <!-- 空状态 -->
       <div v-else-if="!loading" class="empty-profile">
         <van-icon name="records-o" size="48" color="#ccc" />
         <p>暂无档案信息</p>
         <p class="sub">请点击下方按钮创建您的档案</p>
-        <van-button type="primary" round @click="goEdit" style="margin-top: 20px;">创建档案</van-button>
+        <van-button class="edit-btn" round @click="goEdit" style="margin-top: 20px;">创建档案</van-button>
       </div>
-
-      <!-- 加载中 -->
       <div v-if="loading" class="loading-tip">加载中...</div>
       <div v-if="error" class="error-tip">{{ error }}</div>
+    </div>
+    <div v-if="showDeleteModal" class="modal-mask" @click.self="closeDeleteModal">
+      <div class="modal-box">
+        <div class="modal-title">确认删除档案</div>
+        <div class="modal-content">
+          删除后档案将永久清除，无法恢复，确定要继续吗？
+        </div>
+        <div class="modal-footer">
+          <button class="footer-btn cancel" @click="closeDeleteModal">取消</button>
+          <button class="footer-btn confirm" @click="confirmDelete" :disabled="deleteLoading">
+            {{ deleteLoading ? '删除中...' : '确认删除' }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -75,7 +77,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { showToast, showConfirmDialog } from 'vant'
+import { showToast } from 'vant'
 import { useUserStore } from '@/store/user'
 import { getElderInfoByUserId, deleteElderInfo } from '@/api/elderInfo'
 
@@ -85,27 +87,28 @@ const userStore = useUserStore()
 const profile = ref({})
 const loading = ref(false)
 const error = ref('')
-
-// userId（从 store 获取）
 const userId = computed(() => userStore.userInfo?.id || '')
+
+// 删除弹窗控制
+const showDeleteModal = ref(false)
+const deleteLoading = ref(false)
 
 const hasProfile = computed(() => {
   return profile.value && (profile.value.id || profile.value.name)
 })
 
-// 返回上一页
+// 返回
 const goBack = () => {
   router.back()
 }
 
-// 加载档案信息
+// 加载档案
 const loadProfile = async () => {
   loading.value = true
   error.value = ''
   try {
     const uid = userId.value
     if (!uid) {
-      console.warn('用户未登录')
       profile.value = {}
       return
     }
@@ -119,7 +122,6 @@ const loadProfile = async () => {
         profile.value = {}
         return
       }
-      // 性别文本转换
       let genderText = ''
       if (data.gender === 1 || data.gender === '男') genderText = '男'
       else if (data.gender === 2 || data.gender === '女') genderText = '女'
@@ -145,47 +147,50 @@ const loadProfile = async () => {
   } catch (err) {
     console.error('获取档案失败', err)
     error.value = '加载档案失败，请稍后重试'
-    if (err.response?.status === 404) {
-      showToast('未找到档案，请先创建')
-    } else {
-      showToast('网络异常，请重试')
-    }
+    showToast('网络异常，请重试')
     profile.value = {}
   } finally {
     loading.value = false
   }
 }
 
-// 跳转编辑/创建页面
+// 跳转编辑
 const goEdit = () => {
   router.push('/oldman/profile-edit')
 }
 
-// 删除档案
-const handleDelete = () => {
+// 删除
+const openDeleteModal = () => {
   if (!profile.value.id) {
     showToast('无法获取档案ID')
     return
   }
-  showConfirmDialog({
-    title: '确认删除',
-    message: '确定要删除您的档案吗？此操作不可恢复。',
-    confirmButtonText: '确定',
-    cancelButtonText: '取消'
-  }).then(async () => {
-    try {
-      const res = await deleteElderInfo(profile.value.id)
-      if (res.code === 200) {
-        showToast('删除成功')
-        profile.value = {}
-      } else {
-        showToast(res.msg || res.errorMsg || '删除失败')
-      }
-    } catch (err) {
-      console.error(err)
-      showToast('网络异常，请重试')
+  showDeleteModal.value = true
+}
+
+// 关闭删除弹窗
+const closeDeleteModal = () => {
+  showDeleteModal.value = false
+}
+
+// 确认删除
+const confirmDelete = async () => {
+  deleteLoading.value = true
+  try {
+    const res = await deleteElderInfo(profile.value.id)
+    if (res.code === 200) {
+      showToast('删除成功')
+      profile.value = {}
+    } else {
+      showToast(res.msg || res.errorMsg || '删除失败')
     }
-  }).catch(() => {})
+  } catch (err) {
+    console.error(err)
+    showToast('网络异常，请重试')
+  } finally {
+    deleteLoading.value = false
+    closeDeleteModal()
+  }
 }
 
 onMounted(() => {
@@ -198,9 +203,9 @@ onMounted(() => {
   background: #F5F7FA;
   min-height: 100vh;
   padding-bottom: 30px;
+  position: relative;
 }
 
-/* 顶部导航栏 */
 .nav-bar {
   display: flex;
   justify-content: space-between;
@@ -217,15 +222,12 @@ onMounted(() => {
   font-weight: 600;
   color: #1E2A32;
 }
-
-/* 内容区域 - 全宽无居中限制 */
 .profile-content {
   padding: 16px;
   width: 100%;
   box-sizing: border-box;
 }
 
-/* 简历卡片 - 占满宽度 */
 .resume-card {
   background: white;
   border-radius: 24px;
@@ -234,7 +236,6 @@ onMounted(() => {
   width: 100%;
   box-sizing: border-box;
 }
-
 .resume-header {
   display: flex;
   align-items: center;
@@ -264,8 +265,6 @@ onMounted(() => {
   color: #6C7A89;
   font-size: 16px;
 }
-
-
 .emergency-info {
   background: #F8F9FC;
   border-radius: 20px;
@@ -290,7 +289,6 @@ onMounted(() => {
   color: #1E2A32;
   font-size: 16px;
 }
-
 .resume-details {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -320,8 +318,6 @@ onMounted(() => {
   max-width: 65%;
   font-size: 16px;
 }
-
-
 .action-buttons {
   display: flex;
   justify-content: flex-end;
@@ -332,6 +328,12 @@ onMounted(() => {
   min-width: 120px;
   font-size: 16px;
   padding: 8px 20px;
+}
+
+.edit-btn {
+  background-color: #1989fa !important;
+  border-color: #1989fa !important;
+  color: #fff !important;
 }
 
 .empty-profile {
@@ -349,11 +351,67 @@ onMounted(() => {
 .empty-profile .sub {
   font-size: 15px;
 }
-
 .loading-tip, .error-tip {
   text-align: center;
   padding: 60px;
   color: #999;
   font-size: 16px;
+}
+
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.modal-box {
+  width: 280px;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.modal-title {
+  padding: 20px 15px 10px;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  color: #333;
+}
+.modal-content {
+  padding: 0 20px 20px;
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+  line-height: 1.5;
+}
+.modal-footer {
+  display: flex;
+  border-top: 1px solid #eee;
+  height: 48px;
+  line-height: 48px;
+}
+.footer-btn {
+  flex: 1;
+  font-size: 16px;
+  border: none;
+  background: #fff;
+  cursor: pointer;
+}
+.footer-btn.cancel {
+  color: #666;
+  border-right: 1px solid #eee;
+}
+.footer-btn.confirm {
+  color: #ee0a24;
+  font-weight: 500;
+}
+.footer-btn:disabled {
+  opacity: 0.6;
 }
 </style>

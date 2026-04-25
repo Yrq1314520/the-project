@@ -1,10 +1,16 @@
 import path from 'node:path'
 import { createRouter, createWebHashHistory } from 'vue-router'
+import UserCenter from '@/views/user/UserCenter.vue'
 
 const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', component: () => import('@/views/user/index.vue') },
-
+  {
+    path: '/user/center',
+    name: 'UserCenter',
+    component: UserCenter,
+    meta: { requiresAuth: true }
+  },
   {
     path: '/family',
     component: () => import('@/views/family/index.vue'),
@@ -36,13 +42,6 @@ const routes = [
   {
     path: '/family/warning',
     component: () => import('@/views/family/WarningNotify.vue'),
-    meta: {
-      requiresAuth: true
-    }
-  },
-  {
-    path: '/family/real-warning',
-    component: () => import('@/views/family/RealTimeWarning.vue'),
     meta: {
       requiresAuth: true
     }
@@ -95,6 +94,11 @@ const routes = [
   {
     path: '/oldman/profile-edit',
     component: () => import('@/views/oldman/ProfileEdit.vue'),
+    meta: { requiresAuth: true, role: 1 }
+  },
+  {
+    path: '/oldman/elder-medicine',
+    component: () => import('@/views/oldman/ElderMedicine.vue'),
     meta: { requiresAuth: true, role: 1 }
   },
 

@@ -5,7 +5,6 @@
       <div class="nav-title">老人详情</div>
       <div style="width: 80px;"></div>
     </div>
-
     <van-tabs v-model:active="currentTab" class="tabs" sticky>
       <van-tab title="老人档案">
         <div v-if="profileData" class="resume-card">
@@ -30,14 +29,13 @@
             <div class="detail-item"><span class="label">居住地址</span><span class="value">{{ profileData.address || '未填写' }}</span></div>
           </div>
           <div class="action-buttons">
-            <van-button type="primary" size="small" round @click="openEditDialog">修改档案</van-button>
-            <van-button type="danger" size="small" round @click="handleDelete">删除档案</van-button>
+            <van-button class="custom-edit-btn" size="small" round @click="openEditDialog">修改档案</van-button>
+            <van-button type="danger" size="small" round @click="openDeleteModal">删除档案</van-button>
           </div>
         </div>
         <div v-else-if="loading" class="loading-tip">加载中...</div>
         <div v-else-if="error" class="empty-tip">{{ error }}</div>
       </van-tab>
-
       <van-tab title="药品管理">
         <DrugManage :elderInfoId="elderId" />
       </van-tab>
@@ -47,9 +45,11 @@
       <van-tab title="健康分析">
         <HealthAnalysis v-if="elderId" :elder-id="elderId" />
       </van-tab>
-      <van-tab title="用药提醒">
-        <MedicineReminder v-if="elderId" :elder-id="elderId" />
-      </van-tab>
+     <van-tab title="用药提醒">
+     <div v-if="elderId">
+      <MedicineReminder :key="elderId" :elder-id="elderId" />
+     </div>
+   </van-tab>
     </van-tabs>
 
     <!-- 编辑弹窗 -->
@@ -71,7 +71,7 @@
             <van-field v-model="editForm.relation" label="关系" />
           </van-cell-group>
           <div style="margin: 16px">
-            <van-button type="primary" block native-type="submit" :loading="editLoading">保存修改</van-button>
+            <van-button  class="custom-edit-btn" block native-type="submit" :loading="editLoading">保存修改</van-button>
             <van-button style="margin-top: 12px" block @click="showEditDialog = false">取消</van-button>
           </div>
         </van-form>
@@ -82,13 +82,27 @@
     <van-popup v-model:show="showGenderPicker" position="bottom">
       <van-picker :columns="[{ text: '男', value: 1 }, { text: '女', value: 2 }]" @confirm="onGenderConfirm" @cancel="showGenderPicker = false" />
     </van-popup>
+    <div v-if="showDeleteModal" class="modal-mask" @click.self="closeDeleteModal">
+      <div class="modal-box">
+        <div class="modal-title">确认删除档案</div>
+        <div class="modal-content">
+          删除后该老人档案将永久清除，无法恢复，确定要继续吗？
+        </div>
+        <div class="modal-footer">
+          <button class="footer-btn cancel" @click="closeDeleteModal">取消</button>
+          <button class="footer-btn confirm" @click="confirmDelete" :disabled="deleteLoading">
+            {{ deleteLoading ? '删除中...' : '确认删除' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { showToast, showConfirmDialog } from 'vant'
+import { showToast } from 'vant'
 import { getElderProfileByUserIdApi, updateOldmanProfileApi, deleteOldmanProfileApi } from '@/api/family'
 import DrugManage from './DrugManage.vue'
 import QuestionsRecords from './QuestionsRecords.vue'
@@ -97,12 +111,14 @@ import MedicineReminder from './MedicineReminder.vue'
 
 const route = useRoute()
 const router = useRouter()
+
 const userId = ref('')
 const elderId = ref('')
 const profileData = ref(null)
 const loading = ref(false)
 const error = ref('')
 const currentTab = ref(0)
+
 const showEditDialog = ref(false)
 const editLoading = ref(false)
 const editForm = ref({
@@ -124,9 +140,11 @@ const editForm = ref({
 })
 const showGenderPicker = ref(false)
 
+const showDeleteModal = ref(false)
+const deleteLoading = ref(false)
+
 const goBack = () => router.back()
 
-// 根据userId获取该家庭成员绑定的所有老人档案，然后根据elderId匹配当前老人
 const loadProfile = async () => {
   if (!userId.value || !elderId.value) {
     error.value = '缺少必要参数'
@@ -137,7 +155,6 @@ const loadProfile = async () => {
   try {
     const res = await getElderProfileByUserIdApi(userId.value)
     if (res.success === 200 && res.data && res.data.length > 0) {
-      // 找到 elderInfoId 匹配的档案
       const matched = res.data.find(item => (item.id || item.elderInfoId) == elderId.value)
       if (matched) {
         const archiveId = matched.id || matched.elderInfoId
@@ -233,30 +250,38 @@ const onEditSubmit = async () => {
   }
 }
 
-const handleDelete = () => {
+// 打开删除弹窗
+const openDeleteModal = () => {
   if (!profileData.value || !profileData.value.id) {
     showToast('无法获取档案ID')
     return
   }
-  showConfirmDialog({
-    title: '确认删除',
-    message: '确定要删除该老人的档案吗？删除后无法恢复。',
-    confirmButtonText: '确定',
-    cancelButtonText: '取消'
-  }).then(async () => {
-    try {
-      const res = await deleteOldmanProfileApi(profileData.value.id)
-      if (res.success === 200) {
-        showToast('删除成功')
-        router.push('/family')
-      } else {
-        showToast(res.errorMsg || '删除失败')
-      }
-    } catch (err) {
-      console.error(err)
-      showToast('网络异常')
+  showDeleteModal.value = true
+}
+
+// 关闭删除弹窗
+const closeDeleteModal = () => {
+  showDeleteModal.value = false
+}
+
+// 确认删除
+const confirmDelete = async () => {
+  deleteLoading.value = true
+  try {
+    const res = await deleteOldmanProfileApi(profileData.value.id)
+    if (res.success === 200) {
+      showToast('删除成功')
+      router.push('/family')
+    } else {
+      showToast(res.errorMsg || '删除失败')
     }
-  }).catch(() => {})
+  } catch (err) {
+    console.error(err)
+    showToast('网络异常')
+  } finally {
+    deleteLoading.value = false
+    closeDeleteModal()
+  }
 }
 
 onMounted(() => {
@@ -279,6 +304,7 @@ onMounted(() => {
   padding: 20px;
   background-color: #F5F7FA;
   min-height: 100vh;
+  position: relative;
 }
 .nav-bar {
   display: flex;
@@ -407,5 +433,74 @@ onMounted(() => {
   text-align: center;
   padding: 60px;
   color: #999;
+}
+
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.modal-box {
+  width: 280px;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.modal-title {
+  padding: 20px 15px 10px;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  color: #333;
+}
+.modal-content {
+  padding: 0 20px 20px;
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+  line-height: 1.5;
+}
+.modal-footer {
+  display: flex;
+  border-top: 1px solid #eee;
+  height: 48px;
+  line-height: 48px;
+}
+.footer-btn {
+  flex: 1;
+  font-size: 16px;
+  border: none;
+  background: #fff;
+  cursor: pointer;
+}
+.footer-btn.cancel {
+  color: #666;
+  border-right: 1px solid #eee;
+}
+.footer-btn.confirm {
+  color: #ee0a24;
+  font-weight: 500;
+}
+.footer-btn:disabled {
+  opacity: 0.6;
+}
+.custom-edit-btn {
+  background-color: #1989fa !important;
+  border: 1px solid #1989fa !important;
+  color: #ffffff !important;
+}
+
+.custom-edit-btn:active,
+.custom-edit-btn:disabled {
+  background-color: #1989fa !important;
+  border-color: #1989fa !important;
+  opacity: 0.9;
 }
 </style>

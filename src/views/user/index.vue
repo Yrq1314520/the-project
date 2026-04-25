@@ -135,6 +135,19 @@ const switchToLogin = () => {
   padding: 8px 0;
 }
 
+:deep(.login-submit-btn),
+:deep(.register-submit-btn),
+:deep(.reset-submit-btn) {
+  background-color: #1989fa !important;
+  border-color: #1989fa !important;
+  color: #fff !important;
+}
+
+:deep(.van-button--primary) {
+  background-color: #1989fa;
+  border-color: #1989fa;
+}
+
 .footer-copyright {
   margin-top: 40px;
   font-size: 12px;

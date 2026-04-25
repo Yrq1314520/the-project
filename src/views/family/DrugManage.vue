@@ -5,7 +5,6 @@
       <van-button type="primary" @click="openAddDialog">添加药品</van-button>
     </div>
 
-    <!-- 搜索栏药品名称和类型筛选 -->
     <div class="search-wrapper">
       <van-search v-model="searchKey" placeholder="输入药品名称搜索" @search="onSearch" />
       <div class="type-filter">
@@ -15,36 +14,37 @@
       </div>
     </div>
 
-    <!-- 药品卡片显示详细信息 -->
-      <div v-for="item in drugList" :key="item.id" class="drug-card">
-        <div class="drug-card-header">
-          <div class="drug-name">{{ item.medicineName }}</div>
-          <div class="card-actions">
-            <van-button type="primary" size="small" @click="openEditDialog(item)">编辑</van-button>
-            <van-button type="danger" size="small" @click="handleDelete(item)">删除</van-button>
-          </div>
-        </div>
-        <div class="drug-detail-list">
-          <div class="detail-row">
-            <span class="label">类型：</span>
-            <span class="value">{{ item.type || '暂无' }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="label">数量：</span>
-            <span class="value">{{ item.quantity || '暂无' }}</span>
-          </div>
-          <div class="detail-row" v-if="item.expiryDate">
-            <span class="label">有效期：</span>
-            <span class="value">{{ item.expiryDate }}</span>
-          </div>
-          <div class="detail-row" v-if="item.remark">
-            <span class="label">备注：</span>
-            <span class="value">{{ item.remark }}</span>
-          </div>
+    <div v-for="item in drugList" :key="item.id" class="drug-card">
+      <div class="drug-card-header">
+        <div class="drug-name">{{ item.medicineName }}</div>
+        <div class="card-actions">
+          <van-button class="custom-edit-btn" size="small" @click="openEditDialog(item)">编辑</van-button>
+          <van-button type="danger" size="small" @click="openDeleteModal(item)">删除</van-button>
         </div>
       </div>
+      <div class="drug-detail-list">
+        <div class="detail-row">
+          <span class="label">类型：</span>
+          <span class="value">{{ item.type || '暂无' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">数量：</span>
+          <span class="value">{{ item.quantity || '暂无' }}</span>
+        </div>
+        <div class="detail-row" v-if="item.expiryDate">
+          <span class="label">有效期：</span>
+          <span class="value">{{ item.expiryDate }}</span>
+        </div>
+        <div class="detail-row" v-if="item.remark">
+          <span class="label">备注：</span>
+          <span class="value">{{ item.remark || '暂无' }}</span>
+        </div>
+      </div>
+    </div>
+
     <van-empty v-if="!loading && drugList.length === 0" description="暂无药品信息" />
-    <!-- 添加药品对话框 -->
+
+    <!-- 添加/编辑弹窗 -->
     <van-popup v-model:show="showDialog" position="bottom" round>
       <div class="dialog-content">
         <h3 class="dialog-title">{{ isEdit ? '修改药品' : '添加药品' }}</h3>
@@ -59,7 +59,7 @@
           </template>
           <div class="dialog-buttons">
             <van-button type="default" @click="showDialog = false">取消</van-button>
-            <van-button type="primary" native-type="submit">确定</van-button>
+            <van-button class="custom-edit-btn" native-type="submit">确定</van-button>
           </div>
         </van-form>
       </div>
@@ -74,13 +74,34 @@
     <van-popup v-model:show="showTypePicker" position="bottom">
       <van-picker :columns="typeOptionsObj" @confirm="onTypeConfirm" @cancel="showTypePicker = false" />
     </van-popup>
+
+    <div v-if="showDeleteModal" class="modal-mask" @click.self="closeDeleteModal">
+      <div class="modal-box">
+        <div class="modal-title">确认删除药品</div>
+        <div class="modal-content">
+          删除后将永久清除，无法恢复，确定要删除【{{ deleteTargetName }}】吗？
+        </div>
+        <div class="modal-footer">
+          <button class="footer-btn cancel" @click="closeDeleteModal">取消</button>
+          <button class="footer-btn confirm" @click="confirmDelete" :disabled="deleteLoading">
+            {{ deleteLoading ? '删除中...' : '确认删除' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue'
-import { showToast, showConfirmDialog } from 'vant'
-import { getDrugListByElderIdApi, addDrugApi, updateDrugApi, deleteDrugApi, fuzzySearchDrugApi } from '@/api/medicine'
+import { showToast } from 'vant'
+import {
+  getDrugListByElderIdApi,
+  addDrugApi,
+  updateDrugApi,
+  deleteDrugApi,
+  fuzzySearchDrugApi
+} from '@/api/medicine'
 
 const props = defineProps({
   elderInfoId: {
@@ -99,8 +120,21 @@ const finished = ref(false)
 const showDialog = ref(false)
 const isEdit = ref(false)
 const currentId = ref(null)
-const drugForm = reactive({ elderId: '', medicineName: '', expiryDate: '', type: '', quantity: '', remark: '' })
-const editForm = reactive({ id: '', medicineName: '', quantity: '' })
+
+const drugForm = reactive({
+  elderId: '',
+  medicineName: '',
+  expiryDate: '',
+  type: '',
+  quantity: '',
+  remark: ''
+})
+
+const editForm = reactive({
+  id: '',
+  medicineName: '',
+  quantity: ''
+})
 
 // 日期选择器
 const showDatePicker = ref(false)
@@ -113,9 +147,10 @@ const onDateConfirm = (value) => {
 
 // 类型选项
 const typeOptions = ref(['感冒发烧', '肠胃消化', '咳嗽咽痛', '皮肤骨科', '慢病用药', '儿童用药', '未分类'])
-const typeFilterOptions = ref([{ text: '全部', value: '' }, ...typeOptions.value.map(t => ({ text: t, value: t }))])
-
-// 类型选择器
+const typeFilterOptions = ref([
+  { text: '全部', value: '' },
+  ...typeOptions.value.map(t => ({ text: t, value: t }))
+])
 const typeOptionsObj = ref(typeOptions.value.map(t => ({ text: t, value: t })))
 
 const showTypePicker = ref(false)
@@ -132,7 +167,7 @@ const onTypeConfirm = (value) => {
   showTypePicker.value = false
 }
 
-// 重置添加表单
+// 重置表单
 const resetDrugForm = () => {
   drugForm.elderId = currentElderId.value || ''
   drugForm.medicineName = ''
@@ -142,7 +177,7 @@ const resetDrugForm = () => {
   drugForm.remark = ''
 }
 
-// 加载药品列表
+// 加载药品
 const loadData = async () => {
   if (!currentElderId.value) {
     finished.value = true
@@ -163,19 +198,17 @@ const loadData = async () => {
     }
     if (res.success === 200) {
       drugList.value = Array.isArray(res.data) ? res.data : (res.data?.list || [])
-      finished.value = true
     } else {
       drugList.value = []
-      finished.value = true
       showToast(res.errorMsg || '查询不到药品信息')
     }
   } catch (err) {
     console.error('加载药品失败', err)
     showToast('加载失败，请稍后重试')
     drugList.value = []
-    finished.value = true
   } finally {
     loading.value = false
+    finished.value = true
   }
 }
 
@@ -193,7 +226,7 @@ watch(selectedType, () => {
   if (currentElderId.value) onSearch()
 })
 
-// 打开添加弹窗
+// 打开添加
 const openAddDialog = () => {
   if (!currentElderId.value) {
     showToast('请先选择老人')
@@ -204,7 +237,7 @@ const openAddDialog = () => {
   showDialog.value = true
 }
 
-// 打开编辑弹窗
+// 打开编辑
 const openEditDialog = (item) => {
   isEdit.value = true
   currentId.value = item.id
@@ -213,11 +246,14 @@ const openEditDialog = (item) => {
   showDialog.value = true
 }
 
-// 提交添加/编辑
+// 提交
 const handleSubmit = async () => {
   try {
     if (isEdit.value) {
-      const res = await updateDrugApi(currentId.value, { medicineName: editForm.medicineName, quantity: Number(editForm.quantity) })
+      const res = await updateDrugApi(currentId.value, {
+        medicineName: editForm.medicineName,
+        quantity: Number(editForm.quantity)
+      })
       if (res.success === 200) {
         showToast('修改成功')
         showDialog.value = false
@@ -253,24 +289,43 @@ const handleSubmit = async () => {
   }
 }
 
-// 删除药品
-const handleDelete = (item) => {
-  showConfirmDialog({
-    title: '确认删除',
-    message: `确定要删除药品"${item.medicineName}"吗？`
-  }).then(async () => {
-    try {
-      const res = await deleteDrugApi(item.id)
-      if (res.success === 200) {
-        showToast('删除成功')
-        loadData()
-      } else {
-        showToast(res.errorMsg || '删除失败')
-      }
-    } catch (err) {
-      showToast('删除失败')
+const showDeleteModal = ref(false)
+const deleteLoading = ref(false)
+const deleteTargetId = ref(null)
+const deleteTargetName = ref('')
+
+// 删除弹窗
+const openDeleteModal = (item) => {
+  deleteTargetId.value = item.id
+  deleteTargetName.value = item.medicineName
+  showDeleteModal.value = true
+}
+
+// 关闭删除弹窗
+const closeDeleteModal = () => {
+  showDeleteModal.value = false
+  deleteTargetId.value = null
+  deleteTargetName.value = ''
+}
+
+// 确认删除
+const confirmDelete = async () => {
+  if (!deleteTargetId.value) return
+  deleteLoading.value = true
+  try {
+    const res = await deleteDrugApi(deleteTargetId.value)
+    if (res.success === 200) {
+      showToast('删除成功')
+      loadData()
+    } else {
+      showToast(res.errorMsg || '删除失败')
     }
-  }).catch(() => {})
+  } catch (err) {
+    showToast('删除失败')
+  } finally {
+    deleteLoading.value = false
+    closeDeleteModal()
+  }
 }
 
 onMounted(() => {
@@ -284,8 +339,9 @@ onMounted(() => {
 <style scoped>
 .family-drug-page {
   padding: 16px;
-  background: var(--bg-color);
+  background: #F7F9FC;
   min-height: 100vh;
+  position: relative;
 }
 .page-header {
   display: flex;
@@ -299,7 +355,7 @@ onMounted(() => {
   margin: 0;
 }
 .page-header .van-button {
-  background: var(--primary-color);
+  background: #5F9DB5;
   border-radius: 30px;
   padding: 8px 20px;
 }
@@ -365,7 +421,6 @@ onMounted(() => {
   font-weight: 500;
   word-break: break-word;
 }
-
 .dialog-content {
   padding: 20px;
   max-height: 80vh;
@@ -386,5 +441,74 @@ onMounted(() => {
 .dialog-buttons .van-button {
   flex: 1;
   font-size: 16px;
+}
+
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.modal-box {
+  width: 280px;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.modal-title {
+  padding: 20px 15px 10px;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  color: #333;
+}
+.modal-content {
+  padding: 0 20px 20px;
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+  line-height: 1.5;
+}
+.modal-footer {
+  display: flex;
+  border-top: 1px solid #eee;
+  height: 48px;
+  line-height: 48px;
+}
+.footer-btn {
+  flex: 1;
+  font-size: 16px;
+  border: none;
+  background: #fff;
+  cursor: pointer;
+}
+.footer-btn.cancel {
+  color: #666;
+  border-right: 1px solid #eee;
+}
+.footer-btn.confirm {
+  color: #ee0a24;
+  font-weight: 500;
+}
+.footer-btn:disabled {
+  opacity: 0.6;
+}
+.custom-edit-btn {
+  background-color: #1989fa !important;
+  border: 1px solid #1989fa !important;
+  color: #ffffff !important;
+}
+
+.custom-edit-btn:active,
+.custom-edit-btn:disabled {
+  background-color: #1989fa !important;
+  border-color: #1989fa !important;
+  opacity: 0.9;
 }
 </style>

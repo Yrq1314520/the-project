@@ -1,200 +1,114 @@
 <template>
-  <div class="user-menu">
-    <div class="user-info" @click="showMenu = true">
+  <div class="user-menu" ref="userMenuRef">
+    <div class="user-info" @click.stop="toggleDropdown">
       <span>{{ displayName }}</span>
       <van-icon name="arrow-down" size="14" />
     </div>
-    <van-action-sheet
-      v-model:show="showMenu"
-      :actions="actions"
-      cancel-text="取消"
-      close-on-click-action
-      @select="onSelect"
-    />
-
-    <!-- 查看个人信息弹窗 -->
-    <van-popup v-model:show="showInfoPopup" round position="bottom" :style="{ height: '60%' }">
-      <div class="info-popup">
-        <h3>个人信息</h3>
-        <div v-if="userDetail" class="info-list">
-          <div class="info-item"><span class="label">用户ID：</span><span>{{ userDetail.id || '—' }}</span></div>
-          <div class="info-item"><span class="label">用户名：</span><span>{{ userDetail.username || '—' }}</span></div>
-          <div class="info-item"><span class="label">昵称：</span><span>{{ userDetail.nickname || '未设置' }}</span></div>
-          <div class="info-item"><span class="label">手机号：</span><span>{{ userDetail.phone || '未绑定' }}</span></div>
-          <div class="info-item"><span class="label">邮箱：</span><span>{{ userDetail.email || '未绑定' }}</span></div>
-          <div class="info-item"><span class="label">角色：</span><span>{{ userDetail.role || '用户' }}</span></div>
+    <transition name="fade">
+      <div v-show="showDropdown" class="dropdown-menu" ref="dropdownRef">
+        <div class="dropdown-item" @click="goToPersonalCenter">个人中心</div>
+        <div class="dropdown-item" @click="handleLogout">退出登录</div>
+      </div>
+    </transition>
+    <div v-if="showConfirmModal" class="modal-overlay" @click="cancelConfirm">
+      <div class="confirm-modal" @click.stop>
+        <div class="modal-title">退出登录</div>
+        <div class="modal-desc">确定要退出登录吗？</div>
+        <div class="modal-btn-row">
+          <div class="modal-btn cancel-btn" @click="cancelConfirm">取消</div>
+          <div class="modal-btn confirm-btn" @click="confirmLogout">确定</div>
         </div>
-        <div v-else class="loading-tip">加载中...</div>
-        <van-button round block type="primary" @click="showInfoPopup = false" class="close-btn">关闭</van-button>
       </div>
-    </van-popup>
-
-    <!-- 修改个人信息弹窗 -->
-    <van-popup v-model:show="showEditPopup" round position="bottom" :style="{ height: '70%' }">
-      <div class="edit-popup">
-        <h3>修改个人信息</h3>
-        <van-form @submit="onSubmitEdit">
-          <van-field v-model="editForm.nickname" label="昵称" placeholder="请输入昵称" />
-          <van-field v-model="editForm.phone" label="手机号" placeholder="请输入手机号" type="tel" />
-          <van-field v-model="editForm.email" label="邮箱" placeholder="请输入邮箱" type="email" />
-          <div style="margin: 16px;">
-            <van-button round block type="primary" native-type="submit" :loading="editLoading">保存修改</van-button>
-            <van-button round block plain style="margin-top: 12px;" @click="showEditPopup = false">取消</van-button>
-          </div>
-        </van-form>
-      </div>
-    </van-popup>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { showConfirmDialog, showToast } from 'vant'
+import { showToast } from 'vant'
 import { useUserStore } from '@/store/user'
-import { changePasswordApi, cancelAccountApi, getUserInfoApi, updateProfileApi, logoutApi } from '@/api/user'
+import { logoutApi } from '@/api/user'
 
 const router = useRouter()
 const userStore = useUserStore()
-const showMenu = ref(false)
+
+const showDropdown = ref(false)
+const userMenuRef = ref(null)
+const dropdownRef = ref(null)
+
+// 控制自定义居中弹窗显示
+const showConfirmModal = ref(false)
 
 const userInfo = computed(() => userStore.userInfo)
+const displayName = computed(() => userInfo.value?.nickname || userInfo.value?.username || '用户')
 
-const displayName = computed(() => {
-  return userInfo.value?.nickname || userInfo.value?.username || '用户'
+const toggleDropdown = () => {
+  showDropdown.value = !showDropdown.value
+}
+
+// 关闭下拉菜单
+const closeDropdown = () => {
+  showDropdown.value = false
+}
+
+// 跳转到个人中心页面
+const goToPersonalCenter = () => {
+  closeDropdown()
+  router.push('/user/center')
+}
+
+// 点击退出登录：打开居中弹窗
+const handleLogout = () => {
+  closeDropdown()
+  showConfirmModal.value = true
+}
+
+// 取消弹窗
+const cancelConfirm = () => {
+  showConfirmModal.value = false
+}
+
+// 确认退出登录 真正执行接口逻辑
+const confirmLogout = async () => {
+  showConfirmModal.value = false
+  try {
+    const res = await logoutApi()
+    if (res.code === 200) {
+      showToast('已退出登录')
+      userStore.logout()
+      router.replace('/login')
+    } else {
+      showToast(res.msg || res.errorMsg || '退出失败')
+    }
+  } catch (err) {
+    showToast('操作失败')
+  }
+}
+
+// 当点击外部关闭下拉菜单
+const handleClickOutside = (event) => {
+  if (!showDropdown.value) return
+  const target = event.target
+  const isInsideMenu = userMenuRef.value?.contains(target)
+  const isInsideDropdown = dropdownRef.value?.contains(target)
+  if (!isInsideMenu && !isInsideDropdown) {
+    closeDropdown()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
 })
 
-const showInfoPopup = ref(false)
-const userDetail = ref(null)
-const showEditPopup = ref(false)
-const editLoading = ref(false)
-const editForm = ref({ nickname: '', phone: '', email: '' })
-
-const actions = [
-  { name: '查看个人信息', key: 'viewInfo' },
-  { name: '修改个人信息', key: 'editInfo' },
-  { name: '修改密码', key: 'changePassword' },
-  { name: '退出登录', key: 'logout' },       
-  { name: '注销账号', key: 'cancelAccount', color: '#ee0a24' }
-]
-
-// 获取用户信息
-const fetchUserInfo = async () => {
-  const userId = userStore.userInfo?.id
-  if (!userId) {
-    showToast('无法获取用户ID')
-    return
-  }
-  try {
-    const res = await getUserInfoApi(userId)
-    if (res.code === 200 && res.data) {
-      userDetail.value = res.data
-      try {
-        userStore.userInfo = { ...userStore.userInfo, ...res.data }
-      } catch (e) {
-        console.warn('更新 store 失败', e)
-      }
-    } else {
-      showToast(res.msg || '获取信息失败')
-    }
-  } catch (err) {
-    console.error('获取用户信息失败', err)
-    showToast('网络异常')
-  }
-}
-
-const onSelect = async (action) => {
-  showMenu.value = false
-  switch (action.key) {
-    case 'viewInfo':
-      await fetchUserInfo()
-      showInfoPopup.value = true
-      break
-    case 'editInfo':
-      editForm.value = {
-        nickname: userInfo.value?.nickname || '',
-        phone: userInfo.value?.phone || '',
-        email: userInfo.value?.email || ''
-      }
-      showEditPopup.value = true
-      break
-    case 'changePassword':
-      router.push('/user/change-password')
-      break
-    case 'logout':  
-      try {
-        await showConfirmDialog({
-          title: '退出登录',
-          message: '确定要退出登录吗？',
-          confirmButtonText: '确定',
-          cancelButtonText: '取消'
-        })
-        const res = await logoutApi()
-        if (res.code === 200) {
-          showToast('已退出登录')
-          userStore.logout()
-          router.replace('/login')
-        } else {
-          showToast(res.msg || res.errorMsg || '退出失败')
-        }
-      } catch (err) {
-        if (err !== 'cancel') showToast('操作失败')
-      }
-      break
-    case 'cancelAccount':
-      try {
-        await showConfirmDialog({
-          title: '注销账号',
-          message: '注销后所有数据将被清除，且无法恢复，确定继续吗？',
-          confirmButtonColor: '#ee0a24'
-        })
-        const res = await cancelAccountApi()
-        if (res.code === 200) {
-          showToast('账号已注销')
-          userStore.logout()
-          router.replace('/login')
-        } else {
-          showToast(res.msg || res.errorMsg || '注销失败')
-        }
-      } catch (err) {
-        if (err !== 'cancel') showToast('操作失败')
-      }
-      break
-  }
-}
-
-// 修改个人信息
-const onSubmitEdit = async () => {
-  editLoading.value = true
-  try {
-    const data = {
-      nickname: editForm.value.nickname,
-      phone: editForm.value.phone,
-      email: editForm.value.email
-    }
-    const res = await updateProfileApi(data)
-    if (res.code === 200) {
-      showToast('修改成功')
-      await fetchUserInfo()
-      showEditPopup.value = false
-    } else {
-      showToast(res.msg || res.errorMsg || '修改失败')
-    }
-  } catch (err) {
-    console.error('修改个人信息失败', err)
-    if (err.response?.status === 500) {
-      showToast('服务器错误，请稍后重试')
-    } else {
-      showToast('网络异常')
-    }
-  } finally {
-    editLoading.value = false
-  }
-}
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <style scoped>
 .user-menu {
+  position: relative;
   display: inline-block;
 }
 .user-info {
@@ -205,50 +119,98 @@ const onSubmitEdit = async () => {
   background-color: rgba(255, 255, 255, 0.8);
   border-radius: 30px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--text-primary);
 }
 .user-info:active {
   background-color: rgba(0, 0, 0, 0.05);
 }
-.info-popup, .edit-popup {
-  padding: 20px;
-  height: 100%;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 130px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  overflow: hidden;
 }
-.info-popup h3, .edit-popup h3 {
+.dropdown-item {
+  padding: 12px 16px;
   text-align: center;
-  margin-bottom: 20px;
-  font-size: 20px;
+  font-size: 15px;
+  color: #323233;
+  transition: background 0.2s;
+  cursor: pointer;
 }
-.info-list {
-  flex: 1;
-  margin-bottom: 20px;
+.dropdown-item:active {
+  background-color: #f2f3f5;
 }
-.info-item {
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
   display: flex;
-  padding: 12px 0;
-  border-bottom: 1px solid #f0f2f5;
-  font-size: 16px;
-}
-.info-item .label {
-  width: 100px;
-  color: #6C7A89;
-}
-.loading-tip {
-  text-align: center;
-  padding: 40px;
-  color: #999;
-}
-.close-btn {
-  padding: 12px 20px; 
-  height: 50px; 
-  display: flex;
-  align-items: center;
   justify-content: center;
-  font-size: 17px;
+  align-items: center;
+  z-index: 9999;
+}
+
+.confirm-modal {
+  width: 320px;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.modal-title {
+  font-size: 22px;
+  font-weight: bold;
+  text-align: center;
+  padding: 30px 20px 10px;
+  color: #000000;
+}
+
+.modal-desc {
+  font-size: 14px;
+  text-align: center;
+  padding: 0 20px 30px;
+  color: #999999;
+}
+
+.modal-btn-row {
+  display: flex;
+  border-top: 1px solid #eee;
+}
+
+.modal-btn {
+  flex: 1;
+  padding: 16px 0;
+  text-align: center;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  color: #000000;
+  border-right: 1px solid #eee;
+}
+
+.confirm-btn {
+  color: #1989fa;
+  font-weight: 500;
+}
+
+.modal-btn:active {
+  background-color: #f5f5f5;
 }
 </style>

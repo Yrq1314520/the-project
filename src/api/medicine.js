@@ -1,6 +1,4 @@
 import request from '@/utils/request'
-import { url } from 'node:inspector'
-// import { url } from 'node:inspector'
 // import { quantity } from 'echarts/types/src/util/number.js'
 
 // 家属查询所有绑定老人的药品
@@ -163,10 +161,12 @@ export function confirmMedicineApi() {
 }
 
 //服药记录操作（确认/漏服）
-export function takingMedicineApi() {
+export function takingMedicineApi(params, data) {
   return request({
     url: `/v1/medicine-remind/records/action`,
-    method: 'post'
+    method: 'post',
+    params,
+    data
   })
 }
 
@@ -174,6 +174,14 @@ export function takingMedicineApi() {
 export function getTakingMedicineApi(elderId) {
   return request({
     url: `/v1/medicine-remind/elders/${elderId}/statistics`,
+    method: 'get'
+  })
+}
+
+//查询待服药记录
+export function getPendingMedicineApi(elderId) {
+  return request({
+    url: `/v1/medicine-remind/elder/${elderId}/pending`,
     method: 'get'
   })
 }

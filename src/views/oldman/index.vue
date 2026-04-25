@@ -5,10 +5,9 @@
       <div class="logo-area">
         <h1>翼护银发</h1>
       </div>
-        <user-menu />
+      <user-menu />
     </div>
-
-    <!-- 导航栏-->
+    <!-- 导航栏 -->
     <div class="nav-bar">
       <div class="nav-item" @click="handleNavClick('assistant')">
         <van-icon name="chat-o" size="28" />
@@ -27,8 +26,7 @@
         <span>紧急联系人</span>
       </div>
     </div>
-
-    <!-- 轮播图-->
+    <!-- 轮播图 + 今日用药提醒 -->
     <div class="info-row">
       <div class="swipe-area">
         <van-swipe class="my-swipe" :autoplay="3000" indicator-color="#5F9DB5">
@@ -37,8 +35,6 @@
           </van-swipe-item>
         </van-swipe>
       </div>
-
-      <!-- 右侧用药提醒列表 -->
       <div class="reminder-area">
         <div class="section-title-small">
           <van-icon name="clock-o" size="20" />
@@ -47,40 +43,39 @@
         </div>
         <div class="reminder-list">
           <div
-            v-for="reminder in reminderList"
-            :key="reminder.id"
+            v-for="item in todayReminders"
+            :key="item.id"
             class="reminder-item"
           >
             <div class="reminder-info">
-              <div class="drug-name">{{ reminder.medicineName }}</div>
+              <div class="drug-name">{{ item.medicineName }}</div>
               <div class="drug-detail-row">
-                <span class="detail-label">剂量：</span>{{ reminder.dosage }}
-                <span class="detail-label">用法：</span>{{ reminder.usage }}
+                <span class="detail-label">剂量：</span>{{ item.dosage || '—' }}
+                <span class="detail-label">用法：</span>{{ item.usage || '—' }}
               </div>
               <div class="drug-time-row">
                 <van-icon name="clock-o" size="14" />
-                <span>{{ formatRemindTime(reminder.remindTime) }}</span>
+                <span>{{ formatRemindTime(item.remindTime) }}</span>
                 <span class="detail-label">周期：</span>
-                <span>{{ formatRemindDays(reminder.remindDays) }}</span>
+                <span>{{ formatRemindDays(item.remindDays) }}</span>
               </div>
             </div>
             <van-tag
-              :type="reminder.taken ? 'success' : 'warning'"
+              :type="item.status === 1 ? 'success' : 'warning'"
               plain
               size="medium"
-              @click.stop="markReminderTaken(reminder.id)"
+              @click.stop="handleTakeMedicine(item)"
             >
-              {{ reminder.taken ? '已服用' : '未服用' }}
+              {{ item.status === 1 ? '已服用' : '未服用' }}
             </van-tag>
           </div>
-          <div v-if="reminderList.length === 0 && !reminderLoading" class="empty-tip">
-            暂无用药提醒
+          <div v-if="todayReminders.length === 0 && !remindersLoading" class="empty-tip">
+            今日暂无用药提醒
           </div>
-          <div v-if="reminderLoading" class="loading-tip">加载提醒中...</div>
+          <div v-if="remindersLoading" class="loading-tip">加载提醒中...</div>
         </div>
       </div>
     </div>
-
     <!-- 药品信息 -->
     <div class="drug-section" ref="drugSectionRef">
       <div class="section-header">
@@ -109,8 +104,7 @@
         </div>
       </div>
     </div>
-
-    <!-- 紧急联系人区域（设置/修改按钮） -->
+    <!-- 紧急联系人区域 -->
     <div class="emergency-section" ref="emergencySectionRef">
       <div class="section-header">
         <h2 class="section-title">📞 紧急联系人</h2>
@@ -131,8 +125,7 @@
         <van-button size="small" round @click="goToSetEmergency" style="margin-left: 12px;">去设置</van-button>
       </div>
     </div>
-
-    <!-- 用药提醒管理弹窗（添加/编辑/删除） -->
+    <!-- 用药提醒管理弹窗 -->
     <van-popup v-model:show="showReminderDialog" position="bottom" round style="height: 85%">
       <div class="reminder-manage">
         <div class="manage-header">
@@ -140,7 +133,7 @@
           <van-button type="primary" size="small" round @click="openAddReminder">+ 添加提醒</van-button>
         </div>
         <div class="reminder-manage-list">
-          <div v-for="item in allReminders" :key="item.id" class="reminder-manage-item">
+          <div v-for="item in remindersList" :key="item.id" class="reminder-manage-item">
             <div class="reminder-manage-info">
               <div class="reminder-name">{{ item.medicineName }}</div>
               <div class="reminder-detail">
@@ -151,15 +144,14 @@
               </div>
             </div>
             <div class="reminder-manage-actions">
-              <van-button size="small" type="primary" plain @click="openEditReminder(item)">编辑</van-button>
-              <van-button size="small" type="danger" plain @click="deleteReminder(item)">删除</van-button>
+              <van-button size="small" class="custom-edit-btn" plain @click="openEditReminder(item)">编辑</van-button>
+              <van-button size="small" type="danger" plain @click="openDeleteReminderModal(item)">删除</van-button>
             </div>
           </div>
-          <div v-if="allReminders.length === 0" class="empty-tip">暂无提醒，点击上方添加</div>
+          <div v-if="remindersList.length === 0" class="empty-tip">暂无提醒，点击上方添加</div>
         </div>
       </div>
     </van-popup>
-
     <!-- 添加/编辑提醒表单弹窗 -->
     <van-popup v-model:show="showFormDialog" position="bottom" round style="height: 85%">
       <div class="form-content">
@@ -172,12 +164,11 @@
           <van-field label="提醒周期" readonly :value="remindDaysText" @click="openWeekPicker" required />
           <div class="dialog-buttons">
             <van-button type="default" @click="showFormDialog = false">取消</van-button>
-            <van-button type="primary" native-type="submit" :loading="submitting">确定</van-button>
+            <van-button class="custom-edit-btn" native-type="submit" :loading="submitting">确定</van-button>
           </div>
         </van-form>
       </div>
     </van-popup>
-
     <!-- 星期选择器 -->
     <van-popup v-model:show="showWeekPicker" position="bottom" round>
       <div class="week-picker">
@@ -195,6 +186,22 @@
       </div>
     </van-popup>
 
+    
+    <div v-if="showDeleteModal" class="modal-mask" @click.self="closeDeleteModal">
+      <div class="modal-box">
+        <div class="modal-title">确认删除提醒</div>
+        <div class="modal-content">
+          删除后将永久清除，无法恢复，确定要删除【{{ deleteTargetName }}】吗？
+        </div>
+        <div class="modal-footer">
+          <button class="footer-btn cancel" @click="closeDeleteModal">取消</button>
+          <button class="footer-btn confirm" @click="confirmDeleteReminder" :disabled="deleteLoading">
+            {{ deleteLoading ? '删除中...' : '确认删除' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="bottom-placeholder"></div>
   </div>
 </template>
@@ -202,154 +209,92 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { showToast, showConfirmDialog } from 'vant'
+import { showToast } from 'vant'
 import { useUserStore } from '@/store/user'
 import { getMyDrugListApi } from '@/api/medicine'
 import { getElderInfoByUserId } from '@/api/elderInfo'
-import { getAllRemindsApi, addMedicineRemindsApi, updataMedicineRemindsApi, deleteMedicineRemindsApi } from '@/api/medicine'
+import { 
+  searchMedicineRemindsApi,
+  addMedicineRemindsApi, 
+  updataMedicineRemindsApi, 
+  deleteMedicineRemindsApi,
+  getMedicineRecordsApi,
+  takingMedicineApi,
+  getPendingMedicineApi
+} from '@/api/medicine'
+import userMenu from '@/components/userMenu.vue'
 import img5 from '@/assets/woman.jpg'
 import img6 from '@/assets/man.jpg'
 
 const router = useRouter()
 const userStore = useUserStore()
-
-// 用户名称
-const userName = computed(() => userStore.userInfo?.name || userStore.userInfo?.username || '用户')
-
-// 轮播图
+const elderId = ref(null)
 const bannerList = ref([img5, img6])
 
-const formatRemindTime = (time) => {
-  if (!time) return ''
-  if (typeof time !== 'string') time = String(time)
-  if (/^\d{2}:\d{2}$/.test(time)) return time
-  if (/^\d{2},\d{2}$/.test(time)) return time.replace(',', ':')
-  const match = time.match(/(\d{1,2})[^\d](\d{1,2})/)
-  if (match) {
-    const hour = match[1].padStart(2, '0')
-    const minute = match[2].padStart(2, '0')
-    return `${hour}:${minute}`
-  }
-  return time
+//  今日提醒相关 
+const todayReminders = ref([])
+const remindersLoading = ref(false)
+
+const getCurrentWeekday = () => {
+  const day = new Date().getDay()
+  return day === 0 ? 7 : day
 }
 
-const reminderList = ref([])        
-const allReminders = ref([])        
-const reminderLoading = ref(false)
-
-// 加载所有提醒
-const loadReminders = async () => {
-  reminderLoading.value = true
+// 加载今日待服药记录
+const loadTodayReminders = async () => {
+  if (!elderId.value) return
+  remindersLoading.value = true
   try {
-    const res = await getAllRemindsApi()
+    const res = await getPendingMedicineApi(elderId.value)
     if (res.success === 200 && Array.isArray(res.data)) {
-      allReminders.value = res.data
-      reminderList.value = res.data.map(item => ({
-        id: item.id,
+      todayReminders.value = res.data.map(item => ({
+        id: item.remindId,          
         medicineName: item.medicineName,
+        dosage: item.dosage,
+        usage: item.usage,
         remindTime: item.remindTime,
-        dosage: item.dosage ,      
-        usage: item.usage ,        
-        remindDays: item.remindDays ,
-        taken: false  
+        remindDays: item.remindDays,
+        status: item.status          
       }))
     } else {
-      allReminders.value = []
-      reminderList.value = []
+      todayReminders.value = []
     }
   } catch (err) {
-    console.error('加载用药提醒失败', err)
+    console.error('加载待服药记录失败', err)
     showToast('加载提醒失败')
   } finally {
-    reminderLoading.value = false
+    remindersLoading.value = false
   }
 }
-
-// 标记已服用,目前前端实现，等待接口中
-const markReminderTaken = (id) => {
-  const item = reminderList.value.find(r => r.id === id)
-  if (item && !item.taken) {
-    item.taken = true
-    showToast(`已记录：${item.medicineName} 已服用`)
-  } else if (item && item.taken) {
-    showToast('今日已标记过啦')
+const handleTakeMedicine = async (item) => {
+  if (item.status === 1) {
+    showToast('今日已服用过')
+    return
   }
-}
-
-//  药品管理 
-const drugSectionRef = ref(null)
-const drugList = ref([])
-const drugLoading = ref(false)
-
-const loadDrugList = async () => {
-  drugLoading.value = true
   try {
-    const res = await getMyDrugListApi()
+    await showConfirmDialog({
+      title: '确认服药',
+      message: `请确认已服用“${item.medicineName}”吗？`,
+      confirmButtonText: '已服用',
+      cancelButtonText: '取消'
+    })
+    const res = await takingMedicineApi(
+      { type: 'take' },
+      { remindId: item.id }
+    )
     if (res.success === 200) {
-      let list = []
-      if (Array.isArray(res.data)) {
-        list = res.data
-      } else if (res.data && Array.isArray(res.data.list)) {
-        list = res.data.list
-      }
-      drugList.value = list.slice(0, 5)
+      showToast('服药记录成功')
+      await loadTodayReminders()
     } else {
-      drugList.value = []
+      showToast(res.errorMsg || '操作失败，请稍后再试')
     }
   } catch (err) {
-    console.error('加载药品列表失败', err)
-    drugList.value = []
-  } finally {
-    drugLoading.value = false
+    showToast('网络异常，请重试')
   }
 }
 
-const goToDrugManage = () => {
-  router.push('/oldman/drug')
-}
-
-// 紧急联系人 
-const emergencySectionRef = ref(null)
-const emergencyContact = ref({ name: '', phone: '', relation: '' })
-
-const loadEmergencyContact = async () => {
-  try {
-    const userId = userStore.userInfo?.id
-    if (!userId) return
-    const res = await getElderInfoByUserId(userId)
-    if (res.code === 200 && res.data) {
-      let data = res.data
-      if (Array.isArray(data) && data.length > 0) data = data[0]
-      if (data) {
-        emergencyContact.value = {
-          name: data.emergencyContact || data.emergencyName || '',
-          phone: data.emergencyPhone || '',
-          relation: data.relation || ''
-        }
-      } else {
-        emergencyContact.value = { name: '', phone: '', relation: '' }
-      }
-    } else {
-      emergencyContact.value = { name: '', phone: '', relation: '' }
-    }
-  } catch (err) {
-    console.error('加载紧急联系人失败', err)
-  }
-}
-
-const callEmergency = () => {
-  if (emergencyContact.value.phone) {
-    window.location.href = `tel:${emergencyContact.value.phone}`
-  } else {
-    showToast('没有可用的紧急联系电话')
-  }
-}
-
-const goToSetEmergency = () => {
-  router.push('/oldman/emergency-contact')
-}
-
-// 用药提醒管理
+//  提醒管理 
+const remindersList = ref([])
 const showReminderDialog = ref(false)
 const showFormDialog = ref(false)
 const isEdit = ref(false)
@@ -364,7 +309,6 @@ const reminderForm = ref({
   remindDays: ''
 })
 
-// 星期选择
 const showWeekPicker = ref(false)
 const selectedWeekValues = ref([])
 const weekOptions = [
@@ -394,8 +338,36 @@ const formatRemindDays = (daysStr) => {
   return names.join('、')
 }
 
+const formatRemindTime = (time) => {
+  if (!time) return ''
+  const timeStr = String(time)
+  if (/^\d{2}:\d{2}$/.test(timeStr)) return timeStr
+  if (/^\d{2},\d{2}$/.test(timeStr)) return timeStr.replace(',', ':')
+  const match = timeStr.match(/(\d{1,2})[^\d](\d{1,2})/)
+  if (match) {
+    const hour = match[1].padStart(2, '0')
+    const minute = match[2].padStart(2, '0')
+    return `${hour}:${minute}`
+  }
+  return timeStr
+}
+
+const loadRemindersList = async () => {
+  if (!elderId.value) return
+  try {
+    const res = await searchMedicineRemindsApi(elderId.value)
+    if (res.success === 200 && Array.isArray(res.data)) {
+      remindersList.value = res.data
+    } else {
+      remindersList.value = []
+    }
+  } catch (err) {
+    console.error('加载提醒列表失败', err)
+  }
+}
+
 const openReminderManage = () => {
-  loadReminders()
+  loadRemindersList()
   showReminderDialog.value = true
 }
 
@@ -424,11 +396,7 @@ const openEditReminder = (item) => {
 }
 
 const openWeekPicker = () => {
-  if (reminderForm.value.remindDays) {
-    selectedWeekValues.value = reminderForm.value.remindDays.split(',')
-  } else {
-    selectedWeekValues.value = []
-  }
+  selectedWeekValues.value = reminderForm.value.remindDays ? reminderForm.value.remindDays.split(',') : []
   showWeekPicker.value = true
 }
 
@@ -447,6 +415,7 @@ const onSubmitReminder = async () => {
   submitting.value = true
   try {
     const data = {
+      elderId: Number(elderId.value),
       medicineName,
       dosage,
       usage,
@@ -462,39 +431,149 @@ const onSubmitReminder = async () => {
     if (res.success === 200) {
       showToast(isEdit.value ? '修改成功' : '添加成功')
       showFormDialog.value = false
-      await loadReminders()   
-      if (showReminderDialog.value) {
-      }
+      await loadRemindersList()
+      await loadTodayReminders()
     } else {
       showToast(res.errorMsg || '操作失败')
     }
   } catch (err) {
     console.error(err)
-    showToast('网络异常')
+    showToast('网络异常，请重试')
   } finally {
     submitting.value = false
   }
 }
 
-const deleteReminder = (item) => {
-  showConfirmDialog({
-    title: '确认删除',
-    message: `确定要删除提醒"${item.medicineName}"吗？`,
-    confirmButtonText: '确定',
-    cancelButtonText: '取消'
-  }).then(async () => {
+// 
+const showDeleteModal = ref(false)
+const deleteLoading = ref(false)
+const deleteTargetId = ref(null)
+const deleteTargetName = ref('')
+
+// 打开删除弹窗
+const openDeleteReminderModal = (item) => {
+  deleteTargetId.value = item.id
+  deleteTargetName.value = item.medicineName
+  showDeleteModal.value = true
+}
+
+// 关闭删除弹窗
+const closeDeleteModal = () => {
+  showDeleteModal.value = false
+  deleteTargetId.value = null
+  deleteTargetName.value = ''
+}
+
+// 确认删除
+const confirmDeleteReminder = async () => {
+  if (!deleteTargetId.value) return
+  deleteLoading.value = true
+  try {
+    const res = await deleteMedicineRemindsApi(deleteTargetId.value)
+    if (res.success === 200) {
+      showToast('删除成功')
+      await loadRemindersList()
+      await loadTodayReminders()
+    } else {
+      showToast(res.errorMsg || '删除失败')
+    }
+  } catch (err) {
+    showToast('网络异常')
+  } finally {
+    deleteLoading.value = false
+    closeDeleteModal()
+  }
+}
+
+//  药品和紧急联系人
+const drugSectionRef = ref(null)
+const drugList = ref([])
+const drugLoading = ref(false)
+
+const loadDrugList = async () => {
+  drugLoading.value = true
+  try {
+    const res = await getMyDrugListApi()
+    if (res.success === 200) {
+      let list = []
+      if (Array.isArray(res.data)) {
+        list = res.data
+      } else if (res.data && Array.isArray(res.data.list)) {
+        list = res.data.list
+      }
+      drugList.value = list.slice(0, 5)
+    } else {
+      drugList.value = []
+    }
+  } catch (err) {
+    console.error('加载药品列表失败', err)
+    drugList.value = []
+  } finally {
+    drugLoading.value = false
+  }
+}
+
+const goToDrugManage = () => router.push('/oldman/drug')
+
+const emergencySectionRef = ref(null)
+const emergencyContact = ref({ name: '', phone: '', relation: '' })
+
+const loadEmergencyContact = async () => {
+  try {
+    const userId = userStore.userInfo?.id
+    if (!userId) return
+    const res = await getElderInfoByUserId(userId)
+    if (res.code === 200 && res.data) {
+      let data = res.data
+      if (Array.isArray(data) && data.length > 0) data = data[0]
+      if (data) {
+        emergencyContact.value = {
+          name: data.emergencyContact || data.emergencyName || '',
+          phone: data.emergencyPhone || '',
+          relation: data.relation || ''
+        }
+      }
+    }
+  } catch (err) {
+    console.error('加载紧急联系人失败', err)
+  }
+}
+
+const callEmergency = () => {
+  if (emergencyContact.value.phone) {
+    window.location.href = `tel:${emergencyContact.value.phone}`
+  } else {
+    showToast('没有可用的紧急联系电话')
+  }
+}
+
+const goToSetEmergency = () => router.push('/oldman/emergency-contact')
+
+const fetchElderId = async () => {
+  const userInfo = userStore.userInfo
+  if (userInfo && userInfo.elderId) {
+    elderId.value = userInfo.elderId
+    return
+  }
+  if (userInfo && userInfo.id) {
     try {
-      const res = await deleteMedicineRemindsApi(item.id)
-      if (res.success === 200) {
-        showToast('删除成功')
-        await loadReminders()
-      } else {
-        showToast(res.errorMsg || '删除失败')
+      const res = await getElderInfoByUserId(userInfo.id)
+      if (res.code === 200 && res.data) {
+        let elderData = res.data
+        if (Array.isArray(elderData) && elderData.length > 0) elderData = elderData[0]
+        if (elderData && elderData.id) {
+          elderId.value = elderData.id
+          emergencyContact.value = {
+            name: elderData.emergencyContact || elderData.emergencyName || '',
+            phone: elderData.emergencyPhone || '',
+            relation: elderData.relation || ''
+          }
+        }
       }
     } catch (err) {
-      showToast('网络异常')
+      console.error('获取老人信息失败', err)
     }
-  }).catch(() => {})
+  }
 }
 
 const goToAssistant = () => router.push('/oldman/chat')
@@ -515,13 +594,18 @@ const handleNavClick = (type) => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await fetchElderId()
+  if (elderId.value) {
+    loadTodayReminders()
+    loadRemindersList()
+  }
   loadDrugList()
-  loadEmergencyContact()
-  loadReminders()
+  if (!emergencyContact.value.name) {
+    loadEmergencyContact()
+  }
 })
 </script>
-
 
 <style scoped>
 .elder-home {
@@ -529,8 +613,8 @@ onMounted(() => {
   background: #F7F9FC;
   padding: 16px 16px 32px;
   box-sizing: border-box;
+  position: relative;
 }
-
 .header {
   display: flex;
   justify-content: space-between;
@@ -558,7 +642,6 @@ onMounted(() => {
   font-weight: 500;
   color: #2C5F7A;
 }
-
 .nav-bar {
   display: flex;
   justify-content: space-around;
@@ -592,7 +675,6 @@ onMounted(() => {
 .nav-item .van-icon {
   font-size: 28px;
 }
-
 .info-row {
   display: flex;
   gap: 16px;
@@ -600,7 +682,6 @@ onMounted(() => {
   align-items: stretch;  
   flex-wrap: wrap;
 }
-
 .swipe-area {
   flex: 1.2;
   min-width: 140px;
@@ -610,13 +691,11 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
 }
-
 .my-swipe {
   width: 100%;
   height: 100%;
   flex: 1;
 }
-
 :deep(.van-swipe) {
   height: 100%;
 }
@@ -627,7 +706,6 @@ onMounted(() => {
   width: 100%;
   height: 100%;
 }
-
 .banner-img {
   width: 100%;
   height: 100%;
@@ -645,7 +723,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
 }
-
 .section-title-small {
   display: flex;
   align-items: center;
@@ -690,7 +767,6 @@ onMounted(() => {
   padding: 6px 12px;
   cursor: pointer;
 }
-
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -716,7 +792,6 @@ onMounted(() => {
   border-radius: 30px;
   font-weight: 500;
 }
-
 .drug-section {
   background: white;
   border-radius: 28px;
@@ -754,8 +829,6 @@ onMounted(() => {
   padding: 2px 10px;
   border-radius: 20px;
 }
-
-
 .emergency-section {
   background: white;
   border-radius: 28px;
@@ -819,7 +892,6 @@ onMounted(() => {
 .bottom-placeholder {
   height: 20px;
 }
-
 @media (max-width: 480px) {
   .nav-item span {
     font-size: 14px;
@@ -837,7 +909,6 @@ onMounted(() => {
     font-size: 20px;
   }
 }
-
 .reminder-area .section-title-small {
   display: flex;
   align-items: center;
@@ -972,5 +1043,75 @@ onMounted(() => {
   font-weight: 500;
   color: #8F9EA8;
   margin-right: 2px;
+}
+
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.modal-box {
+  width: 280px;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.modal-title {
+  padding: 20px 15px 10px;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  color: #333;
+}
+.modal-content {
+  padding: 0 20px 20px;
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+  line-height: 1.5;
+}
+.modal-footer {
+  display: flex;
+  border-top: 1px solid #eee;
+  height: 48px;
+  line-height: 48px;
+}
+.footer-btn {
+  flex: 1;
+  font-size: 16px;
+  border: none;
+  background: #fff;
+  cursor: pointer;
+}
+.footer-btn.cancel {
+  color: #666;
+  border-right: 1px solid #eee;
+}
+.footer-btn.confirm {
+  color: #ee0a24;
+  font-weight: 500;
+}
+.footer-btn:disabled {
+  opacity: 0.6;
+}
+
+.custom-edit-btn {
+  background-color: #1989fa !important;
+  border: 1px solid #1989fa !important;
+  color: #ffffff !important;
+}
+
+.custom-edit-btn:active,
+.custom-edit-btn:disabled {
+  background-color: #1989fa !important;
+  border-color: #1989fa !important;
+  opacity: 0.9;
 }
 </style>

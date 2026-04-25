@@ -29,13 +29,6 @@
           required
         />
         <van-field
-          v-model="form.phone"
-          label="联系电话"
-          placeholder="请输入手机号"
-          :rules="rules.phone"
-          required
-        />
-        <van-field
           v-model="form.address"
           label="居住地址"
           placeholder="请输入居住地址"
@@ -84,7 +77,7 @@
       </van-cell-group>
       
       <div style="margin: 16px">
-        <van-button type="primary" block native-type="submit" :loading="submitLoading">
+        <van-button class="custom-edit-btn" block native-type="submit" :loading="submitLoading">
           保存档案
         </van-button>
         <van-button style="margin-top: 10px" block @click="goBack">
@@ -130,7 +123,6 @@ const form = reactive({
   name: '',
   genderText: '',     
   age: '',
-  phone: '',
   address: '',
   medicalHistory: '',
   allergy: '',
@@ -174,7 +166,6 @@ const loadProfile = async () => {
         form.name = data.name || ''
         form.genderText = genderText
         form.age = data.age || ''
-        form.phone = data.phone || ''
         form.address = data.address || ''
         form.medicalHistory = data.medicalHistory || data.illness || ''
         form.allergy = data.allergy || ''
@@ -266,5 +257,17 @@ h2 {
   margin-bottom: 20px;
   font-size: 22px;
   font-weight: 600;
+}
+.custom-edit-btn {
+  background-color: #1989fa !important;
+  border: 1px solid #1989fa !important;
+  color: #ffffff !important;
+}
+
+.custom-edit-btn:active,
+.custom-edit-btn:disabled {
+  background-color: #1989fa !important;
+  border-color: #1989fa !important;
+  opacity: 0.9;
 }
 </style>
