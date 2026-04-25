@@ -3,7 +3,7 @@ import { showToast } from 'vant'
 import router from '@/router'
 
 const service = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: 10000
 })
 
