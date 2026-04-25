@@ -5,6 +5,7 @@ import Components from 'unplugin-vue-components/vite'
 import { VantResolver, ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
 export default defineConfig({
+  base: '/yiguardsilver/web/',
   plugins: [
     vue(),
     Components({
