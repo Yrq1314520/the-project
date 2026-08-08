@@ -1,5 +1,36 @@
-# Vue 3 + Vite
+# 翼护银发 - 智慧养老健康管理平台 Web端
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+## 项目介绍
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+翼护银发是一款面向智慧养老场景的Web应用。
+
+项目通过健康数据管理、数据可视化以及AI智能助手，
+帮助用户进行健康咨询和健康状态管理。
+
+
+## 技术栈
+
+- Vue3
+- Vite
+- Pinia
+- Axios
+- ECharts
+- WebSocket
+- 文心大模型
+
+
+## 我的职责
+
+本人主要负责Web端开发：
+
+- Vue3项目架构搭建
+- 页面组件开发
+- AI智能助手模块
+- 健康数据可视化
+- 实时通信功能
+
+
+## 项目成果
+
+- 广东省计算机设计大赛三等奖
+- 校级大学生创新创业训练计划项目
