@@ -1,21 +1,45 @@
-import { ref } from 'vue'
+import { ref, type Ref } from 'vue'
 import { Notify } from 'vant'
 
-class WebSocketManager {
-  constructor() {
-    this.socket = null
-    this.isConnected = ref(false)
-    this.reconnectTimer = null
-    this.reconnectAttempts = 0
-    this.maxReconnectAttempts = 10
-    this.reconnectInterval = 3000
-    this.url = null
-    this.token = null
-    this.messageHandlers = new Set()
-    this.heartbeatTimer = null
-  }
+/** Notify 可调用选项 */
+interface NotifyOptions {
+  type?: 'primary' | 'success' | 'warning' | 'danger'
+  message?: string
+  duration?: number
+  onClick?: () => void
+}
 
-  init(url, token) {
+// Vant 的 Notify 运行时是可调用函数，但 TS 类型定义将其标记为组件
+const showNotify = Notify as unknown as (options: NotifyOptions) => void
+
+/** WebSocket 推送的消息结构 */
+export interface WsMessage {
+  type?: string
+  content?: string
+  elderName?: string
+  elderId?: number | string
+  eventId?: string | number
+  time?: string
+  raw?: string
+  [key: string]: any
+}
+
+/** 消息处理回调类型 */
+type MessageHandler = (data: WsMessage) => void
+
+class WebSocketManager {
+  private socket: WebSocket | null = null
+  private isConnected: Ref<boolean> = ref(false)
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  private reconnectAttempts = 0
+  private maxReconnectAttempts = 10
+  private reconnectInterval = 3000
+  private url: string | null = null
+  private token: string | null = null
+  private messageHandlers = new Set<MessageHandler>()
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null
+
+  init(url: string, token: string | null): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       console.warn('WebSocket already connected')
       return
@@ -25,7 +49,7 @@ class WebSocketManager {
     this.connect()
   }
 
-  connect() {
+  private connect(): void {
     if (!this.url) {
       console.error('WebSocket url missing')
       return
@@ -42,8 +66,8 @@ class WebSocketManager {
       this.startHeartbeat()
     }
 
-    this.socket.onmessage = (event) => {
-      let data
+    this.socket.onmessage = (event: MessageEvent) => {
+      let data: WsMessage
       try {
         data = JSON.parse(event.data)
         console.log('收到消息:', data)
@@ -51,7 +75,6 @@ class WebSocketManager {
         console.warn('解析消息失败，作为原始文本处理:', event.data)
         data = { raw: event.data }
       }
-
 
       try {
         this.messageHandlers.forEach(handler => handler(data))
@@ -64,7 +87,7 @@ class WebSocketManager {
         try {
           const elderName = data.elderName || '老人'
           const content = data.content || '紧急预警'
-          Notify({
+          showNotify({
             type: 'warning',
             message: `【${elderName}】${content}`,
             duration: 5000,
@@ -78,11 +101,11 @@ class WebSocketManager {
       }
     }
 
-    this.socket.onerror = (err) => {
+    this.socket.onerror = (err: Event) => {
       console.error('WebSocket 错误', err)
     }
 
-    this.socket.onclose = (event) => {
+    this.socket.onclose = (event: CloseEvent) => {
       console.log('WebSocket 关闭', event.code, event.reason)
       this.isConnected.value = false
       this.stopHeartbeat()
@@ -93,7 +116,7 @@ class WebSocketManager {
     }
   }
 
-  send(data) {
+  send(data: any): void {
     if (this.isConnected.value && this.socket?.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify(data))
     } else {
@@ -101,12 +124,12 @@ class WebSocketManager {
     }
   }
 
-  subscribe(handler) {
+  subscribe(handler: MessageHandler): () => void {
     this.messageHandlers.add(handler)
     return () => this.messageHandlers.delete(handler)
   }
 
-  close() {
+  close(): void {
     this.stopHeartbeat()
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer)
     if (this.socket) {
@@ -117,12 +140,12 @@ class WebSocketManager {
     this.reconnectAttempts = 0
   }
 
-  scheduleReconnect() {
+  private scheduleReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.error('WebSocket 重连次数已达上限，停止重连')
       try {
-        Notify({ type: 'danger', message: '预警服务连接失败，请刷新页面重试', duration: 3000 })
-      } catch (e) { }
+        showNotify({ type: 'danger', message: '预警服务连接失败，请刷新页面重试', duration: 3000 })
+      } catch (e) { /* 忽略 */ }
       return
     }
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer)
@@ -133,7 +156,7 @@ class WebSocketManager {
     }, this.reconnectInterval)
   }
 
-  startHeartbeat() {
+  private startHeartbeat(): void {
     this.stopHeartbeat()
     this.heartbeatTimer = setInterval(() => {
       if (this.isConnected.value && this.socket?.readyState === WebSocket.OPEN) {
@@ -143,7 +166,7 @@ class WebSocketManager {
     }, 30000)
   }
 
-  stopHeartbeat() {
+  private stopHeartbeat(): void {
     if (this.heartbeatTimer) {
       clearInterval(this.heartbeatTimer)
       this.heartbeatTimer = null

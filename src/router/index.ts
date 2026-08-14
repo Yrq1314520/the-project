@@ -1,8 +1,15 @@
-import path from 'node:path'
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router'
 import UserCenter from '@/views/user/UserCenter.vue'
 
-const routes = [
+/** 路由元信息类型扩展 */
+declare module 'vue-router' {
+  interface RouteMeta {
+    requiresAuth?: boolean
+    role?: number
+  }
+}
+
+const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/login' },
   { path: '/login', component: () => import('@/views/user/index.vue') },
   {
@@ -85,7 +92,7 @@ const routes = [
   },
   {
     path: '/oldman/chat',
-    component: () => import('@/views/oldman/Chat.vue'),
+    component: () => import('@/views/oldman/chat.vue'),
     meta: { requiresAuth: true, role: 1 }
   },
   {
@@ -164,10 +171,10 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   const token = localStorage.getItem('token')
   const userInfoStr = localStorage.getItem('userInfo')
-  let userRole = null
+  let userRole: number | null = null
 
   if (userInfoStr) {
     try {

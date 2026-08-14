@@ -23,7 +23,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
@@ -34,8 +34,8 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const showDropdown = ref(false)
-const userMenuRef = ref(null)
-const dropdownRef = ref(null)
+const userMenuRef = ref<HTMLDivElement | null>(null)
+const dropdownRef = ref<HTMLDivElement | null>(null)
 
 // 控制自定义居中弹窗显示
 const showConfirmModal = ref(false)
@@ -87,9 +87,9 @@ const confirmLogout = async () => {
 }
 
 // 当点击外部关闭下拉菜单
-const handleClickOutside = (event) => {
+const handleClickOutside = (event: MouseEvent) => {
   if (!showDropdown.value) return
-  const target = event.target
+  const target = event.target as Node | null
   const isInsideMenu = userMenuRef.value?.contains(target)
   const isInsideDropdown = dropdownRef.value?.contains(target)
   if (!isInsideMenu && !isInsideDropdown) {

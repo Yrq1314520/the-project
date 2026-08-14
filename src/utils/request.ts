@@ -1,6 +1,20 @@
-import axios from 'axios'
+import axios, {
+  type AxiosRequestConfig,
+  type InternalAxiosRequestConfig,
+  type AxiosResponse
+} from 'axios'
 import { showToast } from 'vant'
 import router from '@/router'
+
+/** 后端统一响应结构 */
+export interface ResponseData<T = any> {
+  success?: number
+  errorMsg?: string
+  code?: number
+  msg?: string
+  data?: T
+  [key: string]: any
+}
 
 const service = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -9,9 +23,11 @@ const service = axios.create({
 
 // 请求拦截器
 service.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('token')
-    if (token) config.headers.Authorization = `Bearer ${token}`
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
     return config
   },
   (error) => Promise.reject(error)
@@ -19,7 +35,7 @@ service.interceptors.request.use(
 
 // 响应拦截器
 service.interceptors.response.use(
-  (res) => {
+  (res: AxiosResponse) => {
     const data = res.data
     if (data && typeof data.success !== 'undefined') {
       data.code = data.success
@@ -38,4 +54,13 @@ service.interceptors.response.use(
   }
 )
 
-export default service
+/**
+ * 发送请求（响应拦截器已将返回值改为 res.data）
+ * @param config axios 请求配置
+ * @returns Promise<T>，默认 T = ResponseData
+ */
+function request<T = ResponseData>(config: AxiosRequestConfig): Promise<T> {
+  return service(config) as unknown as Promise<T>
+}
+
+export default request

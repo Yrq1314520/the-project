@@ -1,15 +1,39 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
+/** WebSocket 推送的预警数据 */
+export interface WarningData {
+  eventId?: string | number
+  type?: string
+  content?: string
+  time?: string
+  elderId?: number | string
+  elderName?: string
+  [key: string]: any
+}
+
+/** 预警列表项 */
+export interface WarningItem {
+  id: number | string
+  title: string
+  content: string
+  time: string
+  type: string
+  isRead: boolean
+  elderId?: number | string
+  eventId?: string | number
+  elderName?: string
+}
+
 export const useWarningStore = defineStore('warning', () => {
-  const warningList = ref([])
+  const warningList = ref<WarningItem[]>([])
   const unreadCount = ref(0)
 
-  function addWarning(data) {
+  function addWarning(data: WarningData) {
     if (data.eventId && warningList.value.some(w => w.eventId === data.eventId)) {
       return
     }
-    const newWarning = {
+    const newWarning: WarningItem = {
       id: data.eventId || Date.now(),
       title: getWarningTitle(data),
       content: data.content || '',
@@ -24,7 +48,7 @@ export const useWarningStore = defineStore('warning', () => {
     unreadCount.value++
   }
 
-  function getWarningTitle(data) {
+  function getWarningTitle(data: WarningData): string {
     const name = data.elderName || '老人'
     switch (data.type) {
       case 'emergency_qa':
@@ -42,13 +66,13 @@ export const useWarningStore = defineStore('warning', () => {
     }
   }
 
-  function formatTime(isoString) {
+  function formatTime(isoString?: string): string {
     if (!isoString) return new Date().toLocaleString()
     const date = new Date(isoString)
     return date.toLocaleString()
   }
 
-  function markAsRead(id) {
+  function markAsRead(id: number | string) {
     const item = warningList.value.find(w => w.id === id)
     if (item && !item.isRead) {
       item.isRead = true
