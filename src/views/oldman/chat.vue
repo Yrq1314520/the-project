@@ -59,7 +59,7 @@
 </template>
 
 
-<script setup>
+<script setup lang="ts">
 import { ref, nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
@@ -68,10 +68,10 @@ import request from '@/utils/request'
 
 const router = useRouter()
 const userStore = useUserStore()
-const chatContentRef = ref(null)
+const chatContentRef = ref<HTMLElement | null>(null)
 const inputText = ref('')
 const isLoading = ref(false)
-const messages = ref([])
+const messages = ref<Record<string, any>[]>([])
 
 const goBack = () => router.back()
 
@@ -92,7 +92,7 @@ const getElderId = () => {
 
   const id = userStore.userInfo?.elderInfoId || 
              userStore.userInfo?.elderId ||
-             userStore.elderInfoId ||
+             (userStore as any).elderInfoId ||
              localStorage.getItem('elderInfoId') ||
              localStorage.getItem('elderId')
   return id ? Number(id) : null
@@ -160,7 +160,7 @@ const sendMessage = async () => {
 onMounted(() => {
   if (!getElderId()) {
     console.warn('未获取到老人档案ID，预警功能将无法关联')
-    showToast({ message: '请重新登录以关联健康档案', type: 'warning', duration: 3000 })
+    showToast({ message: '请重新登录以关联健康档案', type: 'warning' as any, duration: 3000 })
   }
   if (messages.value.length === 0) {
     messages.value.push({

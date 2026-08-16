@@ -72,7 +72,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 
@@ -97,7 +97,7 @@ const logList = ref([
   { id: 5, username: 'admin', type: 'logout', content: '用户登出', ip: '192.168.1.1', createTime: '2026-04-01 12:00:00' }
 ])
 
-const getTypeText = (type) => {
+const getTypeText = (type: any) => {
   const typeMap = {
     login: '登录',
     logout: '登出',
@@ -105,7 +105,7 @@ const getTypeText = (type) => {
     edit: '编辑',
     delete: '删除'
   }
-  return typeMap[type] || '未知'
+  return (typeMap as any)[type] || '未知'
 }
 
 const handleSearch = () => {
@@ -120,17 +120,17 @@ const handleReset = () => {
   }
 }
 
-const handleSizeChange = (size) => {
+const handleSizeChange = (size: any) => {
   page.value.size = size
   ElMessage.info('分页功能开发中')
 }
 
-const handleCurrentChange = (current) => {
+const handleCurrentChange = (current: any) => {
   page.value.current = current
   ElMessage.info('分页功能开发中')
 }
 
-const handleViewDetail = (log) => {
+const handleViewDetail = (log: any) => {
   ElMessage.info('查看详情功能开发中')
 }
 </script>

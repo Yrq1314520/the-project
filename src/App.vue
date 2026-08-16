@@ -6,7 +6,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
 import { useUserStore } from '@/store/user'
 import { wsManager } from '@/utils/websocketManager'
@@ -14,7 +14,7 @@ import { useWarningStore } from '@/store/warning'
 
 const userStore = useUserStore()
 const warningStore = useWarningStore()
-let unsubscribe = null
+let unsubscribe: (() => void) | null = null
 
 onMounted(() => {
   const token = userStore.token   

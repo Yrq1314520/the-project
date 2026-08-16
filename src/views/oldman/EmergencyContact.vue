@@ -37,7 +37,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showToast } from 'vant'
@@ -46,7 +46,7 @@ import { getElderInfoByUserId, updateElderInfo } from '@/api/elderInfo'
 
 const router = useRouter()
 const userStore = useUserStore()
-const formRef = ref(null)
+const formRef = ref<any>(null)
 const submitting = ref(false)
 
 const goBack = () => {
@@ -54,7 +54,7 @@ const goBack = () => {
 }
 
 // 档案主键
-const elderInfoId = ref(null)
+const elderInfoId = ref<any>(null)
 
 const form = reactive({
   name: '',
@@ -73,7 +73,7 @@ const rules = {
 
 const loadElderInfo = async () => {
   try {
-    const res = await getElderInfoByUserId(userStore.userInfo.id)
+    const res = await getElderInfoByUserId(userStore.userInfo.id || 0)
     if (res.code === 200 && res.data) {
       let data = res.data
       if (Array.isArray(data) && data.length > 0) {

@@ -27,7 +27,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 
@@ -41,12 +41,12 @@ const handleAddRole = () => {
   ElMessage.info('添加角色功能开发中')
 }
 
-const handleEditRole = (role) => {
+const handleEditRole = (role: any) => {
   ElMessage.info('编辑角色功能开发中')
 }
 
-const handleDeleteRole = (id) => {
-  ElMessage.confirm('确定要删除该角色吗？', '提示', {
+const handleDeleteRole = (id: any) => {
+  (ElMessage as any).confirm('确定要删除该角色吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'

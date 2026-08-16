@@ -17,7 +17,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getElderInfoByUserId } from '@/api/elderInfo'
@@ -25,10 +25,10 @@ import { useUserStore } from '@/store/user'
 
 const router = useRouter()
 const userStore = useUserStore()
-const info = ref({})
+const info = ref<Record<string, any>>({})
 
 onMounted(async () => {
-  const res = await getElderInfoByUserId(userStore.userInfo.id)
+  const res = await getElderInfoByUserId(userStore.userInfo.id || 0)
   info.value = res.data || {}
 })
 

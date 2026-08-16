@@ -151,7 +151,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 
@@ -169,7 +169,7 @@ const page = reactive({
 })
 
 // 数据
-const userList = ref([])
+const userList = ref<any[]>([])
 const total = ref(0)
 
 // 对话框
@@ -212,26 +212,26 @@ const rules = {
 }
 
 // 表单引用
-const formRef = ref(null)
+const formRef = ref<any>(null)
 
 // 获取角色标签类型
-const getRoleTagType = (role) => {
+const getRoleTagType = (role: any) => {
   const typeMap = {
     '1': 'success',
     '2': 'primary',
     '3': 'warning'
   }
-  return typeMap[role] || 'info'
+  return (typeMap as any)[role] || 'info'
 }
 
 // 获取角色文本
-const getRoleText = (role) => {
+const getRoleText = (role: any) => {
   const roleMap = {
     '1': '老人',
     '2': '家属',
     '3': '管理员'
   }
-  return roleMap[role] || '未知'
+  return (roleMap as any)[role] || '未知'
 }
 
 // 加载用户列表
@@ -288,12 +288,12 @@ const handleReset = () => {
 }
 
 // 分页
-const handleSizeChange = (size) => {
+const handleSizeChange = (size: any) => {
   page.size = size
   loadUserList()
 }
 
-const handleCurrentChange = (current) => {
+const handleCurrentChange = (current: any) => {
   page.current = current
   loadUserList()
 }
@@ -315,15 +315,15 @@ const handleAddUser = () => {
 }
 
 // 编辑用户
-const handleEditUser = (user) => {
+const handleEditUser = (user: any) => {
   isEdit.value = true
   Object.assign(form, user)
   dialogVisible.value = true
 }
 
 // 删除用户
-const handleDeleteUser = (id) => {
-  ElMessage.confirm('确定要删除该用户吗？', '提示', {
+const handleDeleteUser = (id: any) => {
+  (ElMessage as any).confirm('确定要删除该用户吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
@@ -335,7 +335,7 @@ const handleDeleteUser = (id) => {
 }
 
 // 状态变更
-const handleStatusChange = (user) => {
+const handleStatusChange = (user: any) => {
   // 模拟状态变更
   ElMessage.success(user.status === '1' ? '启用成功' : '禁用成功')
 }
@@ -343,7 +343,7 @@ const handleStatusChange = (user) => {
 // 提交表单
 const handleSubmit = async () => {
   try {
-    await formRef.value.validate()
+    await (formRef.value as any)?.validate()
     // 模拟提交
     ElMessage.success(isEdit.value ? '编辑成功' : '添加成功')
     dialogVisible.value = false

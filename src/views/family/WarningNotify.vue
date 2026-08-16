@@ -44,7 +44,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
@@ -80,7 +80,7 @@ const loadMore = () => {
 }
 
 
-const markAsReadAndScroll = (item) => {
+const markAsReadAndScroll = (item: any) => {
   if (!item.isRead) {
     warningStore.markAsRead(item.id)
   }

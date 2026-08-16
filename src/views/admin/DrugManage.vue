@@ -140,7 +140,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getDrugListApi, addDrugApi, updateDrugApi, deleteDrugApi, updateDrugStatusApi } from '@/api/medicine'
@@ -196,26 +196,26 @@ const rules = {
 }
 
 // 表单引用
-const formRef = ref(null)
+const formRef = ref<any>(null)
 
 // 获取分类标签类型
-const getCategoryTagType = (category) => {
+const getCategoryTagType = (category: any) => {
   const typeMap = {
     '1': 'warning',
     '2': 'primary',
     '3': 'success'
   }
-  return typeMap[category] || 'info'
+  return (typeMap as any)[category] || 'info'
 }
 
 // 获取分类文本
-const getCategoryText = (category) => {
+const getCategoryText = (category: any) => {
   const categoryMap = {
     '1': '处方药',
     '2': '非处方药',
     '3': '保健品'
   }
-  return categoryMap[category] || '未知'
+  return (categoryMap as any)[category] || '未知'
 }
 
 // 加载药品列表
@@ -254,12 +254,12 @@ const handleReset = () => {
 }
 
 // 分页
-const handleSizeChange = (size) => {
+const handleSizeChange = (size: any) => {
   page.size = size
   loadDrugList()
 }
 
-const handleCurrentChange = (current) => {
+const handleCurrentChange = (current: any) => {
   page.current = current
   loadDrugList()
 }
@@ -281,15 +281,15 @@ const handleAddDrug = () => {
 }
 
 // 编辑药品
-const handleEditDrug = (drug) => {
+const handleEditDrug = (drug: any) => {
   isEdit.value = true
   Object.assign(form, drug)
   dialogVisible.value = true
 }
 
 // 删除药品
-const handleDeleteDrug = (id) => {
-  ElMessage.confirm('确定要删除该药品吗？', '提示', {
+const handleDeleteDrug = (id: any) => {
+  (ElMessage as any).confirm('确定要删除该药品吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
@@ -308,7 +308,7 @@ const handleDeleteDrug = (id) => {
 }
 
 // 状态变更
-const handleStatusChange = async (drug) => {
+const handleStatusChange = async (drug: any) => {
   try {
     const res = await updateDrugStatusApi(drug.id, drug.status)
     if (res.success === 200) {
@@ -323,7 +323,7 @@ const handleStatusChange = async (drug) => {
 // 提交表单
 const handleSubmit = async () => {
   try {
-    await formRef.value.validate()
+    await (formRef.value as any)?.validate()
     let res
     console.log('提交的表单数据:', form)
     if (isEdit.value) {

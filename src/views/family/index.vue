@@ -67,7 +67,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showToast, showConfirmDialog } from 'vant'
@@ -84,9 +84,9 @@ const route = useRoute()
 const userStore = useUserStore()
 const warningStore = useWarningStore()   
 
-const elderOptions = ref([])
+const elderOptions = ref<any[]>([])
 const selectedElderValue = ref('')
-const warningSection = ref(null)
+const warningSection = ref<HTMLElement | null>(null)
 
 // 预警列表（从 store 获取真实数据）
 const warningList = computed(() => warningStore.warningList)
@@ -97,7 +97,7 @@ const loadBoundElders = async () => {
     const res = await getBoundEldersApi()
     if (res.success === 200 && res.data && res.data.length > 0) {
       const elders = res.data
-      const options = elders.map(item => ({
+      const options = elders.map((item: any) => ({
         text: item.username,
         value: item.elderInfoId,
         elderInfoId: item.elderInfoId,
@@ -107,13 +107,13 @@ const loadBoundElders = async () => {
     } else {
       const localElders = JSON.parse(localStorage.getItem('localElders') || '[]')
       if (localElders.length > 0) {
-        elderOptions.value = localElders.map(e => ({
+        elderOptions.value = localElders.map((e: any) => ({
           text: e.name,
           value: e.elderInfoId || e.id,
           elderInfoId: e.elderInfoId || e.id,
           userId: e.userId
         }))
-        showToast({ message: '当前显示本地暂存老人', type: 'warning', duration: 2000 })
+        showToast({ message: '当前显示本地暂存老人', type: 'warning' as any, duration: 2000 })
       } else {
         elderOptions.value = []
       }
@@ -122,20 +122,20 @@ const loadBoundElders = async () => {
     console.error(err)
     const localElders = JSON.parse(localStorage.getItem('localElders') || '[]')
     if (localElders.length > 0) {
-      elderOptions.value = localElders.map(e => ({
+      elderOptions.value = localElders.map((e: any) => ({
         text: e.name,
         value: e.elderInfoId || e.id,
         elderInfoId: e.elderInfoId || e.id,
         userId: e.userId
       }))
-      showToast({ message: '网络异常，显示本地暂存老人', type: 'warning', duration: 2000 })
+      showToast({ message: '网络异常，显示本地暂存老人', type: 'warning' as any, duration: 2000 })
     } else {
       elderOptions.value = []
     }
   }
 }
 
-const onElderChange = (event) => {
+const onElderChange = (event: any) => {
   const selectedValue = event.target.value
   if (!selectedValue) return
   const selected = elderOptions.value.find(opt => opt.value == selectedValue)
@@ -169,7 +169,7 @@ const swipeList = ref([
 ])
 
 // 点击预警卡片的话就会标记已读并跳转详情页
-const handleWarningClick = (item) => {
+const handleWarningClick = (item: any) => {
   if (!item.isRead) {
     warningStore.markAsRead(item.id)
   }

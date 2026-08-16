@@ -92,7 +92,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted, watch } from 'vue'
 import { showToast } from 'vant'
 import {
@@ -113,13 +113,13 @@ const props = defineProps({
 const currentElderId = ref('')
 const searchKey = ref('')
 const selectedType = ref('')
-const drugList = ref([])
+const drugList = ref<any[]>([])
 const loading = ref(false)
 const finished = ref(false)
 
 const showDialog = ref(false)
 const isEdit = ref(false)
-const currentId = ref(null)
+const currentId = ref<any>(null)
 
 const drugForm = reactive({
   elderId: '',
@@ -139,7 +139,7 @@ const editForm = reactive({
 // 日期选择器
 const showDatePicker = ref(false)
 const datePickerValue = ref(['2025', '01', '01'])
-const onDateConfirm = (value) => {
+const onDateConfirm = (value: any) => {
   const [year, month, day] = value.selectedValues
   drugForm.expiryDate = `${year}-${month}-${day}`
   showDatePicker.value = false
@@ -154,7 +154,7 @@ const typeFilterOptions = ref([
 const typeOptionsObj = ref(typeOptions.value.map(t => ({ text: t, value: t })))
 
 const showTypePicker = ref(false)
-const onTypeConfirm = (value) => {
+const onTypeConfirm = (value: any) => {
   let selected = ''
   if (value && value.selectedValues && value.selectedValues.length > 0) {
     selected = value.selectedValues[0]
@@ -194,7 +194,7 @@ const loadData = async () => {
         elderId: elderIdNum
       })
     } else {
-      res = await getDrugListByElderIdApi(elderIdNum)
+      res = await getDrugListByElderIdApi(elderIdNum, {})
     }
     if (res.success === 200) {
       drugList.value = Array.isArray(res.data) ? res.data : (res.data?.list || [])
@@ -238,7 +238,7 @@ const openAddDialog = () => {
 }
 
 // 打开编辑
-const openEditDialog = (item) => {
+const openEditDialog = (item: any) => {
   isEdit.value = true
   currentId.value = item.id
   editForm.medicineName = item.medicineName || ''
@@ -291,11 +291,11 @@ const handleSubmit = async () => {
 
 const showDeleteModal = ref(false)
 const deleteLoading = ref(false)
-const deleteTargetId = ref(null)
+const deleteTargetId = ref<any>(null)
 const deleteTargetName = ref('')
 
 // 删除弹窗
-const openDeleteModal = (item) => {
+const openDeleteModal = (item: any) => {
   deleteTargetId.value = item.id
   deleteTargetName.value = item.medicineName
   showDeleteModal.value = true
@@ -330,7 +330,7 @@ const confirmDelete = async () => {
 
 onMounted(() => {
   if (props.elderInfoId) {
-    currentElderId.value = props.elderInfoId
+    currentElderId.value = props.elderInfoId as string
     loadData()
   }
 })

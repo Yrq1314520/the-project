@@ -106,13 +106,13 @@
   </van-form>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { showToast } from 'vant'
 import { registerApi, sendEmailCodeApi } from '@/api/user'
 
 const emit = defineEmits(['switchToLogin'])
-const formRef = ref(null)
+const formRef = ref<any>(null)
 
 // 注册表单数据
 const regForm = reactive({
@@ -140,8 +140,8 @@ const roleOptions = [
 ]
 
 // 确认职能
-const onRoleConfirm = (selected) => {
-  let selectedValue
+const onRoleConfirm = (selected: any) => {
+  let selectedValue: number | undefined
   // 兼容 vant-picker 返回格式
   if (selected && typeof selected === 'object') {
     if (Array.isArray(selected)) {
@@ -177,7 +177,7 @@ const rules = {
   confirmPwd: [
     { required: true, message: '请确认密码' },
     {
-      validator: (val) => val === regForm.pwd,
+      validator: (val: any) => val === regForm.pwd,
       message: '两次输入的密码不一致'
     }
   ],

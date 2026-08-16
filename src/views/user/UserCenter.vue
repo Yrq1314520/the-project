@@ -101,7 +101,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
@@ -127,7 +127,7 @@ const navItems = [
 const activeKey = ref('view')
 
 // 用户信息
-const userDetail = ref(null)
+const userDetail = ref<Record<string, any> | null>(null)
 const fetchUserInfo = async () => {
   const userId = userStore.userInfo?.id
   if (!userId) return
@@ -150,7 +150,7 @@ const infoRows = computed(() => {
   }
 
   const roleNum = userDetail.value?.role
-  const roleText = roleMap[roleNum] || '普通用户'
+  const roleText = (roleMap as any)[roleNum] || '普通用户'
 
   return [
     { label: '用户ID：', value: userDetail.value?.id || '-' },
@@ -190,7 +190,7 @@ const onChangePassword = async () => {
   
   pwdLoading.value = true
   try {
-    const res = await changePasswordApi({ oldPassword, newPassword })
+    const res = await (changePasswordApi as any)({ oldPassword, newPassword })
     if (res.code === 200) {
       showToast('修改成功，请重新登录')
       userStore.logout()

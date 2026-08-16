@@ -39,7 +39,7 @@
   </van-form>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
@@ -48,7 +48,7 @@ import { loginApi } from '@/api/user'
 
 const router = useRouter()
 const userStore = useUserStore()
-const formRef = ref(null)
+const formRef = ref<any>(null)
 
 const loginForm = reactive({
   phone: '',

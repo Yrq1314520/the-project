@@ -122,7 +122,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/user'
 
@@ -158,25 +158,25 @@ const recentActivities = ref([
 ])
 
 // 获取活动类型标签
-const getActivityTypeTag = (type) => {
+const getActivityTypeTag = (type: any) => {
   const typeMap = {
     login: 'success',
     emergency: 'danger',
     data: 'primary',
     system: 'info'
   }
-  return typeMap[type] || 'info'
+  return (typeMap as any)[type] || 'info'
 }
 
 // 获取活动类型文本
-const getActivityTypeText = (type) => {
+const getActivityTypeText = (type: any) => {
   const typeMap = {
     login: '登录',
     emergency: '紧急',
     data: '数据',
     system: '系统'
   }
-  return typeMap[type] || '其他'
+  return (typeMap as any)[type] || '其他'
 }
 
 // 刷新数据

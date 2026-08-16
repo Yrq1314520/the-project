@@ -58,13 +58,26 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { showToast, showConfirmDialog } from 'vant'
+import { sendEmergencyHelpApi } from '@/api/family'
+
+// TODO: 以下接口尚未在 api 层定义，暂时使用本地占位实现
+async function getEmergencyContactsApi(): Promise<any> {
+  // TODO: 替换为真实接口
+  return { success: 200, data: [] }
+}
+
+async function getHelpHistoryApi(params: Record<string, any>): Promise<any> {
+  // TODO: 替换为真实接口
+  return { success: 200, data: { list: [] } }
+}
+
 const loading = ref(false)
 const finished = ref(false)
-const emergencyContacts = ref([])
-const helpHistory = ref([])
+const emergencyContacts = ref<Record<string, any>[]>([])
+const helpHistory = ref<Record<string, any>[]>([])
 
 // 加载紧急联系人
 const loadEmergencyContacts = async () => {
@@ -120,7 +133,7 @@ const sendEmergencyHelp = async () => {
 }
 
 // 拨打电话
-const callContact = (phone) => {
+const callContact = (phone: any) => {
   window.location.href = `tel:${phone}`
 }
 

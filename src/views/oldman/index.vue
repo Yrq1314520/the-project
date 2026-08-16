@@ -80,7 +80,7 @@
     <div class="drug-section" ref="drugSectionRef">
       <div class="section-header">
         <h2 class="section-title">💊 我的药品</h2>
-        <van-button type="primary" size="big" round @click="goToDrugManage" class="manage-btn">
+        <van-button type="primary" :size="'big' as any" round @click="goToDrugManage" class="manage-btn">
           管理药品
         </van-button>
       </div>
@@ -220,7 +220,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'   
@@ -236,17 +236,17 @@ import {
   takingMedicineApi,
   getPendingMedicineApi
 } from '@/api/medicine'
-import userMenu from '@/components/userMenu.vue'
+import userMenu from '@/components/UserMenu.vue'
 import img5 from '@/assets/woman.jpg'
 import img6 from '@/assets/man.jpg'
 
 const router = useRouter()
 const userStore = useUserStore()
-const elderId = ref(null)
+const elderId = ref<any>(null)
 const bannerList = ref([img5, img6])
 
-//  今日提醒相关 
-const todayReminders = ref([])
+//  今日提醒相关
+const todayReminders = ref<Record<string, any>[]>([])
 const remindersLoading = ref(false)
 
 const getCurrentWeekday = () => {
@@ -296,10 +296,10 @@ const loadTodayReminders = async () => {
 
 const showTakeModal = ref(false)
 const takeLoading = ref(false)
-const takeTargetId = ref(null)
+const takeTargetId = ref<any>(null)
 const takeTargetName = ref('')
 
-const openTakeModal = (item) => {
+const openTakeModal = (item: any) => {
   if (item.status === 1) {
     showToast('今日已服用过')
     return
@@ -340,11 +340,11 @@ const confirmTake = async () => {
 }
 
 //  提醒管理 
-const remindersList = ref([])
+const remindersList = ref<Record<string, any>[]>([])
 const showReminderDialog = ref(false)
 const showFormDialog = ref(false)
 const isEdit = ref(false)
-const currentId = ref(null)
+const currentId = ref<any>(null)
 const submitting = ref(false)
 
 const reminderForm = ref({
@@ -356,7 +356,7 @@ const reminderForm = ref({
 })
 
 const showWeekPicker = ref(false)
-const selectedWeekValues = ref([])
+const selectedWeekValues = ref<string[]>([])
 const weekOptions = [
   { text: '周一', value: '1' },
   { text: '周二', value: '2' },
@@ -374,17 +374,17 @@ const remindDaysText = computed(() => {
   return names.join('、')
 })
 
-const formatRemindDays = (daysStr) => {
+const formatRemindDays = (daysStr: any) => {
   if (!daysStr) return '不重复'
   const days = daysStr.split(',')
-  const names = days.map(d => {
+  const names = days.map((d: any) => {
     const opt = weekOptions.find(w => w.value === d)
     return opt ? opt.text : d
   })
   return names.join('、')
 }
 
-const formatRemindTime = (time) => {
+const formatRemindTime = (time: any) => {
   if (!time) return ''
   const timeStr = String(time)
   if (/^\d{2}:\d{2}$/.test(timeStr)) return timeStr
@@ -424,7 +424,7 @@ const openAddReminder = () => {
   showFormDialog.value = true
 }
 
-const openEditReminder = (item) => {
+const openEditReminder = (item: any) => {
   isEdit.value = true
   currentId.value = item.id
   let remindTime = item.remindTime
@@ -493,10 +493,10 @@ const onSubmitReminder = async () => {
 // 删除提醒弹窗相关
 const showDeleteModal = ref(false)
 const deleteLoading = ref(false)
-const deleteTargetId = ref(null)
+const deleteTargetId = ref<any>(null)
 const deleteTargetName = ref('')
 
-const openDeleteReminderModal = (item) => {
+const openDeleteReminderModal = (item: any) => {
   deleteTargetId.value = item.id
   deleteTargetName.value = item.medicineName
   showDeleteModal.value = true
@@ -529,14 +529,14 @@ const confirmDeleteReminder = async () => {
 }
 
 //  药品和紧急联系人
-const drugSectionRef = ref(null)
-const drugList = ref([])
+const drugSectionRef = ref<HTMLElement | null>(null)
+const drugList = ref<Record<string, any>[]>([])
 const drugLoading = ref(false)
 
 const loadDrugList = async () => {
   drugLoading.value = true
   try {
-    const res = await getMyDrugListApi()
+    const res = await (getMyDrugListApi as any)()
     if (res.success === 200) {
       let list = []
       if (Array.isArray(res.data)) {
@@ -558,8 +558,8 @@ const loadDrugList = async () => {
 
 const goToDrugManage = () => router.push('/oldman/drug')
 
-const emergencySectionRef = ref(null)
-const emergencyContact = ref({ name: '', phone: '', relation: '' })
+const emergencySectionRef = ref<HTMLElement | null>(null)
+const emergencyContact = ref<Record<string, any>>({ name: '', phone: '', relation: '' })
 
 const loadEmergencyContact = async () => {
   try {
@@ -622,13 +622,13 @@ const fetchElderId = async () => {
 const goToAssistant = () => router.push('/oldman/chat')
 const goToMyProfile = () => router.push('/oldman/profile')
 
-const scrollToSection = (refElement) => {
+const scrollToSection = (refElement: any) => {
   if (refElement.value) {
     refElement.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 }
 
-const handleNavClick = (type) => {
+const handleNavClick = (type: any) => {
   switch (type) {
     case 'assistant': goToAssistant(); break
     case 'profile': goToMyProfile(); break

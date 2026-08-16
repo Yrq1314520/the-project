@@ -143,7 +143,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 
@@ -161,7 +161,7 @@ const page = reactive({
 })
 
 // 数据
-const oldmanList = ref([])
+const oldmanList = ref<any[]>([])
 const total = ref(0)
 
 // 对话框
@@ -212,7 +212,7 @@ const rules = {
 }
 
 // 表单引用
-const formRef = ref(null)
+const formRef = ref<any>(null)
 
 // 加载老人列表
 const loadOldmanList = () => {
@@ -277,12 +277,12 @@ const handleReset = () => {
 }
 
 // 分页
-const handleSizeChange = (size) => {
+const handleSizeChange = (size: any) => {
   page.size = size
   loadOldmanList()
 }
 
-const handleCurrentChange = (current) => {
+const handleCurrentChange = (current: any) => {
   page.current = current
   loadOldmanList()
 }
@@ -306,15 +306,15 @@ const handleAddOldman = () => {
 }
 
 // 编辑老人
-const handleEditOldman = (oldman) => {
+const handleEditOldman = (oldman: any) => {
   isEdit.value = true
   Object.assign(form, oldman)
   dialogVisible.value = true
 }
 
 // 删除老人
-const handleDeleteOldman = (id) => {
-  ElMessage.confirm('确定要删除该老人档案吗？', '提示', {
+const handleDeleteOldman = (id: any) => {
+  (ElMessage as any).confirm('确定要删除该老人档案吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
@@ -326,7 +326,7 @@ const handleDeleteOldman = (id) => {
 }
 
 // 查看档案
-const handleViewProfile = (oldman) => {
+const handleViewProfile = (oldman: any) => {
   // 跳转到老人档案详情页
 
 }
@@ -334,7 +334,7 @@ const handleViewProfile = (oldman) => {
 // 提交表单
 const handleSubmit = async () => {
   try {
-    await formRef.value.validate()
+    await (formRef.value as any)?.validate()
     // 模拟提交
     ElMessage.success(isEdit.value ? '编辑成功' : '添加成功')
     dialogVisible.value = false

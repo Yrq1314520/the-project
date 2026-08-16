@@ -152,7 +152,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showToast, showConfirmDialog } from 'vant'
@@ -171,7 +171,7 @@ const userStore = useUserStore()
 
 const currentUserId = ref('')
 const manualUserId = ref('')
-const profileData = ref(null)
+const profileData = ref<Record<string, any> | null>(null)
 const noProfile = ref(false)
 const searched = ref(false)
 const loading = ref(false)
@@ -180,7 +180,7 @@ const showDialog = ref(false)
 const showViewDialog = ref(false)
 const isEdit = ref(false)
 const submitLoading = ref(false)
-const currentProfile = ref(null)
+const currentProfile = ref<Record<string, any> | null>(null)
 const currentId = ref('')
 const showGenderPicker = ref(false)
 
@@ -203,9 +203,9 @@ const form = reactive({
   relation: ''
 })
 
-const bindUserId = ref(null)
+const bindUserId = ref<any>(null)
 
-const loadProfile = async (userId) => {
+const loadProfile = async (userId: any) => {
   if (!userId) return
   loading.value = true
   searched.value = true
@@ -246,12 +246,12 @@ const openAddDialog = () => {
     return
   }
   isEdit.value = false
-  Object.keys(form).forEach(key => { form[key] = '' })
+  Object.keys(form).forEach(key => { (form as any)[key] = '' })
   form.userId = userId
   showDialog.value = true
 }
 
-const openEditDialog = (item) => {
+const openEditDialog = (item: any) => {
   isEdit.value = true
   currentId.value = item.id
   Object.assign(form, item)
@@ -259,12 +259,12 @@ const openEditDialog = (item) => {
   showDialog.value = true
 }
 
-const openViewDialog = (item) => {
+const openViewDialog = (item: any) => {
   currentProfile.value = item
   showViewDialog.value = true
 }
 
-const onGenderConfirm = (value) => {
+const onGenderConfirm = (value: any) => {
   const selected = value.selectedValues[0]
   form.genderText = selected === 1 ? '男' : '女'
   form.gender = selected
@@ -295,7 +295,7 @@ const onSubmit = async () => {
     }
 
     if (isEdit.value) {
-      submitData.id = currentId.value
+      ;(submitData as any).id = currentId.value
       const res = await updateOldmanProfileApi(submitData)
       if (res.success === 200) {
         showToast('修改成功')
@@ -312,7 +312,7 @@ const onSubmit = async () => {
         const newId = res.data?.id
         if (newId) {
           let localElders = JSON.parse(localStorage.getItem('localElders') || '[]')
-          const existing = localElders.find(e => e.userId == form.userId)
+          const existing = localElders.find((e: any) => e.userId == form.userId)
           if (existing) {
             existing.elderInfoId = newId
           } else {
@@ -360,14 +360,14 @@ const onSubmit = async () => {
   }
 }
 
-const onDelete = async (id) => {
+const onDelete = async (id: any) => {
   try {
     await showConfirmDialog({ title: '确认删除', message: '确定要删除这条老人档案吗？' })
     const res = await deleteOldmanProfileApi(id)
     if (res.success === 200) {
       showToast('删除成功')
       let localElders = JSON.parse(localStorage.getItem('localElders') || '[]')
-      localElders = localElders.filter(e => e.elderInfoId != id)
+      localElders = localElders.filter((e: any) => e.elderInfoId != id)
       localStorage.setItem('localElders', JSON.stringify(localElders))
       profileData.value = null
       noProfile.value = true
@@ -382,12 +382,12 @@ const onDelete = async (id) => {
 
 onMounted(() => {
   if (route.query.userId) {
-    bindUserId.value = route.query.userId
-    currentUserId.value = route.query.userId
-    manualUserId.value = route.query.userId
+    bindUserId.value = route.query.userId as string
+    currentUserId.value = route.query.userId as string
+    manualUserId.value = route.query.userId as string
     if (route.query.isFamilyBinding === 'true') {
       openAddDialog()
-      if (route.query.username) form.name = decodeURIComponent(route.query.username)
+      if (route.query.username) form.name = decodeURIComponent(route.query.username as string)
     } else {
       loadProfile(currentUserId.value)
     }

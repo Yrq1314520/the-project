@@ -57,7 +57,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
@@ -66,7 +66,7 @@ import { updateProfileApi, getUserInfoApi, logoutApi } from '@/api/user'
 
 const router = useRouter()
 const userStore = useUserStore()
-const formRef = ref(null)
+const formRef = ref<any>(null)
 const loading = ref(false)
 const defaultAvatar = 'https://img.yzcdn.cn/vant/logo.png'
 

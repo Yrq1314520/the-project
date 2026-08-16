@@ -132,7 +132,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, reactive } from 'vue'
 import { showToast } from 'vant'
 import {
@@ -150,14 +150,14 @@ const props = defineProps({
 })
 
 const currentPanel = ref('reminders')
-const reminders = ref([])
-const records = ref([])
-const statistics = ref(null)
+const reminders = ref<any[]>([])
+const records = ref<any[]>([])
+const statistics = ref<Record<string, any> | null>(null)
 const selectedDate = ref(new Date().toISOString().slice(0, 10))
 
 const showModal = ref(false)
 const isEditMode = ref(false)
-const currentEditId = ref(null)
+const currentEditId = ref<any>(null)
 const submitting = ref(false)
 
 const formData = reactive({
@@ -165,7 +165,7 @@ const formData = reactive({
   dosage: '',
   usage: '',
   remindTime: '',
-  remindDaysList: []
+  remindDaysList: [] as any[]
 })
 
 // 星期选项
@@ -182,10 +182,10 @@ const weekOptions = [
 
 const showDeleteModal = ref(false)
 const deleteLoading = ref(false)
-const deleteTargetId = ref(null)
+const deleteTargetId = ref<any>(null)
 const deleteTargetName = ref('')
 
-const openDeleteModal = (item) => {
+const openDeleteModal = (item: any) => {
   deleteTargetId.value = item.id
   deleteTargetName.value = item.medicineName
   showDeleteModal.value = true
@@ -217,10 +217,10 @@ const confirmDeleteReminder = async () => {
 }
 
 
-const formatDays = (daysStr) => {
+const formatDays = (daysStr: any) => {
   if (!daysStr) return '不重复'
-  const map = { '1': '一', '2': '二', '3': '三', '4': '四', '5': '五', '6': '六', '7': '日' }
-  return daysStr.split(',').map(d => map[d] || d).join('、')
+  const map: Record<string, string> = { '1': '一', '2': '二', '3': '三', '4': '四', '5': '五', '6': '六', '7': '日' }
+  return daysStr.split(',').map((d: any) => map[d] || d).join('、')
 }
 
 // 打开添加弹窗
@@ -236,7 +236,7 @@ const openAddForm = () => {
 }
 
 // 打开编辑弹窗
-const openEditForm = (item) => {
+const openEditForm = (item: any) => {
   isEditMode.value = true
   currentEditId.value = item.id
   formData.medicineName = item.medicineName
@@ -310,7 +310,7 @@ const loadRecords = async () => {
   try {
     const res = await getMedicineRecordsApi(props.elderId)
     if (res.success === 200 && Array.isArray(res.data)) {
-      records.value = res.data.filter(r => (r.recordDate || r.date) === selectedDate.value)
+      records.value = res.data.filter((r: any) => (r.recordDate || r.date) === selectedDate.value)
     } else {
       records.value = []
     }
@@ -332,7 +332,7 @@ const loadStatistics = async () => {
 }
 
 // 切换状态
-const toggleStatus = async (item) => {
+const toggleStatus = async (item: any) => {
   const original = item.status
   try {
     const res = await updataMedicineRemindsApi(item.id, { status: item.status })
@@ -347,7 +347,7 @@ const toggleStatus = async (item) => {
 }
 
 // 标记已服
-const markTaken = (record) => {
+const markTaken = (record: any) => {
   showToast('已标记为已服用')
   takingMedicineApi({ type: 'take' }, { remindId: record.id }).then(() => {
     loadRecords()
@@ -356,7 +356,7 @@ const markTaken = (record) => {
 }
 
 // 标记漏服
-const markMissed = (record) => {
+const markMissed = (record: any) => {
   showToast('已标记为漏服')
   takingMedicineApi({ type: 'miss' }, { remindId: record.id }).then(() => {
     loadRecords()

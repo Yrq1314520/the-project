@@ -97,7 +97,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
@@ -106,11 +106,11 @@ import { getElderInfoByUserId, addElderInfo, updateElderInfo } from '@/api/elder
 
 const router = useRouter()
 const userStore = useUserStore()
-const formRef = ref(null)
+const formRef = ref<any>(null)
 const submitLoading = ref(false)
 const isEdit = ref(false)
 const showGenderPicker = ref(false)
-const elderInfoId = ref(null)   
+const elderInfoId = ref<any>(null)   
 
 // 性别选择器
 const genderColumns = [
@@ -149,7 +149,7 @@ const rules = {
 // 加载已有档案
 const loadProfile = async () => { 
   try {
-    const res = await getElderInfoByUserId(userStore.userInfo.id)
+    const res = await getElderInfoByUserId(userStore.userInfo.id || 0)
     if (res.success === 200 && res.data) {
       let data = res.data
       if (Array.isArray(data) && data.length > 0) {
@@ -190,7 +190,7 @@ const loadProfile = async () => {
 }
 
 // 性别选择确认
-const onGenderConfirm = ({ selectedOptions }) => {
+const onGenderConfirm = ({ selectedOptions }: any) => {
   if (selectedOptions && selectedOptions.length > 0) {
     form.genderText = selectedOptions[0].text
   }
@@ -202,7 +202,7 @@ const onSubmit = async () => {
   try {
     await formRef.value?.validate()
     submitLoading.value = true
-    const submitData = {
+    const submitData: Record<string, any> = {
       name: form.name,           
       age: Number(form.age),
       gender: form.genderText === '男' ? 1 : 2,

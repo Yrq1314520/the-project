@@ -33,7 +33,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 
@@ -43,25 +43,25 @@ const notificationList = ref([
   { id: 3, title: '预警通知', content: '有新的预警信息需要处理', type: 'warning', createTime: '2026-04-01 12:00:00' }
 ])
 
-const getTypeText = (type) => {
+const getTypeText = (type: any) => {
   const typeMap = {
     system: '系统通知',
     health: '健康提醒',
     warning: '预警通知'
   }
-  return typeMap[type] || '未知'
+  return (typeMap as any)[type] || '未知'
 }
 
 const handleSendNotification = () => {
   ElMessage.info('发送通知功能开发中')
 }
 
-const handleViewDetail = (notification) => {
+const handleViewDetail = (notification: any) => {
   ElMessage.info('查看详情功能开发中')
 }
 
-const handleDeleteNotification = (id) => {
-  ElMessage.confirm('确定要删除该通知吗？', '提示', {
+const handleDeleteNotification = (id: any) => {
+  (ElMessage as any).confirm('确定要删除该通知吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'

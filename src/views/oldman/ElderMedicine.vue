@@ -136,7 +136,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { showToast, showConfirmDialog } from 'vant'
 import request from '@/utils/request'  
@@ -157,13 +157,13 @@ const props = defineProps({
 })
 
 // 统计数据
-const statistics = ref(null)
+const statistics = ref<Record<string, any> | null>(null)
 // 今日服药记录列表
-const recordList = ref([])
+const recordList = ref<Record<string, any>[]>([])
 const recordsLoading = ref(false)
 
 // 所有提醒配置（用于管理弹窗）
-const allReminders = ref([])
+const allReminders = ref<Record<string, any>[]>([])
 
 // 加载统计数据
 const loadStatistics = async () => {
@@ -209,7 +209,7 @@ const loadTodayRecords = async () => {
 }
 
 // 老人确认服药/漏服操作
-const handleTakeMedicine = async (record) => {
+const handleTakeMedicine = async (record: any) => {
   if (record.taken) {
     showToast('今日已确认过服药')
     return
@@ -237,7 +237,7 @@ const handleTakeMedicine = async (record) => {
 }
 
 // 提交服药操作
-const submitTakeAction = async (recordId, action) => {
+const submitTakeAction = async (recordId: any, action: any) => {
   try {
     const res = await request({
       url: `/v1/medicine-remind/records/action`,
@@ -262,7 +262,7 @@ const submitTakeAction = async (recordId, action) => {
 const showReminderDialog = ref(false)
 const showFormDialog = ref(false)
 const isEdit = ref(false)
-const currentId = ref(null)
+const currentId = ref<any>(null)
 const submitting = ref(false)
 
 const reminderForm = ref({
@@ -275,7 +275,7 @@ const reminderForm = ref({
 
 // 星期选择
 const showWeekPicker = ref(false)
-const selectedWeekValues = ref([])
+const selectedWeekValues = ref<string[]>([])
 const weekOptions = [
   { text: '周一', value: '1' },
   { text: '周二', value: '2' },
@@ -293,17 +293,17 @@ const remindDaysText = computed(() => {
   return names.join('、')
 })
 
-const formatRemindDays = (daysStr) => {
+const formatRemindDays = (daysStr: any) => {
   if (!daysStr) return '不重复'
   const days = daysStr.split(',')
-  const names = days.map(d => {
+  const names = days.map((d: any) => {
     const opt = weekOptions.find(w => w.value === d)
     return opt ? opt.text : d
   })
   return names.join('、')
 }
 
-const formatRemindTime = (time) => {
+const formatRemindTime = (time: any) => {
   if (!time) return ''
   const timeStr = String(time)
   if (/^\d{2}:\d{2}$/.test(timeStr)) return timeStr
@@ -344,7 +344,7 @@ const openAddReminder = () => {
   showFormDialog.value = true
 }
 
-const openEditReminder = (item) => {
+const openEditReminder = (item: any) => {
   isEdit.value = true
   currentId.value = item.id
   let remindTime = item.remindTime
@@ -414,7 +414,7 @@ const onSubmitReminder = async () => {
   }
 }
 
-const deleteReminder = (item) => {
+const deleteReminder = (item: any) => {
   showConfirmDialog({
     title: '确认删除',
     message: `确定要删除提醒"${item.medicineName}"吗？`,

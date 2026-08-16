@@ -112,15 +112,19 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 
 const loading = ref(false)
 const finished = ref(false)
-const activityList = ref([])
+const activityList = ref<any[]>([])
 const 老人状态 = ref(true)
 const 老人位置 = ref('客厅')
 const 最后更新时间 = ref('2026-04-06 14:30:00')
+
+const onLoad = () => {
+  finished.value = true
+}
 
 // 环境数据
 const 环境数据 = reactive({
@@ -137,13 +141,13 @@ const settings = reactive({
 })
 
 // 模拟实时数据更新
-let updateInterval
+let updateInterval: ReturnType<typeof setInterval> | null = null
 
 const startRealTimeUpdate = () => {
   updateInterval = setInterval(() => {
     // 模拟数据更新
     最后更新时间.value = new Date().toLocaleString('zh-CN')
-    环境数据.temperature = (25 + Math.random() * 2).toFixed(1)
+    环境数据.temperature = Number((25 + Math.random() * 2).toFixed(1))
     环境数据.humidity = Math.floor(40 + Math.random() * 10)
   }, 5000)
 }

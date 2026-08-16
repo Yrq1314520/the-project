@@ -40,7 +40,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { showToast } from 'vant'
 const props = defineProps({
@@ -49,9 +49,13 @@ const props = defineProps({
     default: ''
   }
 })
-const list = ref([])
+const list = ref<any[]>([])
 const showAdd = ref(false)
-const addForm = ref({ name: '', phone: '' })
+const addForm = ref<Record<string, any>>({ name: '', phone: '' })
+
+const loadProfile = async (userId: any) => {
+  // TODO: load contacts from API
+}
 
 onMounted(() => {
   if (props.userId) {
@@ -64,7 +68,7 @@ const add = async () => {
   showAdd.value = false
 }
 
-const del = async (id) => {
+const del = async (id: any) => {
   showToast('删除成功')
 }
 </script>

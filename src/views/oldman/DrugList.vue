@@ -148,7 +148,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showToast } from 'vant'
@@ -159,14 +159,14 @@ const searchKey = ref('')
 const selectedType = ref('')
 
 // 列表
-const drugList = ref([])
+const drugList = ref<Record<string, any>[]>([])
 const loading = ref(false)
 const finished = ref(false)
 
 // 弹窗
 const showDialog = ref(false)
 const isEdit = ref(false)
-const currentId = ref(null)
+const currentId = ref<any>(null)
 
 // 路由
 const router = useRouter()
@@ -186,7 +186,7 @@ const form = reactive({
 // 日期选择器
 const showDatePicker = ref(false)
 const datePickerValue = ref(['2025', '01', '01'])
-const onDateConfirm = (value) => {
+const onDateConfirm = (value: any) => {
   const year = value.selectedValues[0]
   const month = value.selectedValues[1]
   const day = value.selectedValues[2]
@@ -210,7 +210,7 @@ const typeFilterOptions = ref([
 ])
 
 const showTypePicker = ref(false)
-const onTypeConfirm = ({ selectedOptions }) => {
+const onTypeConfirm = ({ selectedOptions }: any) => {
   form.type = selectedOptions[0].value
   showTypePicker.value = false
 }
@@ -229,7 +229,7 @@ const resetForm = () => {
 const loadData = async () => {
   loading.value = true
   try {
-    const res = await getMyDrugListApi()
+    const res = await (getMyDrugListApi as any)()
     if (res.success === 200) {
       let list = []
       if (Array.isArray(res.data)) {
@@ -297,7 +297,7 @@ const openAddDialog = () => {
   showDialog.value = true
 }
 
-const openEditDialog = (item) => {
+const openEditDialog = (item: any) => {
   isEdit.value = true
   currentId.value = item.id
   form.medicineName = item.medicineName || ''
@@ -339,11 +339,11 @@ const handleSubmit = async () => {
 
 const showDeleteModal = ref(false)
 const deleteLoading = ref(false)
-const deleteTargetId = ref(null)
+const deleteTargetId = ref<any>(null)
 const deleteTargetName = ref('')
 
 // 打开删除
-const openDeleteModal = (item) => {
+const openDeleteModal = (item: any) => {
   deleteTargetId.value = item.id
   deleteTargetName.value = item.medicineName
   showDeleteModal.value = true

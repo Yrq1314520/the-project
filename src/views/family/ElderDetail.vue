@@ -99,7 +99,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showToast } from 'vant'
@@ -114,7 +114,7 @@ const router = useRouter()
 
 const userId = ref('')
 const elderId = ref('')
-const profileData = ref(null)
+const profileData = ref<Record<string, any> | null>(null)
 const loading = ref(false)
 const error = ref('')
 const currentTab = ref(0)
@@ -155,7 +155,7 @@ const loadProfile = async () => {
   try {
     const res = await getElderProfileByUserIdApi(userId.value)
     if (res.success === 200 && res.data && res.data.length > 0) {
-      const matched = res.data.find(item => (item.id || item.elderInfoId) == elderId.value)
+      const matched = res.data.find((item: any) => (item.id || item.elderInfoId) == elderId.value)
       if (matched) {
         const archiveId = matched.id || matched.elderInfoId
         profileData.value = {
@@ -193,6 +193,7 @@ const openEditDialog = () => {
     age: data.age || '',
     genderText: data.gender === 1 ? '男' : data.gender === 2 ? '女' : '',
     gender: data.gender || '',
+    phone: data.phone || '',
     height: data.height || '',
     weight: data.weight || '',
     medicalHistory: data.medicalHistory || '',
@@ -205,7 +206,7 @@ const openEditDialog = () => {
   showEditDialog.value = true
 }
 
-const onGenderConfirm = (value) => {
+const onGenderConfirm = (value: any) => {
   const selectedValue = value.selectedValues[0]
   editForm.value.genderText = selectedValue === 1 ? '男' : '女'
   editForm.value.gender = selectedValue
@@ -252,7 +253,7 @@ const onEditSubmit = async () => {
 
 // 打开删除弹窗
 const openDeleteModal = () => {
-  if (!profileData.value || !profileData.value.id) {
+  if (!profileData.value || !(profileData.value as any).id) {
     showToast('无法获取档案ID')
     return
   }
@@ -268,7 +269,7 @@ const closeDeleteModal = () => {
 const confirmDelete = async () => {
   deleteLoading.value = true
   try {
-    const res = await deleteOldmanProfileApi(profileData.value.id)
+    const res = await deleteOldmanProfileApi((profileData.value as any).id)
     if (res.success === 200) {
       showToast('删除成功')
       router.push('/family')
@@ -288,8 +289,8 @@ onMounted(() => {
   const rawUserId = route.query.userId
   const rawElderId = route.query.elderId
   if (rawUserId && rawElderId) {
-    userId.value = rawUserId
-    elderId.value = rawElderId
+    userId.value = rawUserId as string
+    elderId.value = rawElderId as string
     loadProfile()
   } else {
     error.value = '缺少用户ID或老人档案ID参数'

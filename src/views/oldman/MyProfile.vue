@@ -44,8 +44,8 @@
           <div class="detail-item full-width"><span class="label">过敏史</span><span class="value">{{ profile.allergy || '无' }}</span></div>
         </div>
         <div class="action-buttons">
-          <van-button class="edit-btn" size="medium" round @click="goEdit">修改档案</van-button>
-          <van-button type="danger" size="medium" round @click="openDeleteModal">删除档案</van-button>
+          <van-button class="edit-btn" :size="'medium' as any" round @click="goEdit">修改档案</van-button>
+          <van-button type="danger" :size="'medium' as any" round @click="openDeleteModal">删除档案</van-button>
         </div>
       </div>
       <div v-else-if="!loading" class="empty-profile">
@@ -74,7 +74,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
@@ -84,7 +84,7 @@ import { getElderInfoByUserId, deleteElderInfo } from '@/api/elderInfo'
 const router = useRouter()
 const userStore = useUserStore()
 
-const profile = ref({})
+const profile = ref<Record<string, any>>({})
 const loading = ref(false)
 const error = ref('')
 const userId = computed(() => userStore.userInfo?.id || '')

@@ -33,7 +33,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
@@ -57,8 +57,8 @@ const timeOptions = [
 const selectedTime = ref('month')
 
 const loading = ref(false)
-const allRecords = ref([])
-const statsData = ref([])
+const allRecords = ref<any[]>([])
+const statsData = ref<any[]>([])
 
 // 定义症状关键词与标准疾病名称的映射（口语化，服务于老人）
 const symptomMapping = [
@@ -87,7 +87,7 @@ const symptomMapping = [
 ]
 
 // 查找词库，进行统计
-const getDiseaseFromQuestion = (question) => {
+const getDiseaseFromQuestion = (question: any) => {
   for (const item of symptomMapping) {
     for (const kw of item.keywords) {
       if (question.includes(kw)) {
@@ -98,7 +98,7 @@ const getDiseaseFromQuestion = (question) => {
   return null
 }
 
-const parseAskTime = (askTime) => {
+const parseAskTime = (askTime: any) => {
   if (!askTime || !Array.isArray(askTime) || askTime.length < 6) return new Date(0)
   const [year, month, day, hour, minute, second = 0] = askTime
   return new Date(year, month - 1, day, hour, minute, second)
@@ -140,7 +140,7 @@ const computeStats = () => {
     return recordTime >= startDate && recordTime <= now
   })
 
-  const symptomCount = {}
+  const symptomCount: Record<string, number> = {}
   filtered.forEach(record => {
     const question = record.question || ''
     const matched = getDiseaseFromQuestion(question)
@@ -150,8 +150,8 @@ const computeStats = () => {
     }
   })
 
-  const stats = Object.entries(symptomCount).map(([symptom, count]) => ({ symptom, count }))
-  stats.sort((a, b) => b.count - a.count)
+  const stats = Object.entries(symptomCount).map(([symptom, count]: [string, number]) => ({ symptom, count }))
+  stats.sort((a, b) => (b.count as number) - (a.count as number))
   statsData.value = stats.slice(0, 6)
 }
 

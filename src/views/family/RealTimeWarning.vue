@@ -32,16 +32,16 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { wsManager } from '@/utils/websocketManager'
 import { useWarningStore } from '@/store/warning'
 
 const warningStore = useWarningStore()
 const showDetail = ref(false)
-const currentDetail = ref(null)
+const currentDetail = ref<Record<string, any> | null>(null)
 
-const openDetail = (item) => {
+const openDetail = (item: any) => {
   currentDetail.value = item
   showDetail.value = true
   warningStore.markAsRead(item.id)

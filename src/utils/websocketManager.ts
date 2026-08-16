@@ -29,7 +29,7 @@ type MessageHandler = (data: WsMessage) => void
 
 class WebSocketManager {
   private socket: WebSocket | null = null
-  private isConnected: Ref<boolean> = ref(false)
+  isConnected: Ref<boolean> = ref(false)
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
   private reconnectAttempts = 0
   private maxReconnectAttempts = 10

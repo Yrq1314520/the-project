@@ -58,12 +58,12 @@
   </van-form>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { showToast } from 'vant'
 import { resetPasswordApi, sendEmailCodeApi } from '@/api/user'
 
-const formRef = ref(null)
+const formRef = ref<any>(null)
 
 // 表单数据
 const form = reactive({
@@ -76,7 +76,7 @@ const submitLoading = ref(false)
 const showNewPwd = ref(false)     // 是否显示新密码
 const codeLoading = ref(false)
 const countDown = ref(0)
-let countDownTimer = null
+let countDownTimer: ReturnType<typeof setInterval> | null = null
 
 // 验证规则
 const rules = {
@@ -128,12 +128,12 @@ const sendVerifyCode = async () => {
 // 倒计时
 const startCountDown = () => {
   countDown.value = 60
-  clearInterval(countDownTimer)
+  if (countDownTimer) clearInterval(countDownTimer)
   countDownTimer = setInterval(() => {
     if (countDown.value > 0) {
       countDown.value--
     } else {
-      clearInterval(countDownTimer)
+      if (countDownTimer) clearInterval(countDownTimer)
     }
   }, 1000)
 }

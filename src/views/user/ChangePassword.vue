@@ -98,7 +98,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
@@ -107,7 +107,7 @@ import { useUserStore } from '@/store/user'
 
 const router = useRouter()
 const userStore = useUserStore()
-const formRef = ref(null)
+const formRef = ref<any>(null)
 const loading = ref(false)
 
 // 密码可见
@@ -118,7 +118,7 @@ const showConfirm = ref(false)
 // 验证码相关
 const counting = ref(false)
 const countDown = ref(60)
-let countDownTimer = null
+let countDownTimer: ReturnType<typeof setInterval> | null = null
 
 // 表单数据
 const form = reactive({
@@ -130,7 +130,7 @@ const form = reactive({
 })
 
 // 确认密码校验
-const checkConfirmPwd = (val) => {
+const checkConfirmPwd = (val: any) => {
   return val === form.newPwd
 }
 
@@ -169,7 +169,7 @@ const startCountDown = () => {
   countDownTimer = setInterval(() => {
     countDown.value--
     if (countDown.value <= 0) {
-      clearInterval(countDownTimer)
+      if (countDownTimer) clearInterval(countDownTimer)
       counting.value = false
     }
   }, 1000)

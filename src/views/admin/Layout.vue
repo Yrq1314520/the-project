@@ -151,7 +151,7 @@
   </el-container>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/store/user'
@@ -185,7 +185,7 @@ const toggleSidebar = () => {
 }
 
 // 菜单选择
-const handleMenuSelect = (key, keyPath) => {
+const handleMenuSelect = (key: any, keyPath: any) => {
 
 }
 

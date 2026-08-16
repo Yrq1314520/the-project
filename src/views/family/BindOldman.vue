@@ -58,7 +58,7 @@
           <van-button
             v-if="item.isBound"
             size="small"
-            type="info"
+            :type="'info' as any"
             round
             disabled
           >
@@ -96,7 +96,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
@@ -111,10 +111,10 @@ import { useUserStore } from '@/store/user'
 const router = useRouter()
 const userStore = useUserStore()
 const searchForm = reactive({ username: '' })
-const elderList = ref([])
+const elderList = ref<any[]>([])
 const searching = ref(false)
 const notFound = ref(false)
-const boundElders = ref([])
+const boundElders = ref<any[]>([])
 const goBack = () => router.back()
 // 加载已绑定老人列表
 const loadBoundElders = async () => {
@@ -183,7 +183,7 @@ const onSearch = async () => {
 }
 
 // 绑定已有档案的老人
-const onBind = async (elderItem) => {
+const onBind = async (elderItem: any) => {
   try {
     const res = await bindElderAccountApi({
       elderInfoId: elderItem.elderInfoId,
@@ -198,7 +198,7 @@ const onBind = async (elderItem) => {
         elderInfoId: elderItem.elderInfoId
       }
       let localElders = JSON.parse(localStorage.getItem('localElders') || '[]')
-      if (!localElders.some(e => e.userId === elderInfo.userId)) {
+      if (!localElders.some((e: any) => e.userId === elderInfo.userId)) {
         localElders.push(elderInfo)
         localStorage.setItem('localElders', JSON.stringify(localElders))
       }
@@ -212,7 +212,7 @@ const onBind = async (elderItem) => {
 }
 
 // 跳转到档案页面（已有账号的老人）
-const goToAddProfile = (item) => {
+const goToAddProfile = (item: any) => {
   router.push({
     path: '/family/oldman-profile',
     query: { userId: item.elderuserId }
@@ -228,7 +228,7 @@ const goToCreateProfile = () => {
   }
   router.push({
     path: '/family/oldman-profile',
-    query: { userId: familyUserId, isFamilyBinding: true, username: searchForm.username }
+    query: { userId: familyUserId, isFamilyBinding: true as any, username: searchForm.username }
   })
 }
 

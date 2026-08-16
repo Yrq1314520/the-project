@@ -45,7 +45,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 
@@ -60,20 +60,20 @@ const healthDataList = ref([
   { id: 3, oldmanName: '张三', type: 'heartRate', value: '72', recordTime: '2026-04-01 12:00:00', recordBy: '李四' }
 ])
 
-const getTypeText = (type) => {
+const getTypeText = (type: any) => {
   const typeMap = {
     bloodPressure: '血压',
     bloodSugar: '血糖',
     heartRate: '心率'
   }
-  return typeMap[type] || '未知'
+  return (typeMap as any)[type] || '未知'
 }
 
 const handleSearch = () => {
   ElMessage.info('搜索功能开发中')
 }
 
-const handleViewDetail = (data) => {
+const handleViewDetail = (data: any) => {
   ElMessage.info('查看详情功能开发中')
 }
 </script>

@@ -42,7 +42,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
 import { showToast, List as VanList, Icon as VanIcon, Button as VanButton, Popup as VanPopup, Picker as VanPicker } from 'vant'
 import { getAllQuestionsRecordsApi } from '@/api/family'
@@ -51,18 +51,18 @@ const props = defineProps({
   elderId: { type: [String, Number], default: '' }
 })
 
-const list = ref([])
+const list = ref<any[]>([])
 const loading = ref(false)
 const finished = ref(false)
 const page = ref(1)
 const pageSize = 10
 
 const showPicker = ref(false)
-const selectedDate = ref(null)
+const selectedDate = ref<any>(null)
 const selectedDateText = ref('')
 
 const dateOptions = computed(() => {
-  const options = [{ text: '全部', value: null }]
+  const options: any[] = [{ text: '全部', value: null }]
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   for (let i = 0; i < 7; i++) {
@@ -83,7 +83,7 @@ const clearDateFilter = () => {
   resetAndReload()
 }
 
-const onDateConfirm = ({ selectedOptions }) => {
+const onDateConfirm = ({ selectedOptions }: any) => {
   const option = selectedOptions[0]
   selectedDate.value = option.value
   selectedDateText.value = option.text === '全部' ? '' : option.text
@@ -91,25 +91,25 @@ const onDateConfirm = ({ selectedOptions }) => {
   resetAndReload()
 }
 
-const formatTime = (askTime) => {
+const formatTime = (askTime: any) => {
   if (!askTime || !Array.isArray(askTime) || askTime.length < 5) return ''
   const [, , , hour, minute] = askTime
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
 }
 
-const parseAskTime = (askTime) => {
+const parseAskTime = (askTime: any) => {
   if (!askTime || !Array.isArray(askTime) || askTime.length < 6) return new Date(0)
   const [year, month, day, hour, minute, second = 0] = askTime
   return new Date(year, month - 1, day, hour, minute, second)
 }
 
-const isSameDay = (date1, date2) => {
+const isSameDay = (date1: any, date2: any) => {
   return date1.getFullYear() === date2.getFullYear() &&
          date1.getMonth() === date2.getMonth() &&
          date1.getDate() === date2.getDate()
 }
 
-const getDateGroupTitle = (date) => {
+const getDateGroupTitle = (date: any) => {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const yesterday = new Date(today)
@@ -120,13 +120,13 @@ const getDateGroupTitle = (date) => {
 }
 
 const groupedList = computed(() => {
-  const sortedList = [...list.value].sort((a, b) => {
+  const sortedList = [...list.value].sort((a: any, b: any) => {
     const timeA = parseAskTime(a.askTime)
     const timeB = parseAskTime(b.askTime)
-    return timeB - timeA
+    return timeB.getTime() - timeA.getTime()
   })
-  const groups = {}
-  sortedList.forEach(record => {
+  const groups: Record<string, any[]> = {}
+  sortedList.forEach((record: any) => {
     const date = parseAskTime(record.askTime)
     const title = getDateGroupTitle(date)
     if (!groups[title]) groups[title] = []
@@ -152,7 +152,7 @@ const loadMore = async () => {
 
   loading.value = true
   try {
-    const params = {
+    const params: Record<string, any> = {
       page: page.value,
       size: pageSize,
       elderId: props.elderId
@@ -168,7 +168,7 @@ const loadMore = async () => {
 
     const res = await getAllQuestionsRecordsApi(params)
     if (res.code === 200 || res.success === 200) {
-      let newList = []
+      let newList: any[] = []
 
       if (Array.isArray(res.data)) {
         newList = res.data
